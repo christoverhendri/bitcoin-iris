@@ -152,6 +152,28 @@ Ethereum di yfinance baru punya data mulai **~November 2017** — jauh setelah `
 
 ---
 
+### `textual_news/`
+
+**Isi:** Data berita/post tekstual tingkat artikel, termasuk raw text, parsing struktural, sentiment, confidence, event significance, importance score, clickbait risk, state change, affected entities, dan event evidence.
+
+**Sumber:** Histori publik Telegram Watcher.Guru melalui pipeline textual-news.
+
+**Granularitas:** Satu record per post, bukan data harian.
+
+**Periode:** **2022-08-23 → 2026-08-23**.
+
+**Jumlah:** **9.471 record unik**. Sebanyak 2.295 record secara eksplisit menyebut Bitcoin/BTC.
+
+**Metode fill:** Tidak menggunakan forward-fill atau backward-fill karena setiap record merupakan event independen.
+
+**Timestamp:** Gunakan `published_at` sebagai waktu ketersediaan informasi. Sebanyak 705 record tidak memiliki publication timestamp dari Telegram public preview dan tidak boleh menggunakan waktu backfill sebagai pengganti waktu kejadian.
+
+**Status:** Candidate pool article-level untuk pengembangan. Data belum langsung dimasukkan ke master dataset. Sebelum modelling time-series, record harus diberi label relevansi Bitcoin, ditangani timestamp-nya, dan diagregasi tanpa lookahead menjadi `kategori/textual_news_daily.csv`.
+
+Dokumentasi rinci tersedia di [`kategori/textual_news/README.md`](kategori/textual_news/README.md).
+
+---
+
 ## Master Dataset (Gabungan)
 
 | File | Isi | Periode | Kenapa periode segitu |
@@ -162,6 +184,8 @@ Ethereum di yfinance baru punya data mulai **~November 2017** — jauh setelah `
 
 **Semua file di atas dijamin nol missing value** — diverifikasi otomatis pakai `assert df.isna().sum().sum() == 0` di notebook, jadi kalau ada yang lolos dan ternyata ada NaN, notebook bakal error keras (bukan silent fail).
 
+`textual_news` belum termasuk dalam master 1–3. Hanya hasil agregasi harian yang sudah divalidasi yang boleh ditambahkan ke master baru, misalnya `btc_master_4.csv`.
+
 ---
 
 ## Ringkasan Cepat: Kapan Pakai File yang Mana?
@@ -169,9 +193,12 @@ Ethereum di yfinance baru punya data mulai **~November 2017** — jauh setelah `
 - **Butuh histori paling panjang, nggak butuh sentiment/fear&greed** → `btc_master_1.csv`
 - **Butuh Fear&Greed sebagai fitur, oke histori mulai 2018** → `btc_master_2.csv`
 - **Butuh sentiment Sanbase, sadar histori cuma ~1 tahun** → `btc_master_3.csv`
+- **Butuh eksperimen berita tekstual/event-level** → `kategori/textual_news/watcher_guru_articles.jsonl`
 - **Cuma butuh 1 kategori spesifik buat analisis terpisah** (misal cuma on-chain aja) → pakai file di folder `kategori/`
 
 ## Kolom yang Perlu Diperlakukan Khusus (jangan diabaikan)
 - `eth_price_is_backfilled` (di `crossasset.csv` & semua master) — `True` = data ETH placeholder, bukan asli
 - `next_halving_is_projected` (di `technical.csv` & semua master) — `True` = tanggal halving berikutnya masih estimasi
 - Semua kolom FRED — inget udah di-lag, bukan tanggal periode asli, kalau butuh cross-check ke sumber asli FRED
+- `textual_news.published_at` — 705 record masih kosong; jangan substitusi dengan waktu backfill untuk analisis temporal
+- `textual_news` assessment scores — baseline heuristik, bukan label ground truth atau prediksi market impact
