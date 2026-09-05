@@ -1,7 +1,19 @@
 # bitcoin-iris
 
+Annotation-free market modelling is now available: frozen embeddings, training-only
+clustering/PCA, parser features, and automatically generated return/volatility
+targets. See [setup, experiments and verified results](docs/annotation_free_modelling.md).
+It uses a separate optional `requirements-model.txt` environment.
+
 Eksperimen forecasting ada di `bitcoin iris/`. Pipeline modelling news ada di
 `news_pipeline/`; requirements root khusus pipeline news.
+
+For the **durable parser-only data pipeline**, use `python -m news_pipeline data run`.
+It saves raw data before parsing, resumes catch-up, quarantines invalid records,
+and computes explainable post weights without loading a sentiment model.
+See [data pipeline commands and weighting](docs/data_pipeline.md) and
+[abuse review and validation](docs/pipeline_security_review.md). The older commands
+below are the optional sentiment baseline workflow.
 
 ## Menjalankan
 
@@ -33,7 +45,8 @@ Live fetch: GET https://t.me/s/WatcherGuru, parser container
 `.tgme_widget_message[data-post]`, teks `.tgme_widget_message_text`, timestamp
 `time[datetime]`. Public preview HTML ini tidak membutuhkan token; bukan streaming
 API resmi. Perubahan layout/halaman tanpa teks memunculkan error eksplisit.
-Timeout koneksi/read 10/30 detik, maksimal tiga retry untuk HTTP 429/5xx.
+Fetch kini memakai timeout koneksi/read 10/15 detik, batas body 2 MiB, dan menolak
+redirect. Mode watch mencoba lagi pada siklus berikutnya.
 
 Alur: raw post → simpan provenance → hapus URL, mention, prefix alert, rapikan
 whitespace → TF-IDF → classifier → SQLite. Media tanpa teks dilewati.

@@ -13,6 +13,7 @@ from .parser import parse_news
 
 
 def train(args):
+    from .exports import safe_csv_text
     import joblib
     from sklearn.feature_extraction.text import TfidfVectorizer
     from sklearn.linear_model import LogisticRegression
@@ -53,7 +54,7 @@ def train(args):
     with (output / 'test_predictions.csv').open('w', newline='', encoding='utf-8') as handle:
         writer = csv.writer(handle)
         writer.writerow(['source_id', 'published_at', 'text', 'weak_label', 'prediction'])
-        writer.writerows((r['source_id'], r['date'].isoformat(), r['text'], r['label'], p) for r, p in zip(test, predicted))
+        writer.writerows((safe_csv_text(r['source_id']), r['date'].isoformat(), safe_csv_text(r['text']), r['label'], p) for r, p in zip(test, predicted))
     print(json.dumps({'audit': audit, 'test_macro_f1': report['test']['macro avg']['f1-score'],
                       'majority_macro_f1': report['majority_test_macro_f1'], 'output': str(output)}, indent=2))
 
@@ -61,6 +62,18 @@ def train(args):
 def main():
     parser = argparse.ArgumentParser(description='IRIS news sentiment pipeline')
     sub = parser.add_subparsers(dest='command', required=True)
+    data = sub.add_parser('data', help='Durable parser-only data pipeline; never loads joblib')
+    data.add_argument('action', choices=['import', 'collect', 'process', 'requeue', 'run', 'status', 'export', 'daily'])
+    data.add_argument('--database', default='artifacts/news/data.sqlite')
+    data.add_argument('--input', type=Path)
+    data.add_argument('--output', type=Path)
+    data.add_argument('--as-of')
+    data.add_argument('--time-basis', choices=['ready', 'publication'], default='ready')
+    data.add_argument('--max-pages', type=int, default=5)
+    data.add_argument('--limit', type=int, default=1000)
+    data.add_argument('--retry', action='store_true')
+    data.add_argument('--watch', action='store_true')
+    data.add_argument('--interval', type=int, default=60)
     parse = sub.add_parser('parse', help='Parse text or JSONL without a sentiment model')
     source = parse.add_mutually_exclusive_group(required=True)
     source.add_argument('--text')
@@ -82,7 +95,46 @@ def main():
     export.add_argument('--database', default='artifacts/news/live.sqlite')
     export.add_argument('--output', default='artifacts/news/live_predictions.jsonl')
     args = parser.parse_args()
-    if args.command == 'parse':
+    if args.command == 'data':
+        from .collector import collect
+        from .exports import export_data
+        from .storage import import_jsonl, process_pending, requeue_failed, status
+        if args.watch and args.action != 'run':
+            parser.error('--watch requires data run')
+        if args.interval < 30:
+            parser.error('interval must be at least 30 seconds')
+        if args.action == 'import':
+            if not args.input:
+                parser.error('import requires --input')
+            print(json.dumps(import_jsonl(args.input, args.database)))
+        elif args.action in {'export', 'daily'}:
+            if not args.output or not args.as_of:
+                parser.error('export/daily require --output and --as-of')
+            print(json.dumps(export_data(args.database, args.output, args.as_of,
+                                         args.action == 'daily', args.time_basis)))
+        elif args.action == 'status':
+            print(json.dumps(status(args.database), indent=2))
+        elif args.action == 'requeue':
+            print(json.dumps(requeue_failed(args.database)))
+        elif args.action == 'process':
+            print(json.dumps(process_pending(args.database, args.limit, args.retry)))
+        else:
+            while True:
+                try:
+                    result = {'collection': collect(args.database, args.max_pages)}
+                    if args.action == 'run':
+                        result['processing'] = process_pending(args.database, args.limit, args.retry)
+                    print(json.dumps(result), flush=True)
+                except Exception:
+                    if not args.watch:
+                        raise
+                    logging.exception('Collection failed; cursor retained for next attempt')
+                    # Existing inbox work can still finish during a source outage.
+                    print(json.dumps({'processing': process_pending(args.database, args.limit, args.retry)}), flush=True)
+                if not args.watch:
+                    break
+                time.sleep(args.interval)
+    elif args.command == 'parse':
         if args.text is not None:
             result = json.dumps(parse_news(args.text), ensure_ascii=False, indent=2)
             if args.output:

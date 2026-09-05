@@ -3,7 +3,8 @@
 import re
 from decimal import Decimal
 
-VERSION = 'iris-news-rules/1.0.0'
+VERSION = 'iris-news-rules/1.1.0'
+MAX_TEXT_CHARS = 16000
 
 ENTITY_RULES = {
     'bitcoin': ('asset', r'\b(?:bitcoin|btc|xbt)\b'),
@@ -36,7 +37,7 @@ ATTRIBUTION = re.compile(r'\b(?:says?|said|according to|reports?|reported|denies
 NEGATION = re.compile(r"\b(?:not|never|no|without|cannot|can['’]t|isn['’]t|wasn['’]t|hasn['’]t|haven['’]t|didn['’]t|won['’]t|denies|denied|deny|false|untrue)\b", re.I)
 MODALITY = re.compile(r'\b(?:may|might|could|would|will|expect(?:s|ed)?|plans?|planned|propos(?:e|es|ed|al)|rumou?rs?|if|unless|should)\b', re.I)
 QUANTITY = re.compile(
-    r'(?<![\w.])(?P<currency>[$€£])?\s*(?P<number>\d+(?:,\d{3})*(?:\.\d+)?)'
+    r'(?<![\w.])(?:(?P<currency>[$€£])\s*)?(?P<number>\d+(?:,\d{3})*(?:\.\d+)?)'
     r'\s*(?P<scale>trillion|billion|million|thousand|[kmbt](?!\w))?'
     r'\s*(?P<unit>%|percent\b|basis points?\b|bps\b|BTC\b|ETH\b|USD\b|dollars?\b|EUR\b|GBP\b)?', re.I)
 TIME = re.compile(r'\b(?:\d{4}-\d{2}-\d{2}|today|yesterday|tomorrow|'
@@ -76,6 +77,12 @@ def segments(text, masked):
 def parse_news(text):
     if not isinstance(text, str):
         raise TypeError('raw_text must be a string')
+    if len(text) > MAX_TEXT_CHARS:
+        raise ValueError('text_too_large')
+    if sum(1 for pattern in EVENT_RULES.values() for _ in re.finditer(pattern, text, re.I)) > 128:
+        raise ValueError('too_many_event_triggers')
+    if len(re.findall(r'\w+', text)) > 2000:
+        raise ValueError('too_many_tokens')
     # Mask instead of deleting so every returned offset addresses original raw_text.
     ignored = matches(URL, text)
     ignored += matches(re.compile(r'@\w+'), text)

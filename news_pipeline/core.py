@@ -6,11 +6,7 @@ from contextlib import closing
 from datetime import datetime, timezone
 from pathlib import Path
 
-import requests
-import truststore
 from bs4 import BeautifulSoup
-from requests.adapters import HTTPAdapter
-from urllib3.util.retry import Retry
 from .parser import VERSION as PARSER_VERSION, parse_news
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -111,14 +107,8 @@ def parse_telegram(html):
 
 
 def fetch_latest():
-    # Use the OS certificate store, including locally trusted proxy CAs.
-    truststore.inject_into_ssl()
-    with requests.Session() as session:
-        retry = Retry(total=3, backoff_factor=1, status_forcelist=[429, 500, 502, 503, 504])
-        session.mount('https://', HTTPAdapter(max_retries=retry))
-        response = session.get('https://t.me/s/WatcherGuru', timeout=(10, 30))
-        response.raise_for_status()
-        return parse_telegram(response.text)
+    from .collector import fetch_page
+    return parse_telegram(fetch_page())
 
 
 def classify(bundle, record):
