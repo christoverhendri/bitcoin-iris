@@ -1,0 +1,296 @@
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------------------
+   IRIS terminal design tokens.
+   Values are mirrored in src/lib/theme/tokens.ts — tokens.test.ts asserts parity.
+   Do not edit one without the other.
+--------------------------------------------------------------------------- */
+@theme {
+  --color-bg: #000000;
+  --color-panel: #080808;
+  --color-sunk: #101010;
+  --color-line: #303030;
+  --color-line2: #4a4a4a;
+  --color-txt: #eeeeee;
+  --color-mut: #aaaaaa;
+  --color-dim: #858585;
+  --color-up: #37e76d;
+  --color-down: #ff4545;
+  --color-blue: #48bfff;
+  --color-amber: #ff9d00;
+  --color-purple: #c898ff;
+
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
+  --font-heading: var(--font-jetbrains-mono), "Consolas", monospace;
+  --font-body: var(--font-jetbrains-mono), "Consolas", monospace;
+}
+
+/* Plain custom properties too: inline style={{color:'var(--up)'}} is the idiom
+   ported from the original, and @theme names are prefixed with --color-. */
+:root {
+  --header-bg: #24201a;
+  --bg: #000000;
+  --panel: #080808;
+  --sunk: #101010;
+  --line: #303030;
+  --line2: #4a4a4a;
+  --txt: #eeeeee;
+  --mut: #aaaaaa;
+  --dim: #858585;
+  --up: #37e76d;
+  --down: #ff4545;
+  --blue: #48bfff;
+  --amber: #ff9d00;
+  --purple: #c898ff;
+
+  --mono: var(--font-jetbrains-mono), ui-monospace, monospace;
+  --font-heading: var(--font-jetbrains-mono), "Consolas", monospace;
+  --font-body: var(--font-jetbrains-mono), "Consolas", monospace;
+
+  /* Sidebar width — one number, referenced by the shell grid and the drawer. */
+  --rail: 184px;
+
+  color-scheme: dark;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  color: var(--txt);
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  /* The terminal is a fixed-height app shell; the content column scrolls, not the page. */
+  overflow: hidden;
+}
+
+button {
+  white-space: nowrap;
+  font-family: var(--mono);
+  cursor: pointer;
+  background: none;
+  border: 0;
+  color: inherit;
+  padding: 0;
+}
+
+a {
+  color: var(--blue);
+  text-decoration: none;
+}
+a:hover {
+  color: var(--up);
+}
+
+::selection {
+  background: color-mix(in srgb, var(--blue) 35%, transparent);
+}
+
+/* ---------------------------------------------------------------------------
+   The one animation in the original: the LIVE dot.
+--------------------------------------------------------------------------- */
+@keyframes irisPulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.2;
+  }
+}
+
+.iris-pulse {
+  animation: irisPulse 1.8s infinite;
+}
+
+/* ---------------------------------------------------------------------------
+   Interaction. The original had three :hover rules, no transitions, and no
+   focus styles at all. Hover is kept identical; transitions and focus rings
+   are added because a keyboard user could not use the original.
+--------------------------------------------------------------------------- */
+.nav-btn,
+.ind-btn,
+.tab-btn,
+.pill-btn {
+  transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease;
+}
+
+.nav-btn:hover {
+  background: #242019;
+}
+.ind-btn:hover {
+  background: #242019;
+}
+.tab-btn:hover {
+  color: var(--txt);
+}
+.pill-btn:hover {
+  background: #242019;
+}
+
+:where(a, button, [tabindex]):focus-visible {
+  outline: 1px solid var(--blue);
+  outline-offset: -1px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Tables. Wide tables scroll inside their own panel (see DataTable) so the
+   shell grid never blows out.
+--------------------------------------------------------------------------- */
+table.iris-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+table.iris-table th,
+table.iris-table td {
+  text-align: left;
+  padding: 5px 8px;
+  font-size: 11px;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+table.iris-table th {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--amber);
+  background: #181818;
+}
+
+table.iris-table tbody tr:nth-child(even) {
+  background: #101010;
+}
+
+table.iris-table tbody tr:hover {
+  background: #152b40;
+}
+
+.iris-panel {
+  border: 1px solid var(--line);
+}
+
+/* Shared page density; individual chart sizing and responsive grids stay local. */
+.iris-workspace > div:first-child {
+  padding: 8px !important;
+  gap: 6px !important;
+}
+
+.iris-micro {
+  font-size: 10px !important;
+  letter-spacing: .025em !important;
+}
+
+.nav-btn[aria-current='page']:hover,
+.tab-btn[aria-selected='true']:hover {
+  background: #ffb43d;
+  color: #000000;
+}
+
+/* ---------------------------------------------------------------------------
+   Mobile. The original was desktop-only: 198px fixed rail, 8.5px type, zero
+   media queries. Below 1024px the rail becomes a drawer (see SidebarDrawer)
+   and the micro-type floor is raised so it stays readable.
+--------------------------------------------------------------------------- */
+@media (max-width: 1023px) {
+  :root {
+    --rail: 0px;
+  }
+  .iris-micro {
+    font-size: 11px !important;
+  }
+}
+
+/* Overview: chart 2/3 + snapshot 1/3 collapses to a single column when narrow. */
+@media (max-width: 900px) {
+  .ov-split {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+}
+
+/* Thin scrollbars that match the surface ramp rather than the OS default. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line2) transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--line2);
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* ---------------------------------------------------------------------------
+   Rail vs drawer.
+   >=1024px: the rail is a real grid column (--rail: 184px) and the hamburger
+             is hidden.
+   <1024px:  --rail collapses to 0, the rail becomes a fixed overlay panel that
+             slides in, and the hamburger appears in the topbar.
+--------------------------------------------------------------------------- */
+.iris-drawer-toggle {
+  display: none;
+}
+
+@media (max-width: 1023px) {
+  .iris-drawer-toggle {
+    display: inline-flex;
+  }
+
+  .iris-rail {
+    position: fixed;
+    inset: 0 auto 0 0;
+    width: 240px;
+    z-index: 50;
+    transform: translateX(-100%);
+    transition: transform 180ms ease;
+  }
+
+  .iris-rail[data-open='true'] {
+    transform: translateX(0);
+  }
+}
+
+@media (max-width: 1023px) and (prefers-reduced-motion: reduce) {
+  .iris-rail {
+    transition: none;
+  }
+}
+
+.iris-panel-loading { padding: 12px; background: var(--panel); border: 1px solid var(--line); display: flex; flex-direction: column; gap: 14px; color: var(--mut); }
+.iris-panel-loading strong { color: var(--amber); font-size: 11px; }
+.iris-skeleton { height: 8px; width: 85%; background: var(--line); }
+.iris-command-bar { display: flex; justify-content: space-between; gap: 8px; padding: 5px 10px; border-bottom: 1px solid var(--line); font-size: 10px; color: var(--mut); }
+.iris-command-bar button { color: var(--amber); }
+.iris-command-bar kbd { margin-left: 12px; color: var(--txt); }
+.iris-command-dialog { margin: 12vh auto auto; padding: 0; width: min(580px, calc(100vw - 24px)); max-height: 76dvh; color: var(--txt); background: var(--panel); border: 1px solid var(--amber); }
+.iris-command-dialog::backdrop { background: rgb(0 0 0 / 75%); }
+.iris-command-content { padding: 14px; }
+.iris-command-heading { display: flex; justify-content: space-between; color: var(--amber); margin-bottom: 12px; }
+.iris-command-dialog input { width: 100%; padding: 12px 8px; background: var(--bg); color: var(--txt); border: 1px solid var(--line2); font-family: var(--mono); font-size: 12px; }
+.iris-command-dialog input:focus { outline: 1px solid var(--amber); }
+.iris-command-results { max-height: 44dvh; overflow: auto; margin-top: 8px; }
+.iris-command-results button { display: flex; justify-content: space-between; width: 100%; padding: 10px 8px; font-size: 12px; text-align: left; white-space: normal; }
+.iris-command-results button[aria-selected='true'], .iris-command-results button:hover { background: var(--amber); color: var(--bg); }
+.iris-command-dialog footer { margin-top: 12px; color: var(--mut); font-size: 10px; }
+@media (max-width: 600px) { .iris-command-bar > span { display: none; } }

@@ -1,0 +1,48 @@
+{
+  "name": "iris-terminal",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "verify:registry": "node scripts/verify-registry.mjs"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.114.0",
+    "d3-geo": "^3.1.1",
+    "d3-scale": "^4.0.2",
+    "d3-selection": "^3.0.0",
+    "d3-shape": "^3.2.0",
+    "d3-transition": "^3.0.1",
+    "d3-zoom": "^3.0.0",
+    "lightweight-charts": "^5.2.1",
+    "next": "16.3.4",
+    "nuqs": "^2.10.1",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "server-only": "^0.0.1",
+    "topojson-client": "^3.1.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/d3-geo": "^3.1.1",
+    "@types/d3-scale": "^4.0.9",
+    "@types/d3-selection": "^3.0.11",
+    "@types/d3-shape": "^3.2.0",
+    "@types/d3-transition": "^3.0.9",
+    "@types/d3-zoom": "^3.0.8",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@types/topojson-client": "^3.1.5",
+    "eslint": "^9",
+    "eslint-config-next": "16.3.4",
+    "tailwindcss": "^4",
+    "typescript": "^5",
+    "vitest": "^4.1.11"
+  }
+}
