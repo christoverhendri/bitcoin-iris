@@ -13,6 +13,8 @@ export type SourceKey =
   | 'coingecko'
   | 'alternative_me'
   | 'derivatives'
+  | 'positioning'
+  | 'etf_flows'
   | 'fred'
   | 'cryptopanic'
   | 'rss'

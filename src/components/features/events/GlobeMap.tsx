@@ -97,12 +97,19 @@ export function GlobeMap({
   const draggingRef = useRef(false);
   const movedRef = useRef(false);
   const startRef = useRef({ x: 0, y: 0, rot: DEFAULT_ROT });
+
+  // Mirror of `rot` for the event handlers, which run outside render and cannot
+  // close over fresh state. Written in an effect, never during render.
   const rotRef = useRef(rot);
-  rotRef.current = rot;
+  useEffect(() => {
+    rotRef.current = rot;
+  }, [rot]);
 
   const idle = !over && !selectedKey;
 
   // Auto-spin only when idle. Throttled — each step reprojects the topology.
+  // Uses a functional update so the loop never has to read the ref, which is
+  // what kept this effect out of the render path in the first place.
   useEffect(() => {
     if (!idle) return;
     let raf = 0;
@@ -110,8 +117,7 @@ export function GlobeMap({
     const tick = (t: number) => {
       if (t - last > 33) {
         last = t;
-        const [l, p] = rotRef.current;
-        setRot([(l + SPIN_STEP) % 360, p]);
+        setRot(([l, p]) => [(l + SPIN_STEP) % 360, p]);
       }
       raf = requestAnimationFrame(tick);
     };

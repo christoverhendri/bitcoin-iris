@@ -21,6 +21,9 @@ const BASE: SourceKey[] = [
   'internal_confluence', // confluence engine -> computed internally
   'onchain_provider', // chain supply / activity -> keyless blockchain.info
   'mempool_space', // network conditions -> keyless mempool.space (+ Blockchair extras)
+  'positioning', // long/short ratios, taker flow, Coinbase premium -> Binance + Coinbase
+  'etf_flows', // US spot ETF daily net flows -> bitbo.io, scraped and shape-validated
+  'yfinance', // global markets + confluence MACRO layer -> keyless Yahoo chart API
 ];
 
 /**

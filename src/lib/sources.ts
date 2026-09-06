@@ -21,6 +21,8 @@ export const SOURCES: SourceDef[] = [
   { key: 'yfinance', displayName: 'Yahoo Finance', category: 'market', requiresKey: false, enabled: true, unlockNote: null },
   { key: 'coingecko', displayName: 'CoinGecko', category: 'market', requiresKey: true, enabled: true, unlockNote: 'Register a free CoinGecko demo key and set COINGECKO_API_KEY in worker/.env.' },
   { key: 'derivatives', displayName: 'Derivatives (Bybit/OKX/Deribit)', category: 'market', requiresKey: false, enabled: true, unlockNote: null },
+  { key: 'positioning', displayName: 'Positioning (Binance futures + premium)', category: 'market', requiresKey: false, enabled: true, unlockNote: null },
+  { key: 'etf_flows', displayName: 'Spot ETF flows (bitbo.io)', category: 'market', requiresKey: false, enabled: true, unlockNote: 'Keyless, but scraped rather than an API: bitbo.io publishes the issuer table as server-rendered HTML. A layout change fails shape validation and lands here by design — there is nothing to configure. See src/lib/sources/etfFlows.ts.' },
   { key: 'internal_quant', displayName: 'Quant pipeline', category: 'quant', requiresKey: false, enabled: true, unlockNote: null },
   { key: 'internal_forecast', displayName: 'Forecast pipeline', category: 'forecast', requiresKey: false, enabled: true, unlockNote: null },
   { key: 'alternative_me', displayName: 'Fear & Greed (alternative.me)', category: 'sentiment', requiresKey: false, enabled: true, unlockNote: null },

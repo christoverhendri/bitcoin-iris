@@ -64,6 +64,8 @@ values
   ('yfinance', 'Yahoo Finance', 'market', false, true, null),
   ('coingecko', 'CoinGecko', 'market', true, true, 'Register a free CoinGecko demo key and set COINGECKO_API_KEY in worker/.env.'),
   ('derivatives', 'Derivatives (Bybit/OKX/Deribit)', 'market', false, true, null),
+  ('positioning', 'Positioning (Binance futures + premium)', 'market', false, true, null),
+  ('etf_flows', 'Spot ETF flows (bitbo.io)', 'market', false, true, 'Keyless, but scraped rather than an API: bitbo.io publishes the issuer table as server-rendered HTML. A layout change fails shape validation and lands here by design — there is nothing to configure. See src/lib/sources/etfFlows.ts.'),
   ('internal_quant', 'Quant pipeline', 'quant', false, true, null),
   ('internal_forecast', 'Forecast pipeline', 'forecast', false, true, null),
   ('alternative_me', 'Fear & Greed (alternative.me)', 'sentiment', false, true, null),

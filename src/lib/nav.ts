@@ -76,14 +76,18 @@ export const SECTIONS: Section[] = [
     key: 'chain',
     label: 'On-Chain',
     title: 'ON-CHAIN',
-    blurb: 'Supply · flows · holders',
+    blurb: 'Supply · flows · derivatives · ETF',
     group: 'Evidence',
     icon: 'M7 7h10v10H7zM3 12h4M17 12h4M12 3v4M12 17v4',
+    // Append only. Middleware validates the `iris_sub` cookie against this list,
+    // so adding is safe; reordering would move the default landing tab.
     subs: [
       { slug: 'supply', label: 'SUPPLY' },
       { slug: 'network', label: 'NETWORK' },
       { slug: 'flows', label: 'FLOWS' },
       { slug: 'derivatives', label: 'DERIVATIVES' },
+      { slug: 'positioning', label: 'POSITIONING' },
+      { slug: 'etf', label: 'ETF FLOWS' },
     ],
   },
   {
@@ -99,13 +103,15 @@ export const SECTIONS: Section[] = [
     key: 'macro',
     label: 'Macro',
     title: 'MACRO',
-    blurb: 'Country data · regime',
+    blurb: 'Country data · regime · global markets',
     group: 'Evidence',
     icon: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM3 12h18M12 3c3 3.6 3 14.4 0 18',
     scope: 'country',
     subs: [
       { slug: 'data', label: 'ECONOMIC DATA' },
       { slug: 'regime', label: 'MACRO REGIME' },
+      // Unscoped: the country tabs do not apply here (see the page's comment).
+      { slug: 'markets', label: 'GLOBAL MARKETS' },
     ],
   },
   {

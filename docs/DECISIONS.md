@@ -28,6 +28,9 @@ is always labelled.
 | **Blockstream Esplora** | exchange address balances + transactions (flow intelligence) |
 | **Bybit / OKX / Binance** | perp funding rate, open interest |
 | **Deribit** | DVOL implied volatility, options open interest |
+| **bitbo.io** | US spot ETF daily net flows per issuer (scraped — see §9) |
+| **Binance futures-data** | retail / top-trader long-short ratios, taker buy-sell volume |
+| **Yahoo Finance** (`v8/finance/chart`) | DXY, S&P 500, VIX, US 10Y, gold — 1y daily |
 
 ### Key-gated sources (dormant until configured)
 
@@ -126,9 +129,25 @@ Funding annualisation assumes 8-hour periods: `rate × 3 × 365 × 100`.
 weights are **arbitrary internal choices**, not fitted or backtested. They are declared in a
 single `WEIGHTS` constant so they can be changed in one place and argued about here.
 
-Layers: `TECHNICAL`, `SENTIMENT`, `NEWS`, `ONCHAIN`, `DERIVATIVES`, `MACRO`. A layer with no
-wired source contributes a neutral `50` rather than being silently dropped — that keeps the
-composite honest about what it does not know.
+Layers and their current weights:
+
+| Layer | Weight | State |
+|---|---|---|
+| `TECHNICAL` | 0.34 | live — RSI / MACD / EMA gap / Bollinger position from real candles |
+| `SENTIMENT` | 0.20 | live — Fear & Greed blended 50/50 with headline tone |
+| `NEWS` | 0.20 | live — RSS lexicon tally |
+| `MACRO` | 0.20 | **live since Yahoo was wired** — see §11 for the mapping |
+| `ONCHAIN` | 0.06 | **still hardcoded `50`** |
+
+`MACRO` went `0.10 → 0.20` when it stopped being a constant. `ONCHAIN` went `0.12 → 0.06`
+for the opposite reason: it cannot move, and a layer that cannot move should not be allowed
+to dilute the ones that can. It keeps a non-zero weight only so that wiring it later is a
+weight change rather than a structural one.
+
+A layer with no wired source contributes a neutral `50` rather than being silently dropped —
+that keeps the composite honest about what it does not know. `src/lib/features/confluence/confluence.test.ts`
+pins both the weights and the macro mapping, so changing a market view requires a deliberate
+edit with a failing test attached.
 
 `bearish` is defined as `100 − overall`. That is a presentation choice, not an independent
 measurement.
@@ -208,8 +227,10 @@ no notification delivery.
   with plausible-looking numbers would be worse than an empty badge.
 - **`chainFlows` netflow history** cannot be reproduced keyless. The DIY path gives a
   snapshot; real history needs Arkham or a database.
-- **Spot ETF flows and cross-venue liquidations** are not implemented — CoinGlass requires a
-  key and Farside blocks automated access.
+- **Spot ETF flows are implemented, by scraping bitbo.io** (§9). CoinGlass still requires a
+  key and Farside still answers 403 to anything automated; bitbo publishes the same issuer
+  data as server-rendered HTML with no key. **Cross-venue liquidations remain unimplemented** —
+  no keyless source publishes them.
 - **Mock determinism**: all mocks seed from the UTC date (`src/lib/rng.ts`), so SSR and
   client hydration agree and values are stable within a day. Never use `Math.random()` or
   `Date.now()` in a mock path.
@@ -303,3 +324,161 @@ screen.
 `failed` after three consecutive ones — so a single dropped request does not make
 the footer flicker. A run that fetched zero transfers is a success; whales are
 not obliged to move every five minutes.
+---
+
+## 9. Spot ETF flows
+
+`src/lib/sources/etfFlows.ts` → `src/lib/features/etfFlows/` → `/chain/etf`.
+
+### What the numbers are, and are not
+
+They are **a third party's transcription** of issuer creation/redemption disclosures,
+scraped from bitbo.io. They have not been reconciled against any issuer's own filing. Units
+are US$ millions, signed, one decimal — bitbo's own precision, not ours.
+
+The window is **whatever bitbo published**, typically eight to ten sessions. It is **not
+cumulative since launch**. `windowNetUsdM` must never be labelled "total ETF flows"; the
+panel prints the session count beside it for exactly this reason.
+
+ETF creations settle **T+1**, so the newest row lags spot by a session. A flow print can help
+explain yesterday's candle. It can never explain today's.
+
+### Why scraping, and how it is contained
+
+CoinGlass requires a key; Farside answers 403 to automated requests. bitbo serves the same
+table as server-rendered HTML with no key and no JS hydration. The cost is a dependency on
+someone else's markup — so the parser is built to fail loudly rather than degrade quietly.
+Six gates, every one of which throws:
+
+| # | Gate | Catches |
+|---|---|---|
+| 1 | a `<table>` exists | page replaced or client-rendered |
+| 2 | header row starts with `Date` | table swapped for a different one |
+| 3 | at least 5 fund columns before `Totals` | layout collapsed |
+| 4 | strict `MMM DD, YYYY` pattern, real calendar date | format change; **never `Date.parse`** |
+| 5 | **per-fund cells sum to the printed total, tolerance 1.0** | **column shift** |
+| 6 | at least 3 dated rows; every value under 20,000 (US$m) | truncation, units change |
+
+Gate 5 is the one that matters. A shifted column produces numbers that are finite, plausible
+and attributed to the wrong issuer — no other check sees it. `Date.parse` is banned in gate 4
+for the same reason: its behaviour on non-ISO strings is implementation-defined, so it would
+happily return a confident wrong date.
+
+A row that fails is dropped whole, never patched cell by cell — a partial row *is* the
+column-shift case. Any gate failure means `defineFeature` renders the seeded mock with a
+`MOCK` badge. There is no best-effort path.
+
+`src/lib/sources/etfFlows.test.ts` runs the parser against a saved snapshot of the real table
+(`__fixtures__/bitbo-etf-flows.html`) and asserts each gate throws.
+
+### Opinion in this feature
+
+`grossSharePct` ranks issuers by **absolute** flow, not net, so a fund that took in 200 and
+paid out 200 reads as a major participant rather than an absent one. That is a choice about
+what "leading" means.
+
+---
+
+## 10. Positioning and premium
+
+`src/lib/sources/positioning.ts` → `src/lib/features/positioning/` → `/chain/positioning`.
+
+### Data
+
+Three Binance `futures/data` endpoints and one price ratio:
+
+| Series | Cohort |
+|---|---|
+| `globalLongShortAccountRatio` | every account, one vote each — retail |
+| `topLongShortPositionRatio` | largest accounts by margin, weighted by position — the large book |
+| `takerlongshortRatio` | volume that crossed the spread — aggression |
+| Coinbase BTC-USD over Binance BTCUSDT | Coinbase Premium |
+
+### Opinion, clearly marked
+
+**`divergence = topTraderRatio − retailRatio` is our own construction**, not a published
+index. The bias buckets are hand-chosen and fitted to nothing:
+
+| Condition | Bias |
+|---|---|
+| `divergence >= +0.5` | bullish |
+| `divergence <= -0.5` | bearish |
+| `retailRatio >= 1.20` and no strong divergence | bearish (crowded long) |
+| `retailRatio <= 0.85` and no strong divergence | bullish (crowded short) |
+| otherwise | neutral |
+
+"Crowded retail longs are contrarian bearish" is a **market aphorism, not a law**. It fails in
+sustained trends — which is precisely when following it costs the most. The panel renders the
+bias together with the sentence that produced it, never as a bare verdict.
+
+### Limits
+
+**Binance is one venue's book, not the market's.** Its retail mix is not everyone's, it
+geo-blocks some jurisdictions, and the "top trader" cohort is defined by Binance's own margin
+ranking, which cannot be inspected from outside.
+
+The **Coinbase Premium** compares a USD pair against a USDT pair, so part of any reading is
+really stablecoin drift rather than a premium. Typical values are a few basis points — well
+inside the spread. The panel therefore uses a **fixed ±0.20% scale** rather than an
+auto-fitted one, so a 0.007% reading looks as small as it is. Read the trend, not the tick.
+
+Each series is fetched independently; a dead endpoint sets its own `available` flag and
+renders an em dash in that panel rather than blanking the page.
+
+---
+
+## 11. Global markets and the macro layer
+
+`src/lib/sources/yahoo.ts` → `src/lib/features/macroMarkets/` → `/macro/markets`, and the
+`MACRO` layer of the confluence score.
+
+### Source caveats
+
+Yahoo's `v8/finance/chart` endpoint is **public but undocumented and unsupported**; it can
+change without notice and needs a browser User-Agent. The sibling `v10/finance/quoteSummary`
+now answers 401 without a session crumb and is deliberately not used — anything unavailable
+from the chart endpoint is simply not fetched.
+
+`indicators.quote[0].close` contains `null` for holidays and halts. Those entries are dropped
+**together with their timestamps**; zero-filling would poison every return computed from the
+series. A symbol that fails is listed in `data.missing` and rendered as such, never hidden by
+silently shortening the table.
+
+### The correlation, and the trap it avoids
+
+Equities trade about 252 sessions a year; BTC trades 365. Zipping two close arrays by index
+pairs a Tuesday with a Saturday somewhere in the first month, and every number after that is
+wrong while remaining perfectly plausible. `src/lib/quant/correlation.ts` therefore matches
+the two series **by UTC calendar day** before computing anything.
+
+Below **30 overlapping sessions** the correlation reports `null`, rendered as an em dash. A
+correlation computed from eleven points is not a 30-day correlation and will not be displayed
+as one. `pearson` also returns `null` — not `0` — when either side is flat, because zero reads
+as "measured, and unrelated" when the truth is "not measurable".
+
+`z1y` places the current level inside that instrument's **own** trailing year. It is a rank
+within that year, not a valuation, and carries no view on what happens next.
+
+### The macro mapping (opinion)
+
+`macroScore()` in `src/lib/features/confluence/live.ts`. Each sub-signal maps to the range
+−1..+1, the available ones are averaged, and the mean is mapped to 0-100:
+
+| Input | Mapping | Reasoning |
+|---|---|---|
+| DXY | `-clamp(z / 2, -1, 1)` | a strong dollar is a headwind; ±2 sigma pins the signal |
+| VIX | level, interpolated across `15 -> +1`, `20 -> +0.5`, `25 -> 0`, `35 -> -0.5`, `45 -> -1` | **level, not z-score** — the distribution is heavily right-skewed, so a z-score understates exactly the spikes that matter |
+| S&P 500 | `clamp(chg30d / 10, -1, 1)` | risk appetite; a ±10% month pins the signal |
+
+A missing sub-signal is **skipped, not defaulted to zero**, so one dead symbol does not drag
+the layer toward neutral. With all three missing the layer returns `50`, the same honest
+neutral it had before Yahoo was wired. The whole block sits in a `try`/`catch`: a Yahoo
+outage degrades confluence to its previous behaviour and can never take the page down.
+
+### FRED stays
+
+Yahoo is **purely additive**. CPI, policy rates and GDP are national statistical releases;
+the chart endpoint serves market prices and has none of them. `^TNX` gives the US 10-year
+yield, which overlaps nothing in the FRED series list. `/macro/data` and `/macro/regime`
+remain FRED-gated and country-scoped; `/macro/markets` is global and ignores the country tabs
+rather than implying a scoping that does not exist.
