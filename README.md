@@ -1,123 +1,124 @@
-# bitcoin-iris
+# Bitcoin IRIS
 
-Annotation-free market modelling is now available: frozen embeddings, training-only
-clustering/PCA, parser features, and automatically generated return/volatility
-targets. See [setup, experiments and verified results](docs/annotation_free_modelling.md).
-It uses a separate optional `requirements-model.txt` environment.
+Repositori riset forecasting Bitcoin dan **IRIS BTC Intelligence Terminal**.
 
-Eksperimen forecasting ada di `bitcoin iris/`. Pipeline modelling news ada di
-`news_pipeline/`; requirements root khusus pipeline news.
+## Status integrasi
 
-For the **durable parser-only data pipeline**, use `python -m news_pipeline data run`.
-It saves raw data before parsing, resumes catch-up, quarantines invalid records,
-and computes explainable post weights without loading a sentiment model.
-See [data pipeline commands and weighting](docs/data_pipeline.md) and
-[abuse review and validation](docs/pipeline_security_review.md). The older commands
-below are the optional sentiment baseline workflow.
+- `terminal/`: aplikasi Next.js, React, dan TypeScript untuk harga, indikator, berita, sentiment, on-chain, makro, dan forecast.
+- `news_pipeline/`: pipeline Python Watcher.Guru, parser, penyimpanan, dan modelling; belum terhubung ke terminal RSS.
+- `bitcoin iris/`: dataset, baseline Python, notebook, dan laporan riset.
+- **Model XGBoost riset belum terhubung ke terminal.** Forecast bulanan terminal menggunakan bootstrap Monte Carlo.
+- Startup tidak memerlukan kredensial. Fitur tambahan dapat memerlukan provider, database, atau ingestion.
+- Berita tidak menggunakan headline contoh. Whale Wire production menampilkan unavailable jika sumber kosong/sintetis; fitur lain dapat menggunakan placeholder berlabel MOCK.
 
-## Menjalankan
+## Menjalankan terminal
 
-Python 3.11+, dari root repository (PowerShell):
+Prasyarat: **Node.js 22+**, npm, dan internet untuk sumber eksternal. Python tidak diperlukan untuk aplikasi web.
+Jalankan dari root repositori:
 
 ```powershell
-uv venv .venv
-uv pip install --python .venv/Scripts/python.exe -r requirements.txt
-.venv/Scripts/python.exe -m news_pipeline train
-.venv/Scripts/python.exe -m news_pipeline predict --text "Bitcoin falls after exchange hack"
-.venv/Scripts/python.exe -m news_pipeline poll
-.venv/Scripts/python.exe -m news_pipeline export
-.venv/Scripts/python.exe -m unittest discover -s tests -v
+npm run setup
+npm run build
+npm start
 ```
 
-Tanpa uv: `python -m venv .venv`, kemudian
-`.venv/Scripts/python.exe -m pip install -r requirements.txt`.
-Polling terus-menerus, hentikan dengan Ctrl+C:
+Buka **http://127.0.0.1:3000**. Root launcher menggunakan localhost.
+Ulangi setup jika dependensi berubah dan build ulang setelah perubahan kode.
+Hentikan server di terminal dengan **Ctrl+C**.
+
+Untuk development dengan reload otomatis:
 
 ```powershell
-.venv/Scripts/python.exe -m news_pipeline poll --watch --interval 60
+npm run dev
 ```
 
-## Sumber dan preprocessing
+Jalankan salah satu mode pada port 3000. `EADDRINUSE` berarti port sedang dipakai.
+Jika halaman tidak dapat diakses, pastikan proses server masih berjalan.
 
-Data repo berasal dari **Telegram Watcher.Guru**, bukan Twitter/X. Histori:
-`bitcoin iris/dataset/kategori/textual_news/watcher_guru_articles.jsonl`.
-Live fetch: GET https://t.me/s/WatcherGuru, parser container
-`.tgme_widget_message[data-post]`, teks `.tgme_widget_message_text`, timestamp
-`time[datetime]`. Public preview HTML ini tidak membutuhkan token; bukan streaming
-API resmi. Perubahan layout/halaman tanpa teks memunculkan error eksplisit.
-Fetch kini memakai timeout koneksi/read 10/15 detik, batas body 2 MiB, dan menolak
-redirect. Mode watch mencoba lagi pada siklus berikutnya.
+Untuk konfigurasi opsional, salin `terminal/.env.example` ke `terminal/.env.local` jika file tujuan belum ada.
+Jangan commit kredensial. Startup tidak otomatis membuat database atau menjalankan ingestion Whale Alert.
 
-Alur: raw post → simpan provenance → hapus URL, mention, prefix alert, rapikan
-whitespace → TF-IDF → classifier → SQLite. Media tanpa teks dilewati.
-`published_at` kosong tetap null; `observed_at` mencatat waktu versi post ditemukan.
-Mode watch mencatat kegagalan lalu mencoba kembali pada interval berikutnya.
+## Struktur folder
 
-Polling hanya membaca halaman terbaru: belum ada pagination historis atau catch-up
-setelah downtime panjang. Poll pertama memproses semua post yang terlihat.
-Ini prototipe near-real-time tanpa jaminan kelengkapan seluruh post; tidak ada
-service background yang otomatis dipasang.
+```text
+bitcoin-iris/
+|-- README.md
+|-- package.json               # Perintah root untuk terminal
+|-- terminal/                  # Aplikasi web
+|   |-- src/app/               # Halaman Next.js dan API
+|   |-- src/components/        # Shell, panel fitur, primitive, chart
+|   |-- src/lib/               # Adapter, fitur data, cache, arsip
+|   |-- public/                # Aset statis dan logo
+|   |-- docs/                  # Integrasi, desain, audit sumber
+|   |-- scripts/               # Utilitas verifikasi
+|   |-- supabase/              # Migrasi database opsional
+|   `-- .data/                 # Arsip/log lokal, diabaikan Git
+|-- news_pipeline/             # Collector, parser, storage, modelling Python
+|-- tests/                     # Tes pipeline Python
+|-- docs/                      # Panduan pipeline dan modelling
+|-- requirements.txt           # Dependensi pipeline Python
+|-- requirements-model.txt     # Dependensi modelling opsional
+|-- bitcoin iris/              # Riset Python
+|   |-- dataset/               # Dataset dan dokumentasi sumber
+|   |-- model/src/iris_btc/     # Package Python
+|   |-- model/scripts/         # Direktori script model
+|   |-- model/tests/           # Direktori test model
+|   |-- scripts/               # Direktori pendukung riset
+|   |-- tests/                 # Direktori test riset
+|   |-- *.py                   # Baseline forecasting
+|   |-- *.ipynb                # Notebook eksperimen
+|   `-- *.md                   # Laporan status dan validasi
+|-- design/logo/               # Aset/desain logo
+`-- output/logo-concepts/      # Keluaran eksplorasi logo
+```
 
-## Modelling dan evaluasi
+`node_modules/`, `.next/`, `.venv*`, dan `__pycache__/` adalah dependensi atau keluaran lokal.
+Folder desain/output tidak dibutuhkan untuk runtime web.
 
-Parser news terbaru tersedia melalui `python -m news_pipeline parse`; output live
-sekarang menyertakan `semantic_parse` dengan evidence offsets, entity mentions,
-quantities, event triggers, negation dan modality. Tidak memerlukan model neural
-tambahan. Panduan, contoh, dan batas coverage: [news parser](docs/news_parser.md).
+## Berita dan arsip
 
-TF-IDF unigram/bigram + Logistic Regression berbobot kelas. Target
-negative/neutral/positive berasal dari tanda `assessment.result.sentiment.polarity`.
-Ini **weak labels heuristik**, bukan anotasi manusia. Evaluasi mengukur agreement
-dengan teacher, bukan akurasi sentimen manusia atau prediksi dampak harga BTC.
+Alur: **RSS penerbit → cache dan arsip server → SSE → browser**.
+Sumber: CoinDesk, CoinTelegraph, Decrypt, dan NewsBTC; CryptoPanic tidak digunakan.
+GET normal dibatasi minimal lima menit per penerbit, dengan penggabungan request,
+conditional GET, backoff, dan Retry-After. SSE bukan streaming langsung dari penerbit.
+Usia headline menunjukkan waktu publikasi, bukan waktu pengecekan feed.
 
-Training membuang timestamp invalid/kosong, teks kosong, label hilang, duplikat
-teks ternormalisasi, dan versi berulang source_id. Versi pertama dalam urutan
-tanggal dipertahankan; histori backfill tidak menjamin teks itu merupakan versi
-yang tersedia pada waktu publikasi awal. Kemiripan event/parafrasa belum dideteksi.
-Fitur hanya teks, tidak memasukkan assessment score, URL, atau metadata sumber.
+Arsip metadata, URL, dan deskripsi singkat disimpan di `terminal/.data/news/`,
+maksimal 30 hari/2.000 artikel per sumber. Checkpoint bertahan setelah restart.
+Set `IRIS_NEWS_ARCHIVE_DIR` ke direktori absolut untuk lokasi penyimpanan lain.
+Implementasi ini ditujukan untuk satu proses server dengan filesystem persisten.
 
-Split kronologis menurut hari UTC: 70% hari awal train, 15% validation, 15% test.
-Satu hari tidak terpecah antarpartisi. TF-IDF hanya fit di train. Pilih C dari
-0.5/2/8 berdasarkan validation Macro-F1; test dievaluasi setelah pemilihan.
-Model tersimpan tetap model train, tidak refit pada test. Laporan mencakup baseline
-kelas mayoritas, metrik tiap kelas, distribusi label, dan batas waktu split.
+Ingestion tidak berjalan saat aplikasi mati. Artikel yang hilang dari RSS sebelum
+terekam tidak bisa dipulihkan dari arsip lokal. Backfill sitemap dan API berita
+berbayar belum ditambahkan. SSE memperbarui daftar berita; skor sentiment dan
+marker peta masih snapshot saat halaman dibuka. Detail feed hanya muncul di development.
 
-`explicit_btc_mention` hanya deteksi keyword Bitcoin/BTC, bukan model relevansi;
-berita makro tanpa keyword bisa relevan. Probabilitas belum dikalibrasi.
-`needs_review` memakai threshold operasional 0.6 yang belum divalidasi manusia.
+## Pipeline news Python
 
-## Output dan integrasi
+Pipeline Watcher.Guru dijalankan terpisah dengan Python 3.11+. Lihat [setup dan baseline](docs/news_pipeline_quickstart.md), [durable data pipeline](docs/data_pipeline.md), dan [modelling annotation-free](docs/annotation_free_modelling.md). Dependensi root Python tidak diperlukan untuk terminal web.
 
-Output lokal berikut diabaikan Git:
+## Pemeriksaan
 
-- `artifacts/news/model.joblib`: preprocessing, classifier, model_id.
-- `artifacts/news/evaluation.json`: audit, split, pemilihan model, metrik.
-- `artifacts/news/test_predictions.csv`: prediksi held-out untuk review.
-- `artifacts/news/live.sqlite`: tabel predictions, payload JSON per versi post.
-- `artifacts/news/live_predictions.jsonl`: hasil perintah export.
+```powershell
+npm test
+npm run lint
+npm run build
+```
 
-Payload memuat raw/cleaned text, semantic_parse, URL/id, published_at, observed_at, sentiment,
-probabilities, needs_review, explicit_btc_mention, model_id, classified_at.
-Prototipe dapat membaca SQLite atau JSONL. Kunci source + source_id + content_hash
-mencegah duplikasi saat restart; hash versi baru memakai raw_text. Edit teks disimpan
-sebagai versi baru. Parser lama dapat diperbarui saat post ditemukan kembali.
-Batch memakai transaksi sehingga kegagalan tidak meninggalkan separuh batch.
-Gunakan satu writer. Retraining tidak menimpa prediksi tersimpan: gunakan database
-baru untuk eksperimen model lain. Hanya load joblib yang dibuat sendiri.
+Perintah root memeriksa terminal, bukan riset Python. Tes mencakup data, cache,
+arsip, pagination, streaming, dan token desain. `npm run verify:registry` melakukan
+pemeriksaan tambahan registry alamat exchange melalui provider eksternal.
 
-Untuk forecasting, artikel perlu agregasi sesuai cutoff informasi, bukan merge
-per baris atau forward/backward-fill sentimen. Simulasi live harus menggunakan
-observed_at dan versi yang tersedia saat itu; timestamp kosong dikeluarkan dari
-agregasi historis. Jangan menggunakan classifier yang dilatih pada masa depan
-untuk backtest masa lalu. Agregasi dan merge master belum menjadi output pipeline.
+## Dokumentasi
 
-## Validasi lanjutan
+- [Panduan teknis terminal](terminal/README.md)
+- [Integrasi dan batas operasional](terminal/docs/INTEGRATION.md)
+- [Audit berita](terminal/docs/NEWS_SOURCE_AUDIT.md)
+- [Token desain](terminal/docs/DESIGN_TOKENS.md)
+- [Dataset](bitcoin%20iris/dataset/README.md)
+- [Laporan forecasting bulanan](bitcoin%20iris/STATUS_REPORT_monthly_forecasting.md)
+- [Laporan validasi](bitcoin%20iris/validation_report.md)
 
-Siapkan anotasi manusia untuk sentimen dan relevansi BTC dengan held-out temporal.
-Audit negasi, kutipan, recap multi-event, serta berita makro sebelum membandingkan
-model bahasa dengan baseline ini. Fetch satu kali tidak membuktikan reliabilitas
-polling jangka panjang.
-
-Referensi: [TF-IDF](https://scikit-learn.org/stable/modules/generated/sklearn.feature_extraction.text.TfidfVectorizer.html),
-[Logistic Regression](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html),
-[sumber live](https://t.me/s/WatcherGuru).
+Laporan riset mencatat hasil pada saat dibuat, bukan validasi runtime web terkini.
+Terminal diimpor dari [Programmer7177/IRIS-Terminal](https://github.com/Programmer7177/IRIS-Terminal).
+Revision asal tercatat dalam catatan integrasi.

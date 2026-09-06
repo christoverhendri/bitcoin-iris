@@ -1,0 +1,14 @@
+{
+  "name": "bitcoin-iris",
+  "private": true,
+  "scripts": {
+    "setup": "npm --prefix terminal ci",
+    "dev": "npm --prefix terminal run dev -- --hostname 127.0.0.1",
+    "build": "npm --prefix terminal run build",
+    "start": "npm --prefix terminal run start -- --hostname 127.0.0.1",
+    "test": "npm --prefix terminal test",
+    "lint": "npm --prefix terminal run lint",
+    "verify:registry": "npm --prefix terminal run verify:registry"
+  },
+  "engines": { "node": ">=22.0.0" }
+}

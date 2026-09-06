@@ -1,0 +1,32 @@
+import { afterEach, expect, it, vi } from 'vitest';
+import { createNewsHub } from './newsHub';
+afterEach(() => vi.useRealTimers());
+it('shares refreshes across subscribers and stops after the last disconnect', async () => {
+  vi.useFakeTimers();
+  const load = vi.fn().mockResolvedValue({ headline: 'New story' });
+  const hub = createNewsHub(load);
+  const a = vi.fn(); const b = vi.fn();
+  const stopA = hub.subscribe(a); const stopB = hub.subscribe(b);
+  await vi.advanceTimersByTimeAsync(0);
+  expect(load).toHaveBeenCalledTimes(1);
+  expect(a).toHaveBeenCalledWith({ headline: 'New story' });
+  expect(b).toHaveBeenCalledWith({ headline: 'New story' });
+  stopA();
+  await vi.advanceTimersByTimeAsync(60_000);
+  expect(a).toHaveBeenCalledTimes(1);
+  expect(b).toHaveBeenCalledTimes(2);
+  stopB();
+  await vi.advanceTimersByTimeAsync(120_000);
+  expect(load).toHaveBeenCalledTimes(2);
+});
+it('reports failure and pushes recovery over the same subscription', async () => {
+  vi.useFakeTimers();
+  const load = vi.fn().mockRejectedValueOnce(new Error('offline')).mockResolvedValue('recovered');
+  const receive = vi.fn();
+  const stop = createNewsHub(load).subscribe(receive);
+  await vi.advanceTimersByTimeAsync(0);
+  expect(receive).toHaveBeenLastCalledWith(null);
+  await vi.advanceTimersByTimeAsync(60_000);
+  expect(receive).toHaveBeenLastCalledWith('recovered');
+  stop();
+});

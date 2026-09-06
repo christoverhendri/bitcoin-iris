@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <title>IRIS BTC — Orbit Core, draft 01</title>
+  <desc>Three swept blades surrounding an amber Bitcoin core. Editable vector concept; no wordmark.</desc>
+  <rect id="Background" width="1024" height="1024" fill="#101216"/>
+  <g id="IRIS-BTC-Symbol" transform="translate(512 512) scale(1.5)">
+    <path id="Blade-01" fill="#F1F3F7" d="M -16 -198 C 85 -211 173 -133 183 -40 C 140 -97 80 -118 31 -98 C -5 -84 -28 -48 -37 -9 C -85 -72 -77 -141 -16 -198 Z"/>
+    <path id="Blade-02" transform="rotate(120)" fill="#C2D3EE" d="M -16 -198 C 85 -211 173 -133 183 -40 C 140 -97 80 -118 31 -98 C -5 -84 -28 -48 -37 -9 C -85 -72 -77 -141 -16 -198 Z"/>
+    <path id="Blade-03" transform="rotate(240)" fill="#4175CB" d="M -16 -198 C 85 -211 173 -133 183 -40 C 140 -97 80 -118 31 -98 C -5 -84 -28 -48 -37 -9 C -85 -72 -77 -141 -16 -198 Z"/>
+    <circle id="Amber-Core" r="26" fill="#FF9D00"/>
+  </g>
+</svg>

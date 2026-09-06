@@ -1,5 +1,12 @@
 .venv/
-.venv-model/
+.venv-*/
 __pycache__/
-*.pyc
+*.py[cod]
+.ipynb_checkpoints/
+node_modules/
+.env*
+!.env.example
+npm-debug.log*
+
+terminal/.data/
 artifacts/
