@@ -1,14 +1,22 @@
 /**
  * Live Global Events feed.
  *
- * Crypto headlines come from the shared RSS merge (`sources/rss.ts`); a few
- * broader world-news feeds are added best-effort. Every headline is run through
- * the keyword classifier, the sentiment lexicon and the gazetteer — items that
- * do not resolve to a place are dropped. The static macro calendar is merged in
- * as always-present low-impact markers, so the map is never empty.
+ * Three streams merge here: crypto headlines from the shared RSS batch, general
+ * world news, and — the highest-signal of the three — press releases straight
+ * from the SEC, the Federal Reserve, the CFTC and the ECB.
+ *
+ * Every headline runs through the keyword classifier, the sentiment lexicon and
+ * the gazetteer. Items that resolve to no place are dropped, except from sources
+ * that publish from one fixed address, which fall back to `SOURCE_PIN` — without
+ * that, institutional headlines would be discarded almost every time, since they
+ * rarely name a country. The static macro calendar is merged in as always-present
+ * low-impact markers so the map is never empty.
+ *
+ * The RSS parser lives in `sources/rss.ts`. This file used to carry a second copy
+ * of it.
  */
-import { fetchText } from '@/lib/sources/http';
-import { getCryptoNews } from '@/lib/sources/rss';
+import { fetchFeeds, getCryptoNews, type RssItem } from '@/lib/sources/rss';
+import { INSTITUTION_FEEDS, SOURCE_PIN, WORLD_FEEDS } from '@/lib/sources/worldFeeds';
 import { scoreHeadline } from '@/lib/sources/lexicon';
 import { classify } from '@/lib/geo/classify';
 import { geocode } from '@/lib/geo/gazetteer';
@@ -17,18 +25,7 @@ import { hashString, utcDay } from '@/lib/rng';
 import type { EventCategory } from '@/lib/geo/classify';
 import type { GeoEvent, GeoEventsArgs } from './types';
 
-interface RawItem {
-  title: string;
-  link: string;
-  publishedAt: number;
-  source: string;
-}
-
-const BROADER_FEEDS: { source: string; url: string }[] = [
-  { source: 'Reuters', url: 'https://www.reutersagency.com/feed/?best-topics=political-general&post_type=best' },
-  { source: 'Al Jazeera', url: 'https://www.aljazeera.com/xml/rss/all.xml' },
-  { source: 'AP', url: 'https://feedx.net/rss/ap.xml' },
-];
+type RawItem = Pick<RssItem, 'title' | 'link' | 'publishedAt' | 'source'>;
 
 const CATEGORY_BASE: Record<EventCategory, number> = {
   SECURITY: 70,
@@ -45,43 +42,6 @@ const CATEGORY_BASE: Record<EventCategory, number> = {
 };
 
 const WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
-
-function stripTags(s: string): string {
-  return s
-    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;|&apos;|&#x27;/g, "'")
-    .replace(/&nbsp;/g, ' ')
-    .replace(/<[^>]+>/g, '')
-    .trim();
-}
-
-function pickTag(block: string, name: string): string | null {
-  const m = block.match(new RegExp(`<${name}[^>]*>([\\s\\S]*?)</${name}>`, 'i'));
-  return m ? m[1] : null;
-}
-
-function parseRss(xml: string, source: string): RawItem[] {
-  const blocks = xml.match(/<item[\s\S]*?<\/item>/gi) ?? [];
-  const out: RawItem[] = [];
-  for (const block of blocks) {
-    const rawTitle = pickTag(block, 'title');
-    if (!rawTitle) continue;
-    const rawLink = pickTag(block, 'link');
-    const rawDate = pickTag(block, 'pubDate') ?? pickTag(block, 'dc:date') ?? pickTag(block, 'published');
-    const parsed = rawDate ? Date.parse(stripTags(rawDate)) : NaN;
-    out.push({
-      title: stripTags(rawTitle),
-      link: rawLink ? stripTags(rawLink) : '',
-      publishedAt: Number.isFinite(parsed) ? parsed : 0,
-      source,
-    });
-  }
-  return out;
-}
 
 function normHeadline(title: string): string {
   return title
@@ -108,12 +68,16 @@ export async function fetchGeopoliticalEvents({ limit = 60 }: GeoEventsArgs) {
     // Crypto feed merge already swallows per-feed failures; ignore a total miss.
   }
 
-  const broader = await Promise.allSettled(
-    BROADER_FEEDS.map(async (f) => parseRss(await fetchText(f.url, { revalidate: 900 }), f.source).slice(0, 25)),
-  );
-  for (const r of broader) {
-    if (r.status === 'fulfilled') raw.push(...r.value);
-  }
+  // World news and institutional press, fetched together. `fetchFeeds` logs any
+  // feed that answered with nothing, so a source going dark is discoverable
+  // instead of silently shrinking the map.
+  const [world, institutions] = await Promise.all([
+    fetchFeeds(WORLD_FEEDS, 25, 900).catch(() => null),
+    // Press releases are low-volume and slow-moving; cache them for an hour.
+    fetchFeeds(INSTITUTION_FEEDS, 15, 3600).catch(() => null),
+  ]);
+  if (world) raw.push(...world.items);
+  if (institutions) raw.push(...institutions.items);
 
   // Cluster count by normalised headline — used for the multi-source impact bonus.
   const clusterCount = new Map<string, number>();
@@ -128,7 +92,10 @@ export async function fetchGeopoliticalEvents({ limit = 60 }: GeoEventsArgs) {
 
   for (const it of raw) {
     if (!it.title) continue;
-    const hit = geocode(it.title);
+
+    // The headline's own place wins. A source pin is only the fallback, so an
+    // SEC release about Japan still lands on Japan rather than on Washington.
+    const hit = geocode(it.title) ?? SOURCE_PIN[it.source] ?? null;
     if (!hit) continue;
 
     const category = classify(it.title);

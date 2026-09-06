@@ -75,7 +75,42 @@ export async function fetchWeeklyForecast({ symbol = 'BTC' }: WeeklyForecastArgs
   let max = lastClose + z * sigma + driftFromScore;
   if (min > max) [min, max] = [max, min];
 
-  const data: WeeklyForecastData = { label, confidence, range: { min, max } };
+  // The contributions that actually produced `score`, carried through to the UI
+  // rather than recomputed there from the conclusion.
+  const drivers: WeeklyForecastData['drivers'] = [
+    {
+      name: 'RSI (14)',
+      signal: nRsi,
+      contribution: (WEIGHTS.rsi * nRsi) / denom,
+      reading: rsiVal.toFixed(1),
+    },
+    {
+      name: 'MACD histogram',
+      signal: nMacd,
+      contribution: (WEIGHTS.macd * nMacd) / denom,
+      reading: hist.toFixed(1),
+    },
+    {
+      name: 'EMA21 vs EMA50',
+      signal: nEmaGap,
+      contribution: (WEIGHTS.emaGap * nEmaGap) / denom,
+      reading: `${emaGapPct >= 0 ? '+' : ''}${emaGapPct.toFixed(2)}%`,
+    },
+    {
+      name: 'Fear & Greed',
+      signal: nFng,
+      contribution: (wFng * nFng) / denom,
+      reading: fngVal === null ? 'unavailable' : String(fngVal),
+    },
+  ];
+
+  const data: WeeklyForecastData = {
+    label,
+    confidence,
+    range: { min, max },
+    drivers,
+    score,
+  };
 
   return {
     data,

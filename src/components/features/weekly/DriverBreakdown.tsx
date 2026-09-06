@@ -8,80 +8,91 @@ export interface DriverBreakdownProps {
   forecast: Envelope<WeeklyForecastData>;
 }
 
-interface Driver {
-  label: string;
-  value: number;
-  max: number;
-  readout: string;
-  tone: Tone;
-}
-
+/**
+ * The signals that actually produced the forecast.
+ *
+ * This panel used to reconstruct its "drivers" from the label and the
+ * confidence — direction bias, conviction, upside room — which meant it was
+ * displaying the conclusion four times over and calling it evidence. The real
+ * contributions were computed in `weeklyForecast/live.ts` and discarded. They
+ * now travel on the type, so the bars below sum to the score.
+ */
 export function DriverBreakdown({ forecast }: DriverBreakdownProps) {
   const f = forecast.data;
   const mid = (f.range.min + f.range.max) / 2;
   const bandWidthPct = mid > 0 ? ((f.range.max - f.range.min) / mid) * 100 : 0;
-  const dirBias = f.label === 'BULLISH' ? 1 : f.label === 'BEARISH' ? -1 : 0;
-  const conviction = (f.confidence - 50) / 50;
 
-  const drivers: Driver[] = [
-    {
-      label: 'DIRECTION BIAS',
-      value: dirBias,
-      max: 1,
-      readout: f.label,
-      tone: dirBias > 0 ? 'up' : dirBias < 0 ? 'down' : 'txt',
-    },
-    {
-      label: 'CONVICTION',
-      value: conviction,
-      max: 1,
-      readout: fmtPct(conviction * 100, true, 0),
-      tone: 'blue',
-    },
-    {
-      label: 'UPSIDE ROOM',
-      value: bandWidthPct / 2,
-      max: bandWidthPct || 1,
-      readout: fmtPct(bandWidthPct / 2, true),
-      tone: 'up',
-    },
-    {
-      label: 'DOWNSIDE ROOM',
-      value: -bandWidthPct / 2,
-      max: bandWidthPct || 1,
-      readout: fmtPct(-bandWidthPct / 2, true),
-      tone: 'down',
-    },
-  ];
+  // Scale every bar against the largest contribution so the relative pull of
+  // each signal is legible, rather than against a fixed 1.0 that would leave
+  // them all as slivers.
+  const maxContribution = Math.max(
+    ...f.drivers.map((d) => Math.abs(d.contribution)),
+    0.05,
+  );
+
+  const toneOf = (v: number): Tone => (v > 0.001 ? 'up' : v < -0.001 ? 'down' : 'txt');
 
   return (
     <Panel style={{ display: 'flex', flexDirection: 'column' }}>
       <PanelHeader
         title="DRIVER BREAKDOWN"
-        note="derived from rule-based output"
+        note="signed contribution to the score · sums to the composite"
         right={<MockBadge env={forecast} />}
       />
       <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-        {drivers.map((d) => (
-          <div key={d.label} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <div
-              style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 10 }}
-            >
-              <span
-                className="iris-micro"
-                style={{ fontFamily: 'var(--mono)', fontSize: 9, letterSpacing: '.12em', color: 'var(--mut)' }}
+        {f.drivers.map((d) => {
+          const tone = toneOf(d.contribution);
+          return (
+            <div key={d.name} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <div
+                style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 10 }}
               >
-                {d.label}
-              </span>
-              <span
-                style={{ fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 700, color: `var(--${d.tone})` }}
-              >
-                {d.readout}
-              </span>
+                <span
+                  className="iris-micro"
+                  style={{ fontFamily: 'var(--mono)', fontSize: 9, letterSpacing: '.12em', color: 'var(--mut)' }}
+                >
+                  {d.name.toUpperCase()}
+                  <span style={{ color: 'var(--dim)', marginLeft: 6 }}>{d.reading}</span>
+                </span>
+                <span
+                  style={{ fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 700, color: `var(--${tone})` }}
+                >
+                  {d.contribution >= 0 ? '+' : ''}
+                  {d.contribution.toFixed(3)}
+                </span>
+              </div>
+              <DivergingBar value={d.contribution} max={maxContribution} tone={tone} />
             </div>
-            <DivergingBar value={d.value} max={d.max} tone={d.tone} />
-          </div>
-        ))}
+          );
+        })}
+
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'baseline',
+            borderTop: '1px solid var(--line)',
+            paddingTop: 8,
+          }}
+        >
+          <span
+            className="iris-micro"
+            style={{ fontFamily: 'var(--mono)', fontSize: 9, letterSpacing: '.12em', color: 'var(--mut)' }}
+          >
+            COMPOSITE SCORE
+          </span>
+          <span
+            style={{
+              fontFamily: 'var(--mono)',
+              fontSize: 12,
+              fontWeight: 700,
+              color: `var(--${toneOf(f.score)})`,
+            }}
+          >
+            {f.score >= 0 ? '+' : ''}
+            {f.score.toFixed(3)}
+          </span>
+        </div>
       </div>
 
       <div style={{ borderTop: '1px solid var(--line)' }}>

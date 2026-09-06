@@ -19,7 +19,7 @@ is always labelled.
 
 | Source | Used for |
 |---|---|
-| Coinbase Exchange | spot price, 24h stats, OHLCV candles |
+| Coinbase Exchange | spot price, 24h stats, OHLCV candles, **~10y daily history via pagination** (§12) |
 | Kraken | OHLCV fallback, long daily history (~720 candles ≈ 2y) |
 | CoinGecko | market cap, BTC dominance, 7d/30d returns, 365d closes |
 | alternative.me | Fear & Greed index |
@@ -162,14 +162,48 @@ to one week (`σ × √(7/365)`) plus a drift term proportional to the score.
 The UI renders a `RULE-BASED PLACEHOLDER` badge next to it. That badge must stay until an
 actual trained model replaces the rule.
 
-### Monthly forecast
+### Monthly forecast — REMOVED
 
-Bootstrap Monte Carlo: resample historical daily log returns with replacement, 2000 paths,
-30-day horizon, percentiles from the terminal distribution. Seeded from the UTC date so SSR
-and hydration agree and the figure is stable within a day.
+`/forecast/monthly`, `src/lib/features/monthlyForecast/`, `src/components/features/monthly/`
+and `src/lib/quant/montecarlo.ts` were deleted once `/forecast/distribution` shipped. Recorded
+here rather than dropped silently, because *why* it went matters more than that it went.
 
-Assumes returns are i.i.d. — they are not. Real BTC returns cluster volatility and have fat
-tails, so the tails here are **understated**.
+What it was: an i.i.d. bootstrap over 365 days of CoinGecko closes, 2000 paths, a fixed 30-day
+horizon, publishing P10/P50/P90.
+
+It was not merely superseded — **it contradicted its replacement**. `bootstrapPaths` resampled
+raw log returns and therefore inherited whatever drift its window happened to contain. Measured
+on the day of removal, that window carried a mean log return of **−0.0881%/day**, putting the
+page's P50 at **−2.6% below spot** for the 30-day question. `/forecast/distribution?h=1M`
+answers the identical question and puts P50 **on spot**, because drift is removed.
+
+The direction of that error was an accident of the window, which is the whole argument: ten
+years of history gives **+0.134%/day** and would have tilted the same page upward instead. Same
+method, opposite conclusion, decided by nothing but the lookback. Two pages disagreeing on one
+question, with the disagreement carrying no information, is worse than one page.
+
+Everything else favoured the replacement too: 3,900 daily closes against 366, filtered
+historical simulation against i.i.d., a P5–P95 ladder against three points, six horizons
+against one.
+
+`montecarlo.ts` went with it because `bootstrapPaths` had no other caller. **The i.i.d. baseline
+survives** — `/forecast/calibration` still scores it against FHS on the same out-of-sample
+origins, via `simulate({ method: 'iid' })` in `src/lib/quant/fhs.ts`. The control is still run;
+it just no longer has a page presenting its output as a forecast. See §12.
+
+Old bookmarks are redirected to `/forecast/distribution?h=1M` from `next.config.ts`.
+
+### The WEEKLY tab is now DIRECTION
+
+`/forecast/weekly` kept its route and its rule, and changed only what the tab reads.
+
+It was not removed, because it is the only panel that takes a **directional** view, and the
+distribution page refuses to take one by construction — drift removal is exactly what flattens
+its median onto spot. The two answer different questions.
+
+But sitting beside a page whose shortest horizon is labelled `1W`, a tab called `WEEKLY` read
+as a competing answer to the same question rather than a different kind of answer. The slug
+stays `weekly` so bookmarks and `iris_sub` cookies keep working.
 
 ### News and social sentiment
 
@@ -482,3 +516,182 @@ the chart endpoint serves market prices and has none of them. `^TNX` gives the U
 yield, which overlaps nothing in the FRED series list. `/macro/data` and `/macro/regime`
 remain FRED-gated and country-scoped; `/macro/markets` is global and ignores the country tabs
 rather than implying a scoping that does not exist.
+
+---
+
+## 12. Price distribution and forecast calibration
+
+`src/lib/quant/{garch,fhs}.ts` → `src/lib/features/{priceDistribution,forecastCalibration}/`
+→ `/forecast/distribution` and `/forecast/calibration`.
+
+### The data ceiling, and how it was lifted
+
+Coinbase caps a *response* at 300 candles, not a product's history. Passing an
+explicit `start`/`end` pair moves that window anywhere, so `getDailyHistory`
+walks it backwards in batches of four. Verified result: **3,900 daily closes,
+2016-01-03 through today, 10.68 years, zero gaps.** The 2016 close was $431.91.
+
+That matters because the alternatives are much shorter, and the code used to
+believe they were the ceiling:
+
+| Source | Daily limit |
+|---|---|
+| **Coinbase, paginated** | **~3,900 (to 2016)** |
+| Kraken | 721 (~2 years) |
+| CoinGecko, keyless | 365 — `error_code 10012` above that |
+| Coinbase, single request | 300 |
+
+Requests go out four at a time with an 80 ms pause. Fully sequential measured
+8.5 s cold, which is too slow to render behind; all thirteen at once risks a 429
+mid-assembly, which would produce a series with a hole in it rather than an
+error. Batched: **3.3 s cold**, and Next caches the pages for a day.
+
+Kraken and a single Coinbase page remain fallbacks. When they are used the
+history is shorter and the long horizons rest on fewer samples — which the
+`WINDOWS` column reports rather than hides.
+
+### Drift is removed. This is the most consequential choice on the page.
+
+Ten years of BTC carries an enormous upward drift. Measured on the real series:
+**+0.1339% per day**, which compounds to roughly **+63% over a year**. A
+bootstrap that inherits it produces a cone whose median rises steeply — and that
+rise would encode nothing except which decade the sample came from.
+
+So the sample mean is subtracted from the returns before anything else runs.
+The consequence, verified on live data:
+
+| Horizon | Median vs spot |
+|---|---|
+| 7d | −0.12% |
+| 30d | +0.22% |
+| 90d | −0.65% |
+| 180d | −0.63% |
+| 365d | −1.65% |
+
+The median sits on spot at every horizon. **What the page shows is a
+distribution of risk, not a forecast of direction.** It answers "how far could
+price travel", never "which way will it go". Every panel says so, and
+`fhs.test.ts` asserts it — a series carrying +0.2%/day must still produce a
+median terminal multiplier between 0.9 and 1.1 over 365 days. If drift ever
+leaks back in, that test fails.
+
+The mean terminal multiplier is still above 1, and correctly so: prices are
+lognormal, so a distribution centred on zero in log space is right-skewed in
+price. That is Jensen's inequality, not drift.
+
+### Method: Filtered Historical Simulation
+
+The retired monthly forecast's i.i.d. bootstrap understated the tails, and §4
+always said so. FHS is the fix, and it is the standard construction for exactly
+this problem:
+
+1. Fit GARCH(1,1) and take the conditional sigma for every day.
+2. Divide each return by its sigma. The resulting standardised residuals are
+   close to i.i.d. — which is what makes resampling them defensible when
+   resampling raw returns is not.
+3. Resample those residuals, and re-inflate each path through **its own**
+   variance recursion, so a large simulated shock makes the next simulated day
+   more volatile.
+
+This keeps volatility clustering *and* the empirical shape of the tails, while
+assuming no distribution whatsoever.
+
+Three engines are implemented behind one interface — `fhs`, `stationary`
+(Politis–Romano geometric blocks, preserving autocorrelation) and `iid` (the old
+behaviour). The calibration page scores them against each other, so the default
+is falsifiable rather than asserted.
+
+**FHS is conditional, and that cuts both ways.** It starts from *today's*
+volatility, so on a calm day its cone is narrower than the unconditional i.i.d.
+mixture and on a violent day much wider. It is not uniformly "fatter"; it is
+responsive, which is the property worth having. The test suite asserts the
+responsiveness, not the width.
+
+### Volatility model
+
+GARCH(1,1) by Gaussian maximum likelihood, with **variance targeting**:
+`omega` is pinned to `sigma_LR^2 * (1 - alpha - beta)` rather than searched, so
+the fitted process reverts to the sample's own long-run variance by construction.
+The remaining two parameters are found by a coarse grid plus two refinement
+passes — a few thousand cheap recursions that return the same answer every run,
+which server-rendered output requires and an iterative solver with a tolerance
+would not guarantee.
+
+Stationarity is enforced (`alpha + beta < 0.999`). A fit that lands on a boundary
+is reported `converged: false` and **EWMA (RiskMetrics, lambda 0.94) is used
+instead** — shown on the panel as `EWMA FALLBACK`, never silently.
+
+The forecast volatility path mean-reverts:
+`E[sigma^2_{t+h}] = sigma_LR^2 + persistence^(h-1) * (sigma^2_{t+1} - sigma_LR^2)`.
+This is the reason GARCH is here at all. The textbook `sqrt(t)` shortcut assumes
+volatility never changes, so a forecast made on a calm day would stay
+implausibly calm for a year. Measured on live data: conditional vol 49.3%
+annualised against a long-run 67.4%, and the path closes that gap rather than
+scaling the 49.3% outward.
+
+### Sample size is published, not buried
+
+`nonOverlappingWindows = floor(sampleDays / horizonDays)`, rendered as the
+`WINDOWS` column. A one-year band drawn from a decade rests on about **ten**
+independent observations. The short horizons are well sampled; the long ones are
+indicative, and the table says which is which instead of presenting all six rows
+with equal authority.
+
+### One simulation, six horizons
+
+The page runs **one** 365-day simulation. Shorter horizons are read off its
+intermediate band rows, and the path-level cross-section is captured at whichever
+horizon is selected. Six independent runs would cost six times as much and — the
+real problem — the 1M row and the 1Y row would come from different random draws,
+so the table could contradict itself and the chart above it.
+
+### Calibration: the part that makes the cone worth believing
+
+A smooth cone looks like knowledge. `/forecast/calibration` is the check.
+
+For roughly 110 historical origins the model predicts forward without seeing the
+answer, and the outcome is compared against the bands it claimed.
+
+**Genuinely out-of-sample.** GARCH parameters and the residual pool are fitted
+once on the earliest 40% of history; every scored origin sits after that prefix.
+Refitting at each origin is the textbook ideal but takes far too long to render
+behind, and fitting on a prefix leaks nothing — no origin's own future touches
+the model that predicts it. Each origin does start from the conditional sigma
+that was genuinely observable on its day, obtained by running the variance
+recursion forward once across the whole series.
+
+Three metrics:
+
+- **Coverage** — did the 50/80/90% bands contain the outcome that often?
+  `NARROW` when empirical falls more than 7 points short (overconfident, the
+  failure that matters), `WIDE` when it exceeds by more than 7. Seven points of
+  slack because with ~110 origins the sampling error on a coverage estimate is
+  already several points, and a tighter rule would flag noise.
+- **PIT** — the predictive CDF evaluated at each outcome. Flat means calibrated;
+  a U means bands too narrow; a hump means too wide.
+- **Pinball loss** — sharpness, so a model cannot win by being uselessly wide.
+
+Measured on the real series at a 30-day horizon, 116 out-of-sample origins:
+
+| Band | Claimed | Actual | Verdict |
+|---|---|---|---|
+| P25–P75 | 50% | 48.3% | GOOD |
+| P10–P90 | 80% | 76.7% | GOOD |
+| P5–P95 | 90% | 93.1% | GOOD |
+
+PIT uniformity 86/100, shape FLAT.
+
+The engine comparison is **not** a clean win, and the page shows that: at 30 days
+i.i.d. scored a marginally better pinball loss (0.0428 against 0.0432) while FHS
+landed closer to its advertised 80% coverage (76.7 against 87.1). FHS remains the
+default because coverage accuracy is the property the cone is claiming, but the
+numbers are on screen and can be argued with.
+
+### What this model does not know
+
+It has never heard of a halving, an ETF approval, a exchange failure, or a
+regulatory announcement. It assumes the next N days resemble the *shape* of the
+last decade's returns — a decade that contained two halvings and two full cycles,
+which is a strength for sample size and a weakness for stationarity.
+
+It cannot forecast direction, and by construction does not try.

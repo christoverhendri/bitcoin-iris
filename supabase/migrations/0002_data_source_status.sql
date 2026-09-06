@@ -68,6 +68,7 @@ values
   ('etf_flows', 'Spot ETF flows (bitbo.io)', 'market', false, true, 'Keyless, but scraped rather than an API: bitbo.io publishes the issuer table as server-rendered HTML. A layout change fails shape validation and lands here by design — there is nothing to configure. See src/lib/sources/etfFlows.ts.'),
   ('internal_quant', 'Quant pipeline', 'quant', false, true, null),
   ('internal_forecast', 'Forecast pipeline', 'forecast', false, true, null),
+  ('internal_distribution', 'Price distribution engine', 'forecast', false, true, null),
   ('alternative_me', 'Fear & Greed (alternative.me)', 'sentiment', false, true, null),
   ('fred', 'FRED', 'macro', true, true, 'Register a free FRED API key and set FRED_API_KEY in worker/.env.'),
   ('internal_macro_regime', 'Macro regime engine', 'macro', false, true, null),

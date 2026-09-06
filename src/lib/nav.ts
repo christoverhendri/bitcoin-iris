@@ -118,12 +118,22 @@ export const SECTIONS: Section[] = [
     key: 'forecast',
     label: 'Forecast',
     title: 'FORECAST',
-    blurb: 'Model output · confidence',
+    blurb: 'Distribution · calibration · direction',
     group: 'Model',
     icon: 'M3 12h4l3-8 4 16 3-8h4',
+    // Ordered deliberately: `subs[0]` is where a first-time visitor lands, and
+    // the distribution page is the one that answers the most. Returning visitors
+    // keep their own tab — middleware validates `iris_sub` against this list and
+    // falls back to `subs[0]` only when the remembered slug is gone.
+    //
+    // `weekly` keeps its slug though its label reads DIRECTION: it is the only
+    // panel that takes a directional view, which the distribution page refuses
+    // to do by construction. Renaming the slug would break old bookmarks for no
+    // gain. The MONTHLY tab was removed — see docs/DECISIONS.md §4.
     subs: [
-      { slug: 'weekly', label: 'WEEKLY' },
-      { slug: 'monthly', label: 'MONTHLY' },
+      { slug: 'distribution', label: 'DISTRIBUTION' },
+      { slug: 'calibration', label: 'CALIBRATION' },
+      { slug: 'weekly', label: 'DIRECTION' },
     ],
   },
   {
@@ -199,6 +209,35 @@ export function resolveTimeframe(raw: string | undefined | null): Timeframe {
   return (TIMEFRAMES as readonly string[]).includes(raw ?? '')
     ? (raw as Timeframe)
     : DEFAULT_TIMEFRAME;
+}
+
+/**
+ * Forecast horizons — how far FORWARD a simulation runs.
+ *
+ * Deliberately separate from `TIMEFRAME_SPEC`, which describes how far BACK to
+ * pull candles. The two look alike and mean opposite things; sharing one
+ * constant would eventually have a chart reading a lookback as a horizon. They
+ * also ride different query keys (`?h=` vs `?tf=`) so a section can carry both
+ * without one clobbering the other.
+ */
+export const FORECAST_HORIZONS = ['1W', '2W', '1M', '3M', '6M', '1Y'] as const;
+export type ForecastHorizon = (typeof FORECAST_HORIZONS)[number];
+export const DEFAULT_HORIZON: ForecastHorizon = '1M';
+
+export const HORIZON_SPEC: Record<ForecastHorizon, { days: number; label: string }> = {
+  '1W': { days: 7, label: '1 week' },
+  '2W': { days: 14, label: '2 weeks' },
+  '1M': { days: 30, label: '1 month' },
+  '3M': { days: 90, label: '3 months' },
+  '6M': { days: 180, label: '6 months' },
+  '1Y': { days: 365, label: '1 year' },
+};
+
+/** Validate a raw `?h=` value, falling back to the default. */
+export function resolveHorizon(raw: string | undefined | null): ForecastHorizon {
+  return (FORECAST_HORIZONS as readonly string[]).includes(raw ?? '')
+    ? (raw as ForecastHorizon)
+    : DEFAULT_HORIZON;
 }
 
 /** Cookie holding the per-section sub-tab memory, read by middleware. */
