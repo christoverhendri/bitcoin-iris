@@ -66,8 +66,8 @@ export function StatusFooter({ health, now }: { health: FeedHealth; now?: number
               : 'Newest success reported by an ingestion job.'
           }
         >
-          {fmtAgo(health.lastSyncAt, now)}
-          {health.syncFromDirectFetch ? '*' : ''}
+          {/* Use the serialized server snapshot, never the hydration-time clock. */}
+          {now !== undefined ? fmtAgo(health.lastSyncAt, now) : health.syncFromDirectFetch ? 'ON DEMAND' : health.lastSyncAt ? health.lastSyncAt.replace('T', ' ').slice(0, 16) + ' UTC' : 'UNKNOWN'}
         </span>
       </div>
     </div>

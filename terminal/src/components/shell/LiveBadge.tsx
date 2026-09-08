@@ -1,5 +1,5 @@
 /**
- * The pulsing LIVE indicator — the only animation in the design.
+ * The pulsing LIVE indicator â€” the only animation in the design.
  *
  * `stale` turns it off deliberately: a pulsing LIVE dot over a five-minute-old
  * price is a credibility bug, not a cosmetic one.
@@ -9,7 +9,7 @@ export function LiveBadge({ stale = false }: { stale?: boolean }) {
   return (
     <span
       className="iris-micro"
-      title={stale ? 'Data is stale — the ingestion worker is not reporting' : 'Data is fresh'}
+      title={stale ? 'Data is stale â€” the ingestion worker is not reporting' : 'Data is fresh'}
       style={{
         display: 'inline-flex',
         alignItems: 'center',
@@ -27,7 +27,7 @@ export function LiveBadge({ stale = false }: { stale?: boolean }) {
         className={stale ? undefined : 'iris-pulse'}
         style={{ width: 5, height: 5, borderRadius: '50%', background: tone }}
       />
-      {stale ? 'STALE' : 'LIVE'}
+      {stale ? 'TICKER STALE' : 'TICKER LIVE'}
     </span>
   );
 }

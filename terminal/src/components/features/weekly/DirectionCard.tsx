@@ -51,7 +51,7 @@ export function DirectionCard({ forecast }: DirectionCardProps) {
               className="iris-micro"
               style={{ fontFamily: 'var(--mono)', fontSize: 9, letterSpacing: '.14em', color: 'var(--mut)' }}
             >
-              MODEL CONFIDENCE
+              RULE STRENGTH · UNCALIBRATED
             </span>
             <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <span

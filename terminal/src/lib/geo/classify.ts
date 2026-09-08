@@ -1,3 +1,5 @@
+import { createKeywordMatcher } from '@/lib/sources/matchKeyword';
+
 /**
  * Rule-based event classifier. Maps a raw headline to one of eight buckets by
  * keyword match. This is a heuristic, not a model — the panel badges its output
@@ -41,7 +43,7 @@ const RULES: { category: EventCategory; keywords: string[] }[] = [
   {
     category: 'REGULATION',
     keywords: [
-      'sec ', 'regulation', 'regulator', 'regulatory', 'mica', ' ban', 'banned', 'license',
+      'sec', 'regulation', 'regulator', 'regulators', 'regulatory', 'mica', 'ban', 'bans', 'banned', 'license',
       'licence', 'licensing', 'framework', 'compliance', 'oversight', 'rulebook', 'watchdog',
       'crackdown',
     ],
@@ -49,7 +51,7 @@ const RULES: { category: EventCategory; keywords: string[] }[] = [
   {
     category: 'ETF_FUND',
     keywords: [
-      'etf', 'spot etf', 'blackrock', 'grayscale', 'fidelity', 'ishares', 'inflow', 'outflow',
+      'etf', 'spot etf', 'blackrock', 'grayscale', 'fidelity', 'ishares', 'inflow', 'inflows', 'outflow', 'outflows',
       'aum', 'fund launch', 'asset manager', 'bitwise', 'ark invest',
     ],
   },
@@ -71,8 +73,8 @@ const RULES: { category: EventCategory; keywords: string[] }[] = [
   {
     category: 'GEOPOLITICS',
     keywords: [
-      'sanction', 'war', 'election', 'conflict', 'tariff', 'trade war', 'invasion', 'ceasefire',
-      'geopolit', 'military', 'missile', 'coup', 'summit',
+      'sanction', 'sanctions', 'war', 'election', 'conflict', 'tariff', 'trade war', 'invasion', 'ceasefire',
+      'geopolitical', 'geopolitics', 'military', 'missile', 'coup', 'summit',
     ],
   },
   {
@@ -93,10 +95,10 @@ const RULES: { category: EventCategory; keywords: string[] }[] = [
 
 /** Lowercase, then first matching rule set wins; MARKET is the fallback. */
 export function classify(title: string): EventCategory {
-  const t = ` ${title.toLowerCase()} `;
+  const matches = createKeywordMatcher(title);
   for (const rule of RULES) {
     for (const kw of rule.keywords) {
-      if (t.includes(kw)) return rule.category;
+      if (matches(kw)) return rule.category;
     }
   }
   return 'MARKET';

@@ -30,6 +30,16 @@ export function newsCategoryColor(article: NewsArticle): string {
   return CATEGORY_COLOR[article.category] ?? 'var(--mut)';
 }
 
-export function newsImpactColor(tier: ImpactTier): string {
-  return IMPACT_TIER_COLOR[tier];
+export function newsImpactColor(tier: ImpactTier | null): string {
+  return tier ? IMPACT_TIER_COLOR[tier] : 'var(--mut)';
+}
+
+export function newsAssessmentLabel(article: NewsArticle): string {
+  if (article.semantic?.parse.needs_review) return 'REVIEW';
+  if (article.semantic && article.sentiment === 'neutral') return 'NO DIRECTION';
+  return newsSentimentWord(article.sentiment);
+}
+
+export function newsRankingLabel(article: NewsArticle): string {
+  return article.semantic ? `WEIGHT ${article.semantic.weighting.post_weight.toFixed(3)}` : `${article.impactTier} IMPACT`;
 }

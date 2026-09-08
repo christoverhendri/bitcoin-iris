@@ -80,7 +80,7 @@ export function GlobalSentimentPanel({ events: baseEvents, news: initialNews, fl
                 </button>
               ))}
             </div>
-            <MockBadge env={events} />
+            {events.isMock && <span role="status" style={{ color: 'var(--amber)', fontSize: 10 }}>NEWS EVENTS UNAVAILABLE</span>}
           </div>
         }
       />
@@ -102,7 +102,7 @@ export function GlobalSentimentPanel({ events: baseEvents, news: initialNews, fl
         </Suspense>
       </div>
 
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 1, background: 'var(--line)' }}>
+      <div className="sentiment-workspace" style={{ gap: 1, background: 'var(--line)' }}>
         <div
           style={{
             flex: '2 1 560px',
@@ -147,12 +147,18 @@ export function GlobalSentimentPanel({ events: baseEvents, news: initialNews, fl
           style={{
             flex: '1 1 300px',
             minWidth: 0,
-            maxHeight: 560,
+            height: 440,
+            minHeight: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
             background: 'var(--panel)',
           }}
         >
-          <NewsRefreshStatus {...liveNews} />
-      <ArchiveMore {...liveNews} />
+          <div style={{ flexShrink: 0 }}>
+            <NewsRefreshStatus {...liveNews} />
+            <ArchiveMore {...liveNews} />
+          </div>
           <EventNewsRail
             events={events.data}
             news={news.data}
@@ -164,7 +170,9 @@ export function GlobalSentimentPanel({ events: baseEvents, news: initialNews, fl
         </div>
       </div>
 
-      <SourceFootnote env={events} />
+      {events.isMock
+        ? <div role="status" className="iris-micro" style={{ padding: '7px 12px', color: 'var(--mut)', borderTop: '1px solid var(--line)' }}>No verified news events are available. On-chain events are reported separately.</div>
+        : <SourceFootnote env={events} />}
     </Panel>
   );
 }

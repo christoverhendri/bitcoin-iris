@@ -7,7 +7,8 @@ import type { Tone } from '@/lib/theme/tokens';
 import { CATEGORY_COLOR, toEventRow } from '@/lib/features/geopoliticalEvents/present';
 import type { EventCategory, GeoEvent } from '@/lib/features/geopoliticalEvents';
 import type { NewsArticle } from '@/lib/features/news';
-import { newsCategoryColor, newsImpactColor, newsSentimentWord } from '@/lib/features/news/present';
+import { newsCategoryColor, newsImpactColor, newsAssessmentLabel, newsRankingLabel } from '@/lib/features/news/present';
+import { SemanticDetails } from '../news/SemanticDetails';
 import type { DetailPayload } from './WorldMap';
 
 const SENTIMENT_TONE: Record<GeoEvent['sentiment'], Tone> = {
@@ -41,10 +42,14 @@ export function EventNewsRail({
     [events, activeCats],
   );
   const [visibleCount, setVisibleCount] = useState(20);
-  const newsRows = news.slice(0, visibleCount);
+  const [source, setSource] = useState('ALL');
+  const [query, setQuery] = useState('');
+  const sources = [...new Set(news.map(a => a.source))].sort();
+  const filteredNews = news.filter(a => (source === 'ALL' || a.source === source) && a.title.toLowerCase().includes(query.toLowerCase()));
+  const newsRows = filteredNews.slice(0, visibleCount);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden' }}>
       <div style={{ display: 'flex', borderBottom: '1px solid var(--line)', flexShrink: 0 }}>
         {(
           [
@@ -78,12 +83,21 @@ export function EventNewsRail({
         })}
       </div>
 
-      {tab === 'news' && <NewsHistoryControl shown={newsRows.length} total={news.length} onMore={() => setVisibleCount((n) => n + 20)} />}
+      {tab === 'news' && <>
+        <div className="news-filters">
+          <input aria-label="Search headlines" placeholder="Search headlines…" value={query} onChange={e => { setQuery(e.target.value); setVisibleCount(20); }} />
+          <select aria-label="News source" value={source} onChange={e => { setSource(e.target.value); setVisibleCount(20); }}>
+            <option value="ALL">All sources</option>
+            {sources.map(s => <option key={s}>{s}</option>)}
+          </select>
+        </div>
+        <NewsHistoryControl shown={newsRows.length} total={filteredNews.length} onMore={() => setVisibleCount((n) => n + 20)} />
+      </>}
       <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
         {tab === 'news' ? (
           newsRows.length === 0 ? (
             <div className="iris-micro" style={emptyBox}>
-              NO HEADLINES AVAILABLE
+              {news.length ? 'NO HEADLINES MATCH THESE FILTERS' : 'NO HEADLINES AVAILABLE'}
             </div>
           ) : (
             newsRows.map((a) => {
@@ -118,7 +132,7 @@ export function EventNewsRail({
                       <span style={{ ...headline2, display: '-webkit-box' }}>{a.title}</span>
                       <span className="iris-micro" style={metaRow}>
                         <span style={{ color: newsImpactColor(a.impactTier), letterSpacing: '.1em' }}>
-                          {a.impactTier}
+                          {newsRankingLabel(a)}
                         </span>
                         <span>·</span>
                         <span style={{ color: newsCategoryColor(a) }}>{a.category}</span>
@@ -129,7 +143,7 @@ export function EventNewsRail({
                       </span>
                     </span>
                     <span style={{ marginTop: 2, flexShrink: 0, display: 'flex', gap: 6 }}>
-                      <Tag label={newsSentimentWord(a.sentiment)} tone={SENTIMENT_TONE[a.sentiment]} />
+                      <Tag label={newsAssessmentLabel(a)} tone={SENTIMENT_TONE[a.sentiment]} />
                       <span style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--mut)' }}>
                         {open ? '−' : '+'}
                       </span>
@@ -155,6 +169,7 @@ export function EventNewsRail({
                       >
                         {a.description || 'No description supplied by the source feed.'}
                       </p>
+                      <SemanticDetails semantic={a.semantic} />
                       {a.url && (
                         <a
                           href={a.url}
@@ -235,7 +250,7 @@ const emptyBox: CSSProperties = {
 };
 const headline2: CSSProperties = {
   fontFamily: 'var(--mono)',
-  fontSize: 10,
+  fontSize: 12,
   lineHeight: 1.35,
   color: 'var(--txt)',
   display: '-webkit-box',
@@ -250,6 +265,6 @@ const metaRow: CSSProperties = {
   gap: 6,
   flexWrap: 'wrap',
   fontFamily: 'var(--mono)',
-  fontSize: 8.5,
-  color: 'var(--dim)',
+  fontSize: 10,
+  color: 'var(--mut)',
 };

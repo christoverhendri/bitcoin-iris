@@ -24,7 +24,7 @@ export const SOURCES: SourceDef[] = [
   { key: 'internal_quant', displayName: 'Quant pipeline', category: 'quant', requiresKey: false, enabled: true, unlockNote: null },
   { key: 'internal_forecast', displayName: 'Forecast pipeline', category: 'forecast', requiresKey: false, enabled: true, unlockNote: null },
   { key: 'alternative_me', displayName: 'Fear & Greed (alternative.me)', category: 'sentiment', requiresKey: false, enabled: true, unlockNote: null },
-  { key: 'fred', displayName: 'FRED', category: 'macro', requiresKey: true, enabled: true, unlockNote: 'Register a free FRED API key and set FRED_API_KEY in worker/.env.' },
+  { key: 'fred', displayName: 'FRED', category: 'macro', requiresKey: true, enabled: true, unlockNote: 'Macro provider is not configured. Set FRED_API_KEY in terminal/.env.local and restart the server.' },
   { key: 'internal_macro_regime', displayName: 'Macro regime engine', category: 'macro', requiresKey: false, enabled: true, unlockNote: null },
   { key: 'cryptopanic', displayName: 'CryptoPanic', category: 'news', requiresKey: true, enabled: true, unlockNote: 'CryptoPanic developer plan is free — set CRYPTOPANIC_TOKEN in worker/.env.' },
   { key: 'rss', displayName: 'Crypto RSS feeds', category: 'news', requiresKey: false, enabled: true, unlockNote: null },

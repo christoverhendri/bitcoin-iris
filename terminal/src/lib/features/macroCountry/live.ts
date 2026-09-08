@@ -57,6 +57,7 @@ const FRED_SERIES: Record<string, SeriesMap> = {
 const DEFAULT_COUNTRIES = ['US', 'CN', 'EU', 'JP', 'GB', 'ID'];
 
 export async function fetchMacroCountry({ countries = DEFAULT_COUNTRIES }: MacroCountryArgs) {
+  if (!process.env.FRED_API_KEY) return null;
   const mapped = countries.filter((c) => FRED_SERIES[c]);
 
   // Nothing we can serve. If the caller asked for exactly one unmapped country

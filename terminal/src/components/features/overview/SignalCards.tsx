@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { PanelStrip, KpiCard, MockBadge, SourceFootnote } from '@/components/primitives';
 import type { Envelope } from '@/lib/envelope';
 import type { WeeklyForecastData } from '@/lib/features/weeklyForecast';
@@ -33,10 +34,11 @@ export function SignalCards({
             label="MARKET REGIME"
             value={wf.label}
             tone={getDirectionTone(wf.label)}
-            detail={`${wf.confidence.toFixed(0)}% confidence`}
+            detail={`${wf.confidence.toFixed(0)}% rule strength (uncalibrated)`}
             pct={wf.confidence}
             right={<MockBadge env={weeklyForecast} />}
           />
+          <Link className="evidence-link" href="/forecast/weekly" prefetch={false}>Rule-based outlook · inspect method →</Link>
           <SourceFootnote env={weeklyForecast} />
         </div>
 
@@ -50,6 +52,7 @@ export function SignalCards({
             pct={conf.scores.overall}
             right={<MockBadge env={confluence} />}
           />
+          <Link className="evidence-link" href="/research/confluence" prefetch={false}>Heuristic composite · inspect evidence →</Link>
           <SourceFootnote env={confluence} />
         </div>
 
@@ -63,6 +66,7 @@ export function SignalCards({
             pct={wf.confidence}
             right={<MockBadge env={weeklyForecast} />}
           />
+          <Link className="evidence-link" href="/forecast/weekly" prefetch={false}>Rule-based outlook · inspect method →</Link>
           <SourceFootnote env={weeklyForecast} />
         </div>
       </PanelStrip>

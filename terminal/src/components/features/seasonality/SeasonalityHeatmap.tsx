@@ -85,6 +85,7 @@ export function SeasonalityHeatmap({ seasonality }: SeasonalityHeatmapProps) {
           </Row>
         </div>
       </div>
+      <p className="method-note" style={{ padding: 12 }}>Limited source history. Blank cells mean no observations, not zero return. The first and latest months may be partial; averages include available observations and are not a forecast.</p>
       <SourceFootnote env={seasonality} />
     </Panel>
   );

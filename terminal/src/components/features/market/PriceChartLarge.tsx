@@ -49,6 +49,7 @@ export function PriceChartLarge({ ohlcv, levels, timeframe }: PriceChartLargePro
         right={<MockBadge env={ohlcv} />}
       />
       <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <div className="chart-with-scale">
         <svg
           viewBox={`0 0 ${W} ${H}`}
           preserveAspectRatio="none"
@@ -110,6 +111,9 @@ export function PriceChartLarge({ ohlcv, levels, timeframe }: PriceChartLargePro
             />
           ))}
         </svg>
+        <div className="chart-scale" aria-label="Price scale in USD">{[hi, (hi + lo) / 2, lo].map((v, i) => <span key={i}>{Number.isFinite(v) ? v.toLocaleString('en-US', {maximumFractionDigits: 0}) : '—'}</span>)}</div>
+        </div>
+        <div className="chart-dates"><span>{candles[0] ? new Date(candles[0].ts).toISOString().slice(0,16).replace('T',' ') : '—'}</span><span>USD · UTC</span><span>{latest ? new Date(latest.ts).toISOString().slice(0,16).replace('T',' ') : '—'}</span></div>
 
         {ohl ? (
           <PanelStrip min={120}>

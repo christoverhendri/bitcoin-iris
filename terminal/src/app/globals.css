@@ -294,3 +294,21 @@ table.iris-table tbody tr:hover {
 .iris-command-results button[aria-selected='true'], .iris-command-results button:hover { background: var(--amber); color: var(--bg); }
 .iris-command-dialog footer { margin-top: 12px; color: var(--mut); font-size: 10px; }
 @media (max-width: 600px) { .iris-command-bar > span { display: none; } }
+
+/* Shared readability and evidence controls. */
+.iris-workspace .iris-micro { font-size: 11px !important; line-height: 1.5; }
+.evidence-link { display: inline-block; padding: 8px 12px; color: var(--amber); font-size: 11px; text-decoration: underline; text-underline-offset: 3px; }
+:where(button, a, input, select):focus-visible { outline: 2px solid var(--amber); outline-offset: 3px; }
+.chart-with-scale { display: grid; grid-template-columns: minmax(0,1fr) 72px; gap: 8px; }
+.chart-scale { display: flex; flex-direction: column; justify-content: space-between; padding: 10px 0; font: 11px var(--mono); color: var(--mut); text-align: right; }
+.chart-dates { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; font: 11px var(--mono); color: var(--mut); padding-right: 80px; }
+.method-note { margin: 0; color: var(--mut); font-size: 12px; line-height: 1.6; }
+.sentiment-summary { grid-template-columns: repeat(3,minmax(0,1fr)); }
+.sentiment-workspace { display: grid; grid-template-columns: minmax(0,1fr) minmax(420px,1fr); align-items: start; }
+.sentiment-workspace > div:first-child { align-self: stretch; display: flex; flex-direction: column; justify-content: center; }
+.news-filters { display:flex; gap:8px; padding:8px 12px; flex-shrink:0; border-bottom:1px solid var(--line); }
+.news-filters input, .news-filters select { min-width:0; padding:8px; color:var(--txt); background:var(--sunk); border:1px solid var(--line2); font:12px var(--mono); }
+.news-filters input { flex:1; }
+@media(min-width:1500px) { .sentiment-summary { grid-template-columns:repeat(6,minmax(0,1fr)); } }
+@media(max-width:1000px) { .sentiment-workspace { grid-template-columns:minmax(0,1fr); } }
+@media(max-width:600px) { .sentiment-summary { grid-template-columns:repeat(2,minmax(0,1fr)); } .news-filters { flex-wrap:wrap; } .chart-dates { padding-right:0; } }

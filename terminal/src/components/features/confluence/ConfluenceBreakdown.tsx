@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { Panel, PanelHeader, ProgressBar, DivergingBar, MockBadge, SourceFootnote } from '@/components/primitives';
 import type { Envelope } from '@/lib/envelope';
 import type { ConfluenceData } from '@/lib/features/confluence';
@@ -70,7 +71,7 @@ export function ConfluenceBreakdown({ confluence }: ConfluenceBreakdownProps) {
       <Panel style={{ display: 'flex', flexDirection: 'column' }}>
         <PanelHeader
           title="LAYER BREAKDOWN"
-          note="5 EVIDENCE LAYERS · EQUAL-WEIGHT MEAN"
+          note="5 LAYERS · FIXED HEURISTIC WEIGHTS"
           right={<MockBadge env={confluence} />}
         />
         <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -84,7 +85,7 @@ export function ConfluenceBreakdown({ confluence }: ConfluenceBreakdownProps) {
                     className="iris-micro"
                     style={{ fontFamily: 'var(--mono)', fontSize: 9.5, letterSpacing: '.12em', color: 'var(--txt)' }}
                   >
-                    {layer}
+                    {layer} · {({TECHNICAL:34, SENTIMENT:22, NEWS:22, ONCHAIN:12, MACRO:10})[layer]}% weight
                   </span>
                   <span
                     className="iris-micro"
@@ -99,6 +100,8 @@ export function ConfluenceBreakdown({ confluence }: ConfluenceBreakdownProps) {
                   style={{ fontFamily: 'var(--mono)', fontSize: 8.5, color: 'var(--dim)', letterSpacing: '.04em' }}
                 >
                   {LAYER_DESCRIPTIONS[layer]}
+                  {['MACRO', 'ONCHAIN'].includes(layer) ? ' · Neutral fallback: this input is not connected to the composite.' : ' · Derived signal, not a probability.'}
+                  <Link className="evidence-link" prefetch={false} href={{MACRO:'/macro/data', ONCHAIN:'/chain/flows', SENTIMENT:'/sentiment', TECHNICAL:'/market/technicals', NEWS:'/sentiment'}[layer]}>Inspect source →</Link>
                 </span>
               </div>
             );

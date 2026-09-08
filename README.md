@@ -5,7 +5,7 @@ Repositori riset forecasting Bitcoin dan **IRIS BTC Intelligence Terminal**.
 ## Status integrasi
 
 - `terminal/`: aplikasi Next.js, React, dan TypeScript untuk harga, indikator, berita, sentiment, on-chain, makro, dan forecast.
-- `news_pipeline/`: pipeline Python Watcher.Guru, parser, penyimpanan, dan modelling; belum terhubung ke terminal RSS.
+- `news_pipeline/`: pipeline Python Watcher.Guru, parser, penyimpanan, dan modelling. Snapshot v2 membawa semantic events, evidence, review flags, dan ranking weight ke NEWS; model prediksi Python belum terhubung. RSS tetap memakai aturan headline terminal.
 - `bitcoin iris/`: dataset, baseline Python, notebook, dan laporan riset.
 - **Model XGBoost riset belum terhubung ke terminal.** Forecast bulanan terminal menggunakan bootstrap Monte Carlo.
 - Startup tidak memerlukan kredensial. Fitur tambahan dapat memerlukan provider, database, atau ingestion.
@@ -112,6 +112,7 @@ pemeriksaan tambahan registry alamat exchange melalui provider eksternal.
 ## Dokumentasi
 
 - [Panduan teknis terminal](terminal/README.md)
+- [Integrasi semantic parser Watcher.Guru](terminal/docs/WATCHER_GURU_TEST.md)
 - [Integrasi dan batas operasional](terminal/docs/INTEGRATION.md)
 - [Audit berita](terminal/docs/NEWS_SOURCE_AUDIT.md)
 - [Token desain](terminal/docs/DESIGN_TOKENS.md)

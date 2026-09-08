@@ -1,6 +1,8 @@
 import { Panel, PanelHeader, Tag, MockBadge, SourceFootnote } from '@/components/primitives';
 import type { Envelope } from '@/lib/envelope';
 import type { NewsArticle } from '@/lib/features/news';
+import { newsAssessmentLabel, newsRankingLabel } from '@/lib/features/news/present';
+import { SemanticDetails } from './SemanticDetails';
 import type { Tone } from '@/lib/theme/tokens';
 
 export type NewsFilter = 'all' | 'bullish' | 'bearish';
@@ -92,7 +94,7 @@ export function NewsWire({ news, filter }: NewsWireProps) {
               }}
             >
               <div style={{ minWidth: 'fit-content', marginTop: 2 }}>
-                <Tag label={sentimentLabel(a.sentiment)} tone={sentimentTone(a.sentiment)} />
+                <Tag label={a.semantic ? newsAssessmentLabel(a) : sentimentLabel(a.sentiment)} tone={sentimentTone(a.sentiment)} />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div
@@ -120,7 +122,9 @@ export function NewsWire({ news, filter }: NewsWireProps) {
                   <span>{a.source}</span>
                   <span>·</span>
                   <span>BTC {a.btcWindow} window</span>
+                  {a.semantic && <span>· {newsRankingLabel(a)}</span>}
                 </div>
+                <SemanticDetails semantic={a.semantic} />
               </div>
             </div>
           ))

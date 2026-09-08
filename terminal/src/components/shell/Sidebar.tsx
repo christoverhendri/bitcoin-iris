@@ -52,7 +52,7 @@ function NavItem({
   );
 }
 
-export function Sidebar({ health }: { health?: FeedHealth }) {
+export function Sidebar({ health, now }: { health?: FeedHealth; now?: number }) {
   const pathname = usePathname();
   const activeKey = pathname.split('/').filter(Boolean)[0];
   const { open, setOpen } = useDrawer();
@@ -136,7 +136,7 @@ export function Sidebar({ health }: { health?: FeedHealth }) {
         })}
       </nav>
 
-      {health ? <StatusFooter health={health} /> : <div role="status" style={{ padding: 12, color: 'var(--mut)' }}>Loading feed status…</div>}
+      {health ? <StatusFooter health={health} now={now} /> : <div role="status" style={{ padding: 12, color: 'var(--mut)' }}>Loading feed status…</div>}
     </aside>
   );
 }

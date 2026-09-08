@@ -16,7 +16,8 @@ import { CommandPalette } from '@/components/shell/CommandPalette';
 export const revalidate = 30;
 
 async function LiveSidebar() {
-  return <Sidebar health={await getFeedHealth()} />;
+  const health = await getFeedHealth();
+  return <Sidebar health={health} />;
 }
 
 async function LiveTopbar() {

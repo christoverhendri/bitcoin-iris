@@ -1,14 +1,19 @@
 import { defineFeature } from '@/lib/defineFeature';
 import { fetchGeopoliticalEvents } from './live';
-import { mockGeopoliticalEvents } from './mock';
 import type { GeoEvent, GeoEventsArgs } from './types';
 
-export const getGeopoliticalEvents = defineFeature<GeoEventsArgs, GeoEvent[]>({
+const resolveGeopoliticalEvents = defineFeature<GeoEventsArgs, GeoEvent[]>({
   key: 'geopolitical_events',
   source: 'rss',
   live: fetchGeopoliticalEvents,
-  mock: mockGeopoliticalEvents,
+  mock: () => [],
 });
+
+/** Missing or synthetic news must never manufacture event markers. */
+export async function getGeopoliticalEvents(args: GeoEventsArgs) {
+  const env = await resolveGeopoliticalEvents(args);
+  return env.isMock ? { ...env, data: [] } : env;
+}
 
 export type { GeoEvent, GeoEventsArgs, EventCategory } from './types';
 export {

@@ -4,15 +4,14 @@
  * Crypto headlines come from the shared RSS merge (`sources/rss.ts`); a few
  * broader world-news feeds are added best-effort. Every headline is run through
  * the keyword classifier, the sentiment lexicon and the gazetteer — items that
- * do not resolve to a place are dropped. The static macro calendar is merged in
- * as always-present low-impact markers, so the map is never empty.
+ * do not resolve to a place are dropped. If all upstreams are unavailable, the
+ * feed returns no data so the UI can represent that state honestly.
  */
 import { fetchText } from '@/lib/sources/http';
 import { getCryptoNews } from '@/lib/sources/rss';
 import { scoreHeadline } from '@/lib/sources/lexicon';
 import { classify } from '@/lib/geo/classify';
 import { geocode } from '@/lib/geo/gazetteer';
-import { MACRO_CALENDAR } from '@/lib/geo/macroCalendar';
 import { hashString, utcDay } from '@/lib/rng';
 import type { EventCategory } from '@/lib/geo/classify';
 import type { GeoEvent, GeoEventsArgs } from './types';
@@ -165,26 +164,6 @@ export async function fetchGeopoliticalEvents({ limit = 60 }: GeoEventsArgs) {
 
     const existing = byHeadline.get(key);
     if (!existing || event.impact > existing.impact) byHeadline.set(key, event);
-  }
-
-  // Always-present macro anchors.
-  const dayStart = startOfUtcDay();
-  for (const anchor of MACRO_CALENDAR) {
-    const key = normHeadline(anchor.headline);
-    if (byHeadline.has(key)) continue;
-    byHeadline.set(key, {
-      id: `cal-${hashString(anchor.headline).toString(36)}`,
-      headline: anchor.headline,
-      source: 'MACRO CALENDAR',
-      publishedAt: dayStart,
-      category: anchor.category,
-      sentiment: 'neutral',
-      lat: anchor.lat,
-      lon: anchor.lon,
-      iso2: anchor.iso2,
-      place: anchor.place,
-      impact: 25,
-    });
   }
 
   const data = [...byHeadline.values()]

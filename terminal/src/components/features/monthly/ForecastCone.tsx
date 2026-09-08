@@ -62,6 +62,7 @@ export function ForecastCone({ forecast }: ForecastConeProps) {
 
     body = (
       <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div className="chart-with-scale">
         <svg viewBox={`0 0 100 ${H}`} preserveAspectRatio="none" style={{ width: '100%', height: 180 }}>
           {[0, 0.25, 0.5, 0.75, 1].map((p) => (
             <line
@@ -97,6 +98,10 @@ export function ForecastCone({ forecast }: ForecastConeProps) {
           <polyline points={poly(lower)} fill="none" stroke="var(--down)" strokeWidth={1} vectorEffect="non-scaling-stroke" />
           <polyline points={poly(mid)} fill="none" stroke="var(--blue)" strokeWidth={1} vectorEffect="non-scaling-stroke" />
         </svg>
+        <div className="chart-scale" aria-label="Illustrative price scale in USD">{[yMax, (yMax+yMin)/2, yMin].map((v,i) => <span key={i}>{(f.p50*(1+v/100)).toLocaleString('en-US',{maximumFractionDigits:0})}</span>)}</div>
+        </div>
+        <div className="chart-dates"><span>Day 0</span><span>USD · simulation horizon</span><span>Day {n-1}</span></div>
+        <p className="method-note">Illustrative interpolation to terminal P10/P50/P90 targets. The shaded range spans the middle 80% of simulated terminal outcomes; it is not a validated 80% coverage guarantee for the intervening path.</p>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 1, background: 'var(--line)' }}>
           {[

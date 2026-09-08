@@ -60,9 +60,9 @@ export function SentimentStrip({ fearGreed, sentiment, news, events, whale }: Se
 
   return (
     <div
+      className="sentiment-summary"
       style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
         gap: 1,
         background: 'var(--line)',
         minWidth: 0,
@@ -76,7 +76,7 @@ export function SentimentStrip({ fearGreed, sentiment, news, events, whale }: Se
         <div style={deltaLine}>{fmtPct(fg.changePct)} 24h</div>
       </Cell>
 
-      <Cell label="SOCIAL SCORE" env={sentiment}>
+      <Cell label="RSS + FEAR & GREED" env={sentiment}>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
           <span style={{ ...bigValue, color: toneVar(signTone(s.score)) }}>{fmtZ(s.score)}</span>
           <span style={valueWord}>{socialWord}</span>
@@ -90,7 +90,7 @@ export function SentimentStrip({ fearGreed, sentiment, news, events, whale }: Se
           <span style={{ width: `${negW}%`, background: 'var(--down)' }} />
         </div>
         <div style={{ ...deltaLine, marginTop: 4 }}>
-          {Math.round(s.positivePct)} / {Math.round(s.neutralPct)} / {Math.round(s.negativePct)}
+          Bull {Math.round(s.positivePct)}% · Neutral {Math.round(s.neutralPct)}% · Bear {Math.round(s.negativePct)}%
         </div>
       </Cell>
 

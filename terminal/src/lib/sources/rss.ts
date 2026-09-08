@@ -10,8 +10,11 @@
 import { unstable_rethrow } from 'next/navigation';
 import { fetchRss, UpstreamError, retryDelay } from './http';
 import { createArchiveStore, mergeHistory } from './newsArchive';
+import type { SemanticNews } from './semanticNews';
 
 export interface RssItem {
+  /** Present only when the Python pipeline supplied validated semantic evidence. */
+  semantic?: SemanticNews;
   title: string;
   link: string;
   publishedAt: number; // ms epoch; 0 when the feed omitted a usable date

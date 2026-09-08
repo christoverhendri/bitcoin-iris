@@ -9,7 +9,8 @@ import { NewsRefreshStatus } from '../news/NewsRefreshStatus';
 import type { Envelope } from '@/lib/envelope';
 import type { SentimentData } from '@/lib/features/sentiment';
 import type { NewsArticle } from '@/lib/features/news';
-import { newsSentimentWord, newsCategoryColor, newsImpactColor } from '@/lib/features/news/present';
+import { newsSentimentWord, newsAssessmentLabel, newsRankingLabel, newsCategoryColor, newsImpactColor } from '@/lib/features/news/present';
+import { SemanticDetails } from '../news/SemanticDetails';
 
 export interface IntelligenceFeedProps {
   sentiment: Envelope<SentimentData>;
@@ -130,7 +131,7 @@ export function IntelligenceFeed({ sentiment, news: initialNews }: IntelligenceF
                     }}
                   >
                     <span style={{ minWidth: 'fit-content', marginTop: 2 }}>
-                      <Tag label={newsSentimentWord(a.sentiment)} tone={toneFor(a.sentiment)} />
+                      <Tag label={newsAssessmentLabel(a)} tone={toneFor(a.sentiment)} />
                     </span>
                     <span style={{ flex: 1, minWidth: 0 }}>
                       <span
@@ -158,7 +159,7 @@ export function IntelligenceFeed({ sentiment, news: initialNews }: IntelligenceF
                         }}
                       >
                         <span style={{ color: newsImpactColor(a.impactTier), letterSpacing: '.1em' }}>
-                          {a.impactTier} IMPACT
+                          {newsRankingLabel(a)}
                         </span>
                         <span>·</span>
                         <span style={{ color: newsCategoryColor(a) }}>{a.category}</span>
@@ -200,6 +201,7 @@ export function IntelligenceFeed({ sentiment, news: initialNews }: IntelligenceF
                       >
                         {a.description || 'No description supplied by the source feed.'}
                       </p>
+                      <SemanticDetails semantic={a.semantic} />
                       {a.url && (
                         <a
                           href={a.url}

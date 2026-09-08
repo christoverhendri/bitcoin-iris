@@ -1,5 +1,4 @@
 import { type Envelope, explainMock } from '@/lib/envelope';
-import { fmtAgo } from '@/lib/format';
 
 /**
  * Renders only when the envelope carries synthetic data. This is the visible
@@ -77,7 +76,8 @@ export function PlaceholderBadge() {
 }
 
 /** `SOURCE: coinbase · 2m ago` footnote pinned to the bottom of a panel. */
-export function SourceFootnote<T>({ env, now }: { env: Envelope<T>; now?: number }) {
+export function SourceFootnote<T>({ env }: { env: Envelope<T>; now?: number }) {
+  const validDate = env.asOf && Number.isFinite(Date.parse(env.asOf));
   return (
     <div
       className="iris-micro"
@@ -86,14 +86,15 @@ export function SourceFootnote<T>({ env, now }: { env: Envelope<T>; now?: number
         padding: '7px 12px',
         borderTop: '1px solid var(--line)',
         fontFamily: 'var(--mono)',
-        fontSize: 8.5,
+        fontSize: 10,
         letterSpacing: '.12em',
-        color: 'var(--dim)',
+        color: 'var(--mut)',
       }}
     >
       SOURCE: {env.sourceKey.toUpperCase().replace(/_/g, ' ')}
       {' · '}
-      {env.isMock ? 'PLACEHOLDER' : fmtAgo(env.asOf, now)}
+      {env.isMock ? 'DEMO DATA · NOT LIVE' : `REPORTED AS OF ${validDate ? new Date(env.asOf!).toISOString().replace('T', ' ').slice(0, 16) + ' UTC' : 'UNKNOWN'}`}
+      {env.isMock && env.unlockNote && <div style={{ marginTop: 5, letterSpacing: 0 }}>{env.unlockNote}</div>}
     </div>
   );
 }

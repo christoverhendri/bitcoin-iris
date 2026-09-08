@@ -1,9 +1,11 @@
 /**
- * Live crypto news — merged public RSS feeds. Sentiment is a keyword heuristic
- * (see `sources/lexicon.ts`); category and impact reuse the Global Events
- * classifier. None of it is a model; the panel labels it as heuristic.
+ * Live news: RSS uses terminal keyword heuristics. Watcher snapshot v2 supplies
+ * Python semantic events and ranking weights; it does not supply market sentiment
+ * or market impact. Legacy v1 snapshots retain the RSS headline-rule fallback.
  */
 import { getCryptoNewsSnapshot } from '@/lib/sources/rss';
+import { getWatcherGuruSnapshot } from '@/lib/sources/watcherGuru';
+import { semanticCategory } from '@/lib/sources/semanticNews';
 import { scoreHeadline } from '@/lib/sources/lexicon';
 import { classify, type EventCategory } from '@/lib/geo/classify';
 import { impactTier } from '@/lib/features/geopoliticalEvents/present';
@@ -34,36 +36,41 @@ function ago(ms: number): string {
 }
 
 export async function fetchNews({ limit = 5 }: NewsArgs) {
-  const { items, feeds } = await getCryptoNewsSnapshot(2000, true);
+  const [rss, watcher] = await Promise.all([getCryptoNewsSnapshot(2000, true), getWatcherGuruSnapshot()]);
+  const { feeds } = rss;
+  const items = [...rss.items, ...watcher.items].sort((a, b) => b.publishedAt - a.publishedAt);
   if (!items.length) return null;
 
   const newest = items[0]?.publishedAt || Date.now();
 
   const scored: NewsArticle[] = items.map((it) => {
-    const category = classify(it.title);
+    const category = it.semantic ? semanticCategory(it.semantic) : classify(it.title);
     const age = it.publishedAt ? Math.max(0, newest - it.publishedAt) : WINDOW_MS;
     const recencyBonus = Math.max(0, Math.round(20 * (1 - Math.min(1, age / WINDOW_MS))));
-    const impact = Math.max(0, Math.min(100, CATEGORY_BASE[category] + recencyBonus));
+    const impact = it.semantic ? null : Math.max(0, Math.min(100, CATEGORY_BASE[category] + recencyBonus));
     return {
       title: it.title,
       source: it.source,
-      sentiment: scoreHeadline(it.title),
+      // Semantic assertion polarity is not market sentiment. The UI explicitly
+      // displays NO DIRECTION/REVIEW for these rows instead of a bullish label.
+      sentiment: it.semantic ? 'neutral' : scoreHeadline(it.title),
+      semantic: it.semantic,
       btcWindow: ago(it.publishedAt),
       url: it.link || undefined,
       description: it.description,
       category,
       impact,
-      impactTier: impactTier(impact),
+      impactTier: impact === null ? null : impactTier(impact),
       publishedAt: it.publishedAt,
     };
   });
 
   // A news wire must surface the newest stories before heuristic impact.
-  scored.sort((a, b) => b.publishedAt - a.publishedAt || b.impact - a.impact);
+  scored.sort((a, b) => b.publishedAt - a.publishedAt || (b.impact ?? 0) - (a.impact ?? 0));
 
   return {
     data: scored.slice(0, limit),
-    asOf: feeds.map((f) => f.fetchedAt).filter((value): value is string => !!value).sort().at(-1)!,
+    asOf: [...feeds.map((f) => f.fetchedAt), watcher.asOf].filter((value): value is string => !!value).sort().at(-1)!,
     synthetic: false,
   };
 }
