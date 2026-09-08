@@ -3,12 +3,13 @@ import csv
 import json
 import logging
 import sqlite3
+import sys
 import time
 from collections import Counter
 from contextlib import closing
 from pathlib import Path
 
-from .core import DATA, LABELS, classify, digest, fetch_latest, ingest, now, temporal_split, training_rows
+from .core import ROOT, DATA, LABELS, classify, digest, fetch_latest, ingest, now, temporal_split, training_rows
 from .parser import parse_news
 
 
@@ -68,6 +69,7 @@ def main():
     data.add_argument('--input', type=Path)
     data.add_argument('--output', type=Path)
     data.add_argument('--as-of')
+    data.add_argument('--snapshot-output', type=Path, default=ROOT / 'terminal/.data/watcher-guru.json')
     data.add_argument('--time-basis', choices=['ready', 'publication'], default='ready')
     data.add_argument('--max-pages', type=int, default=5)
     data.add_argument('--limit', type=int, default=1000)
@@ -131,6 +133,16 @@ def main():
                     logging.exception('Collection failed; cursor retained for next attempt')
                     # Existing inbox work can still finish during a source outage.
                     print(json.dumps({'processing': process_pending(args.database, args.limit, args.retry)}), flush=True)
+                finally:
+                    if args.action == 'run':
+                        from .terminal_snapshot import publish_database
+                        original_error = sys.exc_info()[0]
+                        try:
+                            publish_database(args.database, args.snapshot_output)
+                        except Exception:
+                            if not args.watch and original_error is None:
+                                raise
+                            logging.exception('Snapshot publication failed; canonical data retained')
                 if not args.watch:
                     break
                 time.sleep(args.interval)

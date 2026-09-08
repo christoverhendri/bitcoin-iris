@@ -4,8 +4,8 @@ import { StatusFooter, type FeedHealth } from './StatusFooter';
 
 it('keeps hydration text identical even when the browser clock advances', () => {
   const now = Date.parse('2026-09-06T14:00:00Z');
-  const health: FeedHealth = { live: 1, enabled: 1, lastSyncAt: new Date(now).toISOString(),
-    syncFromDirectFetch: true, modelName: 'test', modelVersion: 'test', modelIsPlaceholder: true };
+  const health: FeedHealth = { observed: 1, enabled: 1, lastSyncAt: new Date(now).toISOString(),
+    modelName: 'test', modelVersion: 'test', modelIsPlaceholder: true };
   vi.useFakeTimers();
   try {
     vi.setSystemTime(now);

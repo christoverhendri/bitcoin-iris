@@ -76,6 +76,28 @@ class ParserTests(unittest.TestCase):
         result = parse_news('Analysts say Bitcoin rises while Ethereum falls.')
         self.assertEqual(result['events'][1]['polarity'], 'unresolved')
 
+    def test_modal_uncertainty_resets_at_sentence_boundary(self):
+        result = parse_news('Bitcoin may rise. Bitcoin falls.')
+        self.assertEqual([e['polarity'] for e in result['events']], ['affirmed', 'affirmed'])
+        self.assertEqual([e['modality'] for e in result['events']], ['possible', 'asserted'])
+
+        result = parse_news('Bitcoin may rise while Ethereum falls. Bitcoin drops.')
+        self.assertEqual([e['polarity'] for e in result['events']], ['affirmed', 'unresolved', 'affirmed'])
+
+    def test_attribution_resets_at_sentence_boundary(self):
+        result = parse_news('Analysts say Bitcoin rises. Ethereum falls.')
+        self.assertEqual([e['polarity'] for e in result['events']], ['affirmed', 'affirmed'])
+
+    def test_lowercase_sec_is_not_regulator(self):
+        result = parse_news('Bitcoin rises in one sec.')
+        self.assertNotIn('sec', [entity['canonical'] for entity in result['entities']])
+        self.assertNotIn('sec', [entity['canonical'] for entity in parse_news('Bitcoin rises in one Sec.')['entities']])
+        self.assertIn('sec', [entity['canonical'] for entity in parse_news('Securities and Exchange Commission approves Bitcoin ETF.')['entities']])
+
+    def test_attribution_uncertainty_resets_after_one_continuation(self):
+        result = parse_news('Analysts say Bitcoin rises while Ethereum falls. Bitcoin drops.')
+        self.assertEqual([event['polarity'] for event in result['events']], ['affirmed', 'unresolved', 'affirmed'])
+
     def test_telegram_preserves_linebreaks_and_inline_words(self):
         html = '''<div class="tgme_widget_message" data-post="WatcherGuru/42">
         <div class="tgme_widget_message_text">Bit<b>coin</b> rises<br>Ethereum falls</div></div>'''

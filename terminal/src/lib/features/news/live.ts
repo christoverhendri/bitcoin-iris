@@ -70,7 +70,7 @@ export async function fetchNews({ limit = 5 }: NewsArgs) {
 
   return {
     data: scored.slice(0, limit),
-    asOf: [...feeds.map((f) => f.fetchedAt), watcher.asOf].filter((value): value is string => !!value).sort().at(-1)!,
+    asOf: [...feeds.map((f) => f.fetchedAt), watcher.asOf].filter((value): value is string => !!value).sort().at(-1) ?? '',
     synthetic: false,
   };
 }

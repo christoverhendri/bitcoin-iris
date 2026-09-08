@@ -68,6 +68,8 @@ class ForecastTests(unittest.TestCase):
                       'venue': 'test', 'horizon_days': 30, 'data_sha256': 'a' * 64}
             result = artifact(bundle, frame, path, frame['origin'].iloc[-1])
             self.assertEqual(result['origin'], frame['origin'].iloc[-1].isoformat())
+            self.assertEqual(result['as_of'], frame['origin'].iloc[-1].isoformat())
+            self.assertNotEqual(result['generated_at'], result['as_of'])
             self.assertEqual(result['calibration']['status'], 'research_only')
             values = list(result['return_quantiles'].values())
             self.assertEqual(values, sorted(values))

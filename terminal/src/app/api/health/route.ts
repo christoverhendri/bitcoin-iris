@@ -25,24 +25,20 @@ export async function GET() {
     // A health check that 500s on its own failure tells a monitor nothing useful.
     console.error('[health]', err);
     return NextResponse.json(
-      { ok: false, error: 'health check failed', live: 0, enabled: ENABLED_SOURCE_COUNT },
+      { ok: false, error: 'health check failed', observed: 0, enabled: ENABLED_SOURCE_COUNT },
       { status: 503 },
     );
   }
 
   const stale = isStale(health.lastSyncAt);
-  const ok = health.live > 0 && !stale;
+  const ok = health.observed > 0 && !stale;
 
   return NextResponse.json(
     {
       ok,
-      live: health.live,
+      observed: health.observed,
       enabled: health.enabled,
       lastSyncAt: health.lastSyncAt,
-      // Says whether `lastSyncAt` is a reported success or the current time
-      // standing in for direct-fetch sources — without it a monitor cannot tell
-      // a healthy terminal from one whose clock is the only thing still moving.
-      syncFromDirectFetch: health.syncFromDirectFetch,
       stale,
       model: {
         name: health.modelName,

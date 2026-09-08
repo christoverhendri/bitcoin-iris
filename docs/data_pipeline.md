@@ -7,7 +7,7 @@ and model `export` remain compatibility commands; they are not the durable inbox
 ## Run from the repository root
 
 ```powershell
-# One live cycle: durably collect, then process pending raw records.
+# One live cycle: durably collect, process pending raw records, publish terminal projection.
 .venv/Scripts/python.exe -m news_pipeline data run
 
 # Continuous operation; Ctrl+C to stop. No background service is installed.
@@ -24,6 +24,11 @@ and model `export` remain compatibility commands; they are not the durable inbox
 ```
 
 Default database: `artifacts/news/data.sqlite`. `--database` selects another file.
+`data run` also rebuilds `terminal/.data/watcher-guru.json`; `--snapshot-output` selects
+another projection path. See the [canonical integration boundary](integration.md).
+Source retry state survives restarts: exponential backoff starts at 60 seconds,
+caps at one hour, and honors Retry-After. Identical failed HTML at the same cursor
+reuses the retained body. `data status` includes source health and retry timestamps.
 One writer per database is enforced with an OS file lock; different databases can
 be used independently. Locks release on process exit, including crashes. SQLite
 uses WAL and parameterized statements.

@@ -1,3 +1,5 @@
+> Archived on 2026-09-08. Historical upstream/import observations and decisions; not current operational status. See [current integration contract](../../../../docs/integration.md).
+
 # News source audit - 2026-09-06
 
 The current feed snapshot contains 101 unique headlines. Successful HTTP checks

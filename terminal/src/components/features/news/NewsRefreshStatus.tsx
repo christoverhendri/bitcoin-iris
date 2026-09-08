@@ -8,7 +8,7 @@ export function NewsRefreshStatus({ news, failed, refreshing, refresh }: ReturnT
   const checked = news.feeds?.map((feed) => feed.checkedAt).sort().at(-1);
   return <div style={{ padding: '6px 12px', borderBottom: '1px solid var(--line)', fontSize: 10, color: 'var(--mut)' }}>
     <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-      <span>{degraded ? 'RSS DEGRADED · latest available stories' : 'RSS · SSE PUSH'} · newest first</span>
+      <span>{degraded ? 'NEWS DEGRADED · latest available stories' : 'RSS · SSE PUSH'} · newest first</span>
       <button type="button" onClick={refresh} disabled={refreshing}>{refreshing ? 'Checking…' : 'Reconnect news'}</button>
     </div>
     <details>
@@ -16,7 +16,7 @@ export function NewsRefreshStatus({ news, failed, refreshing, refresh }: ReturnT
       {news.feeds?.map((feed) => <div key={feed.source}>
         {feed.source}: {feed.status.toUpperCase()} · last success {feed.fetchedAt?.replace('T', ' ').slice(0, 19) ?? 'never'} UTC
       </div>)}
-      <div>Publisher RSS updates determine delivery delay. Sentiment and impact use keyword heuristics.</div>
+      <div>Publisher updates determine delivery delay. RSS uses headline heuristics; Watcher uses canonical semantic evidence.</div>
     </details>
   </div>;
 }

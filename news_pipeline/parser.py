@@ -3,7 +3,7 @@
 import re
 from decimal import Decimal
 
-VERSION = 'iris-news-rules/1.1.0'
+VERSION = 'iris-news-rules/1.2.0'
 MAX_TEXT_CHARS = 16000
 
 ENTITY_RULES = {
@@ -95,6 +95,11 @@ def parse_news(text):
     entities = []
     for canonical, (kind, pattern) in ENTITY_RULES.items():
         for item in matches(re.compile(pattern, re.I), masked):
+            # Lowercase ``sec`` is the ordinary abbreviation for seconds, not
+            # the regulator acronym. Require conventional uppercase spelling
+            # for the short alias; retain the full name case-insensitively.
+            if canonical == 'sec' and item['text'].lower() == 'sec' and item['text'] != 'SEC':
+                continue
             # "strategy" is too ambiguous unless capitalized or explicitly the company.
             if canonical == 'strategy' and item['text'] == 'strategy':
                 continue
@@ -120,8 +125,15 @@ def parse_news(text):
                            'basis': 'explicit_text', 'event_role': None})
     events, unresolved = [], []
     prior_uncertain_context = False
+    prior_part_end = None
     for part in parts:
         a, b = part['start'], part['end']
+        # Segment boundaries also represent contrast words ("while", "but")
+        # and newlines. Keep uncertainty across those boundaries, but reset it
+        # after actual sentence punctuation so one attribution/modal does not
+        # taint the next independent sentence.
+        if prior_part_end is not None and re.search(r'[.!?;]', text[prior_part_end:a]):
+            prior_uncertain_context = False
         neg = matches(NEGATION, masked, a, b)
         modal = matches(MODALITY, masked, a, b)
         attribution = matches(ATTRIBUTION, masked, a, b)
@@ -176,6 +188,7 @@ def parse_news(text):
         elif any(e['segment_id'] == part['id'] and e['polarity'] == 'unresolved' for e in events):
             unresolved.append({'segment_id': part['id'], 'reason': 'complex_scope'})
         prior_uncertain_context = prior_uncertain_context or bool(attribution or modal)
+        prior_part_end = b
     if not parts:
         unresolved.append({'segment_id': None, 'reason': 'no_content'})
     return {'parser_version': VERSION, 'offset_basis': 'raw_text_unicode_codepoints',

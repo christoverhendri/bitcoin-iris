@@ -2,6 +2,7 @@
 import argparse
 import hashlib
 import json
+from datetime import datetime, timezone
 from pathlib import Path
 
 import joblib
@@ -155,7 +156,11 @@ def artifact(bundle, frame, prices, as_of):
             'model_version': VERSION, 'model_family': bundle['model']['family'],
             'origin': row['origin'].isoformat(), 'target_end': row['target_end'].isoformat(),
             'horizon_days': bundle['horizon_days'], 'feature_cutoff': row['origin'].isoformat(),
-            'training_cutoff': bundle['training_cutoff'], 'generated_at': pd.Timestamp(as_of).isoformat(),
+            'training_cutoff': bundle['training_cutoff'],
+            # ``as_of`` is the information cutoff; generated_at records when
+            # this export was actually produced (and must not be backdated).
+            'as_of': pd.Timestamp(as_of).isoformat(),
+            'generated_at': datetime.now(timezone.utc).isoformat(),
             'data_sha256': hashlib.sha256(Path(prices).read_bytes()).hexdigest(),
             'training_data_sha256': bundle['data_sha256'], 'reference_price': float(row['close']),
             'return_quantiles': dict(zip(['p10', 'p50', 'p90'], map(float, q))),

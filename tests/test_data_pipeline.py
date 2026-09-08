@@ -102,6 +102,39 @@ class DataTests(unittest.TestCase):
         self.assertEqual(state['checkpoint'][0]['anchor'], 10)
         self.assertEqual(state['pages']['failed'], 1)
 
+    def test_failed_body_dedup_and_persistent_exponential_backoff(self):
+        clock = NOW
+        with patch('news_pipeline.collector.utcnow', side_effect=lambda: clock):
+            with self.assertRaises(ValueError):
+                collect(self.db, fetcher=lambda _: '<html>blocked</html>')
+            with patch('news_pipeline.collector.fetch_page') as unused:
+                self.assertTrue(collect(self.db, fetcher=unused)['deferred'])
+                unused.assert_not_called()
+            clock += timedelta(seconds=61)
+            with self.assertRaises(ValueError):
+                collect(self.db, fetcher=lambda _: '<html>blocked</html>')
+            self.assertEqual(status(self.db)['pages'], {'failed': 1})
+            clock += timedelta(seconds=61)
+            self.assertTrue(collect(self.db, fetcher=lambda _: self.fail('backoff lost'))['deferred'])
+            clock += timedelta(seconds=60)
+            self.assertEqual(collect(self.db, fetcher=lambda _: page([10]))['inserted'], 1)
+            from news_pipeline.collector import source_health
+            self.assertEqual(source_health(self.db)['failures'], 0)
+
+    def test_failed_network_preserves_success_and_honors_retry_after(self):
+        import requests
+        from news_pipeline.collector import source_health
+        response = requests.Response()
+        response.status_code = 429
+        response.headers['Retry-After'] = '600'
+        with patch('news_pipeline.collector.utcnow', return_value=NOW):
+            collect(self.db, fetcher=lambda _: page([10]))
+            with self.assertRaises(requests.HTTPError):
+                collect(self.db, fetcher=lambda _: (_ for _ in ()).throw(requests.HTTPError(response=response)))
+            health = source_health(self.db)
+            self.assertEqual(health['fetched_at'], NOW.isoformat())
+            self.assertEqual(health['next_retry_at'], (NOW + timedelta(seconds=600)).isoformat())
+
     def test_invalid_cursor_never_requests_network(self):
         with patch('news_pipeline.collector.requests.get') as request:
             with self.assertRaises(ValueError):

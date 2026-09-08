@@ -60,9 +60,8 @@ Forecast terminal belum memakai XGBoost dari folder riset Python.
 Arsip lokal membutuhkan filesystem persisten dan ditujukan untuk satu proses
 server, bukan koordinasi lintas instance serverless.
 
-- [Integrasi, provenance, dan batas operasional](docs/INTEGRATION.md)
-- [Audit kesegaran sumber berita](docs/NEWS_SOURCE_AUDIT.md)
+- [Integrasi, provenance, dan batas operasional](../docs/integration.md)
+- [Arsip audit berita 2026-09-06](docs/archive/2026-09-08/NEWS_SOURCE_AUDIT.md)
 - [Token desain](docs/DESIGN_TOKENS.md)
 
-Dokumen arsitektur/manifest lain dapat memuat rencana atau kondisi upstream yang
-lebih lama; cocokkan dengan adapter aktual sebelum mengandalkannya.
+Dokumen arsitektur, manifest, dan status upstream lama disimpan dalam `docs/archive/2026-09-08/`; dokumen tersebut bukan status operasional saat ini.

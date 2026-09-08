@@ -1,7 +1,6 @@
 import { getAllSourceStatus, type SourceStatusRow } from '@/lib/sourceStatus';
 import { getSupabase } from '@/lib/supabase/server';
 import { ENABLED_SOURCE_COUNT } from '@/lib/sources';
-import { WIRED_SOURCES } from '@/lib/sources/wired';
 import type { SourceKey } from '@/lib/envelope';
 import type { FeedHealth } from '@/components/shell/StatusFooter';
 
@@ -13,79 +12,41 @@ import type { FeedHealth } from '@/components/shell/StatusFooter';
  */
 
 /**
- * Which sources are actually delivering real data.
- *
- * This used to be an either/or: with no `data_source_status` table it counted
- * `WIRED_SOURCES`, and the moment a single row existed it switched to counting
- * only rows reporting `mode = 'live'`. Seeding the catalogue would therefore
- * have dropped the footer from 11/17 to whatever handful of ingestion jobs
- * report a mode — a collapse with no failure behind it.
- *
- * So the table *corrects* the static assumption instead of replacing it:
- *
- *   - start from the sources whose `live.ts` genuinely fetches an upstream
- *   - a row reporting `live` adds one the static list did not know about
- *   - a row reporting `failed` / `degraded` / `mock`, or disabled entirely,
- *     removes one — the database is the authority when it has an opinion
- *   - `unknown` is not an opinion, and changes nothing
+ * Count sources with an observed, recent successful ingestion. Catalogue rows
+ * and direct-fetch implementation details are deliberately not evidence of
+ * health; until a writer records a success, the source remains unknown.
  *
  * Pure and exported so it can be tested without a database.
  */
-export function computeLiveSources(
-  rows: readonly SourceStatusRow[],
-  wired: readonly SourceKey[] = WIRED_SOURCES,
-): Set<SourceKey> {
-  const live = new Set<SourceKey>(wired);
-
-  for (const r of rows) {
-    if (!r.is_enabled) {
-      live.delete(r.source_key);
-      continue;
-    }
-    if (r.mode === 'live') live.add(r.source_key);
-    else if (r.mode === 'failed' || r.mode === 'degraded' || r.mode === 'mock') {
-      live.delete(r.source_key);
-    }
-  }
-
-  return live;
+export function computeObservedSources(rows: readonly SourceStatusRow[], now = Date.now()): Set<SourceKey> {
+  return new Set(rows.filter((r) => {
+    if (!r.is_enabled || r.mode !== 'live' || !r.last_success_at) return false;
+    const at = Date.parse(r.last_success_at);
+    return Number.isFinite(at) && at <= now && now - at <= 5 * 60 * 1000;
+  }).map((r) => r.source_key));
 }
 
 export interface SyncReading {
   at: string | null;
-  /**
-   * True when the timestamp is "now" standing in for direct-fetch sources rather
-   * than a reported success. Drives the footer tooltip — the number was silently
-   * fabricated before, which is the thing being fixed.
-   */
-  fromDirectFetch: boolean;
 }
 
 /**
  * When the data on screen was last known good.
  *
- * Direct-fetch sources never report a success timestamp — nothing writes one for
- * them — but their responses are at most one revalidate window old by
- * construction, so "now" is a defensible reading *while any of them is counted
- * live*. Once every live source is one that reports, the reported time is used
- * instead, and the tooltip says which of the two the reader is looking at.
+ * A missing timestamp stays missing. The caller can therefore distinguish an
+ * unobserved feed from one whose ingestion job has recently succeeded.
  */
-export function computeSync(
-  rows: readonly SourceStatusRow[],
-  liveKeys: ReadonlySet<SourceKey>,
-  wired: readonly SourceKey[] = WIRED_SOURCES,
-  now: Date = new Date(),
-): SyncReading {
+export function computeSync(rows: readonly SourceStatusRow[], now = Date.now()): SyncReading {
   const reported = new Map<SourceKey, string>();
   for (const r of rows) {
-    if (r.last_success_at) reported.set(r.source_key, r.last_success_at);
+    if (r.is_enabled && r.mode === 'live' && r.last_success_at) {
+      const at = Date.parse(r.last_success_at);
+      if (Number.isFinite(at) && at <= now) reported.set(r.source_key, r.last_success_at);
+    }
   }
 
-  const directFetchCounted = wired.some((k) => liveKeys.has(k) && !reported.has(k));
-  if (directFetchCounted) return { at: now.toISOString(), fromDirectFetch: true };
-
-  const times = [...reported.values()].sort();
-  return { at: times.length > 0 ? times[times.length - 1] : null, fromDirectFetch: false };
+  const times = [...reported.values()].sort((a, b) => Date.parse(a) - Date.parse(b));
+  return { at: times.length > 0 ? times[times.length - 1] : null };
 }
 
 export async function getFeedHealth(): Promise<FeedHealth> {
@@ -93,16 +54,16 @@ export async function getFeedHealth(): Promise<FeedHealth> {
   const rows = [...statuses.values()];
 
   const enabled = rows.length > 0 ? rows.filter((r) => r.is_enabled).length : ENABLED_SOURCE_COUNT;
-  const liveKeys = computeLiveSources(rows);
-  const sync = computeSync(rows, liveKeys);
+  const now = Date.now();
+  const observedKeys = computeObservedSources(rows, now);
+  const sync = computeSync(rows, now);
 
   const model = await getActiveModel();
 
   return {
-    live: liveKeys.size,
+    observed: observedKeys.size,
     enabled,
     lastSyncAt: sync.at,
-    syncFromDirectFetch: sync.fromDirectFetch,
     modelName: model.name,
     modelVersion: model.version,
     modelIsPlaceholder: model.isPlaceholder,
@@ -135,5 +96,5 @@ async function getActiveModel(): Promise<{ name: string; version: string; isPlac
 export function isStale(lastSyncAt: string | null, now = Date.now()): boolean {
   if (!lastSyncAt) return true;
   const t = Date.parse(lastSyncAt);
-  return !Number.isFinite(t) || now - t > 5 * 60 * 1000;
+  return !Number.isFinite(t) || t > now || now - t > 5 * 60 * 1000;
 }

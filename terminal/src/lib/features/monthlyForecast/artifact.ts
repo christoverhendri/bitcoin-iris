@@ -6,6 +6,10 @@ export interface ForecastArtifact {
   venue: string;
   origin: string;
   target_end: string;
+  /** Information cutoff used to build the forecast. */
+  as_of: string;
+  /** Wall-clock time at which this artifact was exported. */
+  generated_at: string;
   horizon_days: 30;
   feature_cutoff: string;
   training_cutoff: string;
@@ -44,9 +48,13 @@ export function validateForecastArtifact(raw: unknown, now = Date.now()): Foreca
   const a = raw as Record<string, unknown>;
   if (a.schema_version !== 1 || a.instrument !== 'BTC/USD' || a.horizon_days !== 30) fail('unsupported schema, instrument, or horizon');
   if (typeof a.venue !== 'string' || !a.venue.trim()) fail('venue is required');
-  if (!isoUtc(a.origin) || !isoUtc(a.target_end) || !isoUtc(a.feature_cutoff) || !isoUtc(a.training_cutoff)) fail('timestamps must be ISO UTC');
+  if (!isoUtc(a.origin) || !isoUtc(a.target_end) || !isoUtc(a.as_of) || !isoUtc(a.generated_at) || !isoUtc(a.feature_cutoff) || !isoUtc(a.training_cutoff)) fail('timestamps must be ISO UTC');
   const origin = Date.parse(a.origin as string);
   if (origin > now) fail('origin is in the future');
+  if (Date.parse(a.generated_at as string) > now) fail('generated_at is in the future');
+  if (Date.parse(a.as_of as string) > now) fail('as_of is in the future');
+  if (Date.parse(a.as_of as string) < origin) fail('as_of must include the forecast origin');
+  if (Date.parse(a.generated_at as string) < Date.parse(a.as_of as string)) fail('generated_at precedes the information cutoff');
   if (now - origin > 48 * 60 * 60 * 1000) fail('origin is older than 48 hours');
   if (Date.parse(a.target_end as string) !== origin + 30 * 24 * 60 * 60 * 1000) fail('target_end must equal origin plus 30 days');
   if (Date.parse(a.feature_cutoff as string) > origin) fail('feature_cutoff is after origin');

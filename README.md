@@ -5,9 +5,9 @@ Repositori riset forecasting Bitcoin dan **IRIS BTC Intelligence Terminal**.
 ## Status integrasi
 
 - `terminal/`: aplikasi Next.js, React, dan TypeScript untuk harga, indikator, berita, sentiment, on-chain, makro, dan forecast.
-- `news_pipeline/`: pipeline Python Watcher.Guru, parser, penyimpanan, dan modelling. Snapshot v2 membawa semantic events, evidence, review flags, dan ranking weight ke NEWS; model prediksi Python belum terhubung. RSS tetap memakai aturan headline terminal.
+- `news_pipeline/`: pipeline Python Watcher.Guru, parser, penyimpanan, dan modelling. Proyeksi SQLite v2 membawa semantic events, evidence, review flags, dan ranking weight ke NEWS; model prediksi Python belum terhubung. RSS tetap memakai aturan headline terminal.
 - `bitcoin iris/`: dataset, baseline Python, notebook, dan laporan riset.
-- **Model XGBoost riset belum terhubung ke terminal.** Forecast bulanan terminal menggunakan bootstrap Monte Carlo.
+- **Model XGBoost riset belum terhubung ke terminal.** Forecast bulanan memakai bootstrap secara default; `IRIS_FORECAST_PATH` mengaktifkan adapter artifact tervalidasi. Artifact research-only ditolak.
 - Startup tidak memerlukan kredensial. Fitur tambahan dapat memerlukan provider, database, atau ingestion.
 - Berita tidak menggunakan headline contoh. Whale Wire production menampilkan unavailable jika sumber kosong/sintetis; fitur lain dapat menggunakan placeholder berlabel MOCK.
 
@@ -115,8 +115,8 @@ pemeriksaan tambahan registry alamat exchange melalui provider eksternal.
 - [Menjalankan pipeline forecast dan adapter terminal](docs/forecast_pipeline.md)
 - [Panduan teknis terminal](terminal/README.md)
 - [Integrasi semantic parser Watcher.Guru](terminal/docs/WATCHER_GURU_TEST.md)
-- [Integrasi dan batas operasional](terminal/docs/INTEGRATION.md)
-- [Audit berita](terminal/docs/NEWS_SOURCE_AUDIT.md)
+- [Integrasi dan batas operasional](docs/integration.md)
+- [Arsip audit berita 2026-09-06](terminal/docs/archive/2026-09-08/NEWS_SOURCE_AUDIT.md)
 - [Token desain](terminal/docs/DESIGN_TOKENS.md)
 - [Dataset](bitcoin%20iris/dataset/README.md)
 - [Laporan forecasting bulanan](bitcoin%20iris/STATUS_REPORT_monthly_forecasting.md)

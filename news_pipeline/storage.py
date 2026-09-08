@@ -96,6 +96,7 @@ def connect(path):
             fingerprint TEXT PRIMARY KEY, reason TEXT NOT NULL, sample TEXT NOT NULL,
             created_at TEXT NOT NULL);
         CREATE TABLE IF NOT EXISTS checkpoints (name TEXT PRIMARY KEY, payload TEXT NOT NULL);
+        CREATE TABLE IF NOT EXISTS source_health (source TEXT PRIMARY KEY, payload TEXT NOT NULL);
         CREATE TABLE IF NOT EXISTS fetch_pages (
             id INTEGER PRIMARY KEY, before_id INTEGER, observed_at TEXT NOT NULL,
             html TEXT NOT NULL, state TEXT NOT NULL DEFAULT 'pending', error TEXT);
@@ -246,5 +247,6 @@ def status(database):
     with connect(database) as db:
         return {'raw': dict(db.execute('SELECT state,count(*) FROM raw_posts GROUP BY state').fetchall()),
                 'quarantine': db.execute('SELECT count(*) FROM quarantine').fetchone()[0],
+                'source_health': {r[0]: json.loads(r[1]) for r in db.execute('SELECT source,payload FROM source_health')},
                 'pages': dict(db.execute('SELECT state,count(*) FROM fetch_pages GROUP BY state').fetchall()),
                 'checkpoint': [json.loads(r[0]) for r in db.execute('SELECT payload FROM checkpoints')]}

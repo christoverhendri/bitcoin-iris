@@ -1,8 +1,10 @@
 import { afterEach, expect, it, vi } from 'vitest';
-import { parseWatcherSnapshot } from './watcherGuru';
+import { parseWatcherSnapshot, getWatcherGuruSnapshot } from './watcherGuru';
 import fixture from './fixtures/semantic-news.json';
 import { semanticCategory } from './semanticNews';
-afterEach(() => vi.useRealTimers());
+vi.mock('node:fs/promises', () => ({ stat: vi.fn(), readFile: vi.fn() }));
+import { stat, readFile } from 'node:fs/promises';
+afterEach(() => { vi.useRealTimers(); vi.restoreAllMocks(); });
 it('deduplicates posts, keeps latest edits and rejects unsafe IDs, invalid dates and old history', () => {
   const post = { source_id: '123', raw_text: 'Bitcoin rally', published_at: new Date().toISOString() };
   const result = parseWatcherSnapshot({ version: 1, records: [post, { ...post, raw_text: 'Bitcoin crash' },
@@ -39,4 +41,40 @@ it('rejects invalid v2 evidence or weights instead of falling back to headline s
     mutate(record);
     expect(parseWatcherSnapshot({ version: 2, records: [record] }).items).toEqual([]);
   }
+});
+
+
+it('does not turn a failed fetch or a new export into source freshness', () => {
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date('2026-09-08T00:00:00Z'));
+  const result = parseWatcherSnapshot({ ...fixture, generated_at: '2026-09-08T00:00:00Z',
+    fetched_at: '2026-09-07T12:00:00Z', attempted_at: '2026-09-08T00:00:00Z',
+    source_health: { status: 'failed' } });
+  expect(result.asOf).toBe('2026-09-07T12:00:00Z');
+  expect(result.health.status).toBe('stale');
+  expect(parseWatcherSnapshot(fixture).asOf).toBeUndefined();
+  const recentFailure = parseWatcherSnapshot({ ...fixture, fetched_at: '2026-09-07T23:59:00Z',
+    source_health: { status: 'failed' } });
+  expect(recentFailure.health.status).toBe('stale');
+});
+
+
+it('rejects noncanonical runtime snapshots and reports missing files unavailable', async () => {
+  vi.mocked(stat).mockResolvedValue({ size: 100 } as Awaited<ReturnType<typeof stat>>);
+  vi.mocked(readFile).mockResolvedValue(JSON.stringify(fixture));
+  vi.spyOn(console, 'warn').mockImplementation(() => {});
+  expect((await getWatcherGuruSnapshot()).health.status).toBe('unavailable');
+  vi.mocked(stat).mockRejectedValue(Object.assign(new Error('missing'), { code: 'ENOENT' }));
+  expect((await getWatcherGuruSnapshot()).asOf).toBeUndefined();
+});
+
+it('serves canonical runtime projections with observed success health', async () => {
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date('2026-09-08T00:00:00Z'));
+  vi.mocked(stat).mockResolvedValue({ size: 100 } as Awaited<ReturnType<typeof stat>>);
+  vi.mocked(readFile).mockResolvedValue(JSON.stringify({ ...fixture, origin: 'durable_store',
+    fetched_at: '2026-09-07T23:59:00Z', source_health: { status: 'ok' } }));
+  const result = await getWatcherGuruSnapshot();
+  expect(result.items).toHaveLength(7);
+  expect(result.health.status).toBe('ok');
 });

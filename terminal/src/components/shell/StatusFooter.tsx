@@ -1,32 +1,26 @@
 import { fmtAgo } from '@/lib/format';
 
 export interface FeedHealth {
-  /** Sources currently reporting `mode = 'live'`. */
-  live: number;
+  /** Sources with a successful, observed ingestion result. */
+  observed: number;
   /** Sources that are enabled at all. */
   enabled: number;
-  /** Newest `last_success_at` across all sources, ISO. */
+  /** Newest valid success from enabled reporting sources, ISO. */
   lastSyncAt: string | null;
-  /**
-   * True when `lastSyncAt` is the current time standing in for direct-fetch
-   * sources, rather than a success any job reported. The tooltip says so — this
-   * number used to be `new Date()` with nothing on screen admitting it.
-   */
-  syncFromDirectFetch: boolean;
   modelName: string;
   modelVersion: string;
   modelIsPlaceholder: boolean;
 }
 
 /**
- * The pinned rail footer: `FEEDS 4/17 · MODEL v0.9.2 · SYNC 2m ago`.
- * Everything here is read from `data_source_status` and `model_registry`, so it
- * cannot claim a feed is live while the panel above it shows placeholder data.
+ * The pinned rail footer: `OBSERVED 4/17 · MODEL v0.9.2 · SYNC 2m ago`.
+ * Reports come from `data_source_status` and `model_registry`. This summarizes
+ * recent ingestion observations; it is not a guarantee that every panel query succeeds.
  */
 export function StatusFooter({ health, now }: { health: FeedHealth; now?: number }) {
-  const allLive = health.live === health.enabled && health.enabled > 0;
-  const someLive = health.live > 0;
-  const feedsTone = allLive ? 'var(--up)' : someLive ? 'var(--amber)' : 'var(--dim)';
+  const allObserved = health.observed === health.enabled && health.enabled > 0;
+  const someObserved = health.observed > 0;
+  const feedsTone = allObserved ? 'var(--up)' : someObserved ? 'var(--amber)' : 'var(--dim)';
 
   return (
     <div
@@ -42,9 +36,9 @@ export function StatusFooter({ health, now }: { health: FeedHealth; now?: number
       }}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
-        <span style={{ color: 'var(--dim)' }}>FEEDS</span>
+        <span style={{ color: 'var(--dim)' }}>OBSERVED</span>
         <span style={{ color: feedsTone }}>
-          {health.live}/{health.enabled}
+          {health.observed}/{health.enabled}
         </span>
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
@@ -61,13 +55,11 @@ export function StatusFooter({ health, now }: { health: FeedHealth; now?: number
         <span
           style={{ color: 'var(--mut)' }}
           title={
-            health.syncFromDirectFetch
-              ? 'Direct-fetch sources report no success timestamp. Their responses are at most one revalidate window old, so the current time stands in.'
-              : 'Newest success reported by an ingestion job.'
+            'Newest successful observation reported by an ingestion job.'
           }
         >
           {/* Use the serialized server snapshot, never the hydration-time clock. */}
-          {now !== undefined ? fmtAgo(health.lastSyncAt, now) : health.syncFromDirectFetch ? 'ON DEMAND' : health.lastSyncAt ? health.lastSyncAt.replace('T', ' ').slice(0, 16) + ' UTC' : 'UNKNOWN'}
+          {now !== undefined ? fmtAgo(health.lastSyncAt, now) : health.lastSyncAt ? health.lastSyncAt.replace('T', ' ').slice(0, 16) + ' UTC' : 'UNKNOWN'}
         </span>
       </div>
     </div>

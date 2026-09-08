@@ -10,11 +10,8 @@
 --     becomes an UPDATE rather than a deploy
 --   - an ingestion job can report what actually happened on its last run
 --
--- Important: seeding this table does NOT reduce the feed count. `computeLiveSources`
--- in src/lib/features/feedHealth/index.ts treats these rows as corrections to the
--- static wired list, not as a replacement for it. A row at mode 'unknown' says
--- nothing and changes nothing. That behaviour is covered by feedHealth.test.ts —
--- if it regresses, the rail footer collapses to near zero with nothing broken.
+-- Health is based on observed successful ingestion rows. A seeded row at mode
+-- 'unknown' is catalogue metadata, not evidence that the feed is healthy.
 --
 -- Column names and types must stay in step with `SourceStatusRow` in
 -- src/lib/sourceStatus.ts, which is the read contract.
@@ -67,7 +64,7 @@ values
   ('internal_quant', 'Quant pipeline', 'quant', false, true, null),
   ('internal_forecast', 'Forecast pipeline', 'forecast', false, true, null),
   ('alternative_me', 'Fear & Greed (alternative.me)', 'sentiment', false, true, null),
-  ('fred', 'FRED', 'macro', true, true, 'Register a free FRED API key and set FRED_API_KEY in worker/.env.'),
+  ('fred', 'FRED', 'macro', true, true, 'Macro provider is not configured. Set FRED_API_KEY in terminal/.env.local and restart the server.'),
   ('internal_macro_regime', 'Macro regime engine', 'macro', false, true, null),
   ('cryptopanic', 'CryptoPanic', 'news', true, true, 'CryptoPanic developer plan is free — set CRYPTOPANIC_TOKEN in worker/.env.'),
   ('rss', 'Crypto RSS feeds', 'news', false, true, null),

@@ -1,59 +1,30 @@
-# Watcher.Guru: integrasi semantic parser
+# Watcher.Guru canonical integration
 
-NEWS menggabungkan RSS dengan snapshot lokal Watcher.Guru. Snapshot v2 menjalankan
-`parse_news()` dan `weight_post()` milik pipeline Python. Raw text, evidence dengan
-offset Unicode codepoint, review flags, parser version, dan faktor ranking weight
-dipertahankan. Kategori terminal dipetakan dari jenis event, bukan pencocokan judul ulang.
+The supported path is SQLite raw inbox -> current parser -> terminal projection -> NEWS/SSE.
+See the [current integration contract](../../docs/integration.md) for timestamps, health,
+retention and source coverage. Semantic polarity is an assertion, not market sentiment;
+NEWS shows REVIEW or NO DIRECTION and a separate ranking weight.
 
-Polarity `affirmed`/`negated` menyatakan assertion, bukan bullish/bearish. Karena parser
-belum mengestimasi arah harga, baris semantic menampilkan `REVIEW` atau `NO DIRECTION`.
-Ranking weight ditampilkan terpisah dengan waktu evaluasinya; field impact untuk baris
-ini bernilai null. Weight menggunakan relevance, evidence, certainty, timestamp quality,
-freshness (half-life 24 jam), dan novelty dari pipeline; bukan probabilitas atau prediksi.
-Urutan NEWS tetap terbaru dahulu. Weight tidak dibandingkan dengan impact RSS.
-
-RSS dan snapshot v1 masih memakai aturan headline terminal. Skor sentiment agregat,
-Confluence, dan peta tetap memakai sumber sebelumnya. Model prediksi Python belum terhubung.
-
-Dari root repositori, gunakan environment Python pipeline yang sudah disiapkan:
+From the repository root:
 
 ```powershell
-# Import histori lokal: simpan hanya 30 hari terakhir, maksimum 2.000 post.
-.venv/Scripts/python.exe -m news_pipeline.terminal_snapshot
-# Ambil halaman terbaru satu kali; cooldown tersimpan lima menit antarpercobaan.
+# Collect, process and publish continuously.
+.venv/Scripts/python.exe -m news_pipeline data run --watch --interval 60
+# Publish an existing canonical database without fetching.
+.venv/Scripts/python.exe -m news_pipeline.terminal_snapshot --database artifacts/news/data.sqlite
+# One canonical collection/processing/publication cycle.
 .venv/Scripts/python.exe -m news_pipeline.terminal_snapshot --live
 ```
 
-File `terminal/.data/watcher-guru.json` diabaikan Git. Penulisan atomik mempertahankan
-histori dan mengganti versi post dengan ID yang sama. Timestamp invalid dan post
-masa depan dibuang. Snapshot dibatasi 40 MiB; record terbaru diprioritaskan. Input yang
-melampaui batas parser dilewati. Jalankan satu writer. Ini alat manual, belum worker otomatis,
-bridge SQLite, atau catch-up halaman historis Telegram.
+For historical JSONL, run `data import --input <path>`, then `data process`, then publish.
+The old direct `--input` snapshot path has been removed. Legacy snapshots without
+`origin: durable_store` are unavailable until rebuilt through the canonical store.
+Do not regenerate fixture timestamps as a substitute for source fetch health.
 
-Terminal membaca ulang snapshot saat mengambil NEWS, termasuk siklus SSE.
-Build dan restart terminal setelah memasang perubahan kode. Pembaruan snapshot
-berikutnya tidak memerlukan build ulang. Sumber baris tampil sebagai `Watcher.Guru`;
-diagnostik kesehatan RSS belum mencakup sumber snapshot ini. File hilang berarti
-Watcher.Guru tidak aktif; file rusak dicatat di log tanpa mematikan RSS.
+The default output is `terminal/.data/watcher-guru.json`. Match a custom `--output` (or
+`data run --snapshot-output`) with the terminal's absolute `IRIS_WATCHER_SNAPSHOT`.
+No terminal restart is required when only the projection data changes.
 
-`--input` menerima JSONL dengan `source_id`, `raw_text`, dan `published_at`, termasuk
-ekspor `iris-parsed-post/v1`. Semantic parse dihitung ulang memakai parser terpasang
-dan weight dievaluasi pada waktu ekspor snapshot; assessment impor tidak dipercaya.
-Metadata observed/feature-ready, collection mode, dan content hash dipertahankan bila ada.
-Snapshot v1 yang sebelumnya sudah membersihkan text tidak dapat mengembalikan raw text
-asli; ekspor ulang dari sumber raw/SQLite untuk mendapatkan evidence asli lengkap.
-Snapshot v2 dengan versi parser/weight atau evidence tidak valid ditolak per record,
-tanpa fallback diam-diam ke aturan headline.
-Untuk lokasi lain, cocokkan `--output` dengan path absolut `IRIS_WATCHER_SNAPSHOT`
-pada environment server terminal. `generated_at` adalah waktu ekspor, bukan waktu
-publikasi atau bukti bahwa collector terus berjalan.
-
-Validasi dari root:
-
-```powershell
-.venv/Scripts/python.exe -m unittest discover -s tests -p test_terminal_snapshot.py
-npm --prefix terminal test -- --run src/lib/sources/watcherGuru.test.ts src/lib/features/news/live.test.ts
-```
-
-Fixture `terminal/src/lib/sources/fixtures/semantic-news.json` berasal dari publisher
-Python. Test memeriksa negasi, uncertainty, Unicode evidence, dan pemisahan weight/impact.
+Regression coverage includes failed fetch preserving success time, canonical edit ownership,
+raw evidence offsets, parser contract version, duplicate weighting and failed-source display.
+Run `python -m unittest discover -s tests` and `npm test` using the configured environments.

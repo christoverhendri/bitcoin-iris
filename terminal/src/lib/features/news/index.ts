@@ -1,5 +1,6 @@
 import { defineFeature } from '@/lib/defineFeature';
 import { fetchNews } from './live';
+import { getWatcherGuruSnapshot } from '@/lib/sources/watcherGuru';
 import { getCryptoNewsSnapshot } from '@/lib/sources/rss';
 import type { NewsArticle, NewsArgs } from './types';
 
@@ -21,6 +22,6 @@ export {
 
 export async function getNews(args: NewsArgs) {
   const news = await resolveNews(args);
-  const { feeds } = await getCryptoNewsSnapshot();
-  return { ...news, feeds };
+  const [{ feeds }, watcher] = await Promise.all([getCryptoNewsSnapshot(), getWatcherGuruSnapshot()]);
+  return { ...news, feeds: [...feeds, watcher.health] };
 }

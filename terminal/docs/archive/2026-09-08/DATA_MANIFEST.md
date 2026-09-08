@@ -1,3 +1,5 @@
+> Archived on 2026-09-08. Historical upstream/import observations and decisions; not current operational status. See [current integration contract](../../../../docs/integration.md).
+
 # Data Manifest
 
 Per-feature map of **variable name → database column → real source → what is

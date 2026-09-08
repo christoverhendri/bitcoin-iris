@@ -2,12 +2,17 @@
 import argparse
 import json
 import os
+import sys
+import logging
 import re
 import unicodedata
+import tempfile
 from datetime import timedelta
 from pathlib import Path
 
-from .core import DATA, ROOT, clean, fetch_latest, now, timestamp
+from .core import ROOT, clean, now, timestamp
+from .parser import VERSION
+from .storage import connect, writer_lock
 from .parser import parse_news
 from .weighting import weight_post
 
@@ -45,6 +50,9 @@ def publish(output, incoming, current=None):
         record['weighting'] = weight_post(record['semantic_parse'], record['published_at'], as_of, normalized in seen)
         seen.add(normalized)
     document = {'version': 2, 'generated_at': as_of.isoformat(), 'records': []}
+    if current.get('origin') == 'durable_store':
+        document['origin'] = 'durable_store'
+        document['source_health'] = current.get('source_health', {})
     for key in ('attempted_at', 'fetched_at'):
         if isinstance(current.get(key), str) and timestamp(current[key]):
             document[key] = current[key]
@@ -57,32 +65,66 @@ def publish(output, incoming, current=None):
             break
         document['records'].append(record)
     output.parent.mkdir(parents=True, exist_ok=True)
-    temporary = output.with_suffix('.tmp')
-    temporary.write_text(json.dumps(document, ensure_ascii=False), encoding='utf-8')
-    os.replace(temporary, output)
+    with tempfile.NamedTemporaryFile(mode='w', encoding='utf-8', dir=output.parent,
+                                     prefix=output.name + '.', suffix='.tmp', delete=False) as handle:
+        temporary = Path(handle.name)
+        json.dump(document, handle, ensure_ascii=False)
+    try:
+        os.replace(temporary, output)
+    finally:
+        temporary.unlink(missing_ok=True)
     return len(document['records'])
+
+
+
+def publish_database(database, output):
+    """The terminal projection is rebuilt only from canonical, processed records.
+
+    No previous snapshot merge: stale exports cannot resurrect superseded records.
+    Lock spans both the database read and publication to serialize projections.
+    """
+    if Path(database).resolve() == Path(output).resolve():
+        raise ValueError('Snapshot output must not overwrite the canonical database')
+    if not Path(database).is_file():
+        raise FileNotFoundError('Canonical database missing; run data import or data run first')
+    with writer_lock(database):
+        with connect(database) as db:
+            cutoff = (timestamp(now()) - timedelta(days=30)).isoformat()
+            records = [json.loads(row[0]) for row in db.execute(
+                """SELECT p.payload FROM raw_posts r JOIN parsed_posts p ON p.raw_id=r.id
+                   WHERE p.parser_version=? AND r.published_at>=? AND r.id=(
+                       SELECT MAX(latest.id) FROM raw_posts latest WHERE latest.source_id=r.source_id)
+                   ORDER BY r.published_at DESC LIMIT 2000""", (VERSION, cutoff))]
+            health_row = db.execute("SELECT payload FROM source_health WHERE source='watcher_guru'").fetchone()
+            health = json.loads(health_row[0]) if health_row else {}
+        return publish(Path(output), records, {'origin': 'durable_store', 'source_health': health,
+                       'attempted_at': health.get('attempted_at'), 'fetched_at': health.get('fetched_at')})
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--input', type=Path, default=DATA)
-    parser.add_argument('--live', action='store_true', help='Fetch latest public page once; five-minute cooldown')
+    parser.add_argument('--database', type=Path, default=ROOT / 'artifacts/news/data.sqlite')
+    parser.add_argument('--live', action='store_true', help='Collect and process through the canonical store before publishing')
     parser.add_argument('--output', type=Path, default=ROOT / 'terminal/.data/watcher-guru.json')
     args = parser.parse_args()
-    current = json.loads(args.output.read_text(encoding='utf-8')) if args.output.exists() else {}
     if args.live:
-        previous = timestamp(current.get('attempted_at'))
-        if previous and timestamp(now()) - previous < timedelta(minutes=5):
-            parser.error('Watcher.Guru GET cooldown: wait five minutes between attempts.')
-        # Persist the attempt before fetching so failures also respect the cooldown.
-        current['attempted_at'] = now()
-        publish(args.output, [], current)
-        incoming = fetch_latest()
-        current['fetched_at'] = now()
+        from .collector import collect
+        from .storage import process_pending
+        try:
+            collect(args.database)
+            process_pending(args.database)
+        finally:
+            # Publish failed attempt health without inventing a new fetch success.
+            original_error = sys.exc_info()[0]
+            try:
+                publish_database(args.database, args.output)
+            except Exception:
+                if original_error is None:
+                    raise
+                logging.exception('Snapshot publication failed; canonical data retained')
     else:
-        with args.input.open(encoding='utf-8') as handle:
-            incoming = [json.loads(line) for line in handle if line.strip()]
-    print(json.dumps({'items': publish(args.output, incoming, current), 'output': str(args.output)}))
+        publish_database(args.database, args.output)
+    print(json.dumps({'output': str(args.output)}))
 
 
 if __name__ == '__main__':

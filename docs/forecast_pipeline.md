@@ -75,7 +75,9 @@ using its outer test result; no model is automatically promoted to production.
 | `latest_forecast.json` | Versioned terminal contract; newest feature row survives unknown future labels |
 
 The export records instrument, venue, origin, target end, feature/information
-cutoffs, model version, hashes, reference close, return/price quantiles and
+cutoffs, model version, hashes, reference close, return/price quantiles,
+`as_of` (the forecast data cutoff), and `generated_at` (the UTC wall-clock export
+time), and
 `calibration.status = research_only`. `training_cutoff` is the last information
 endpoint used, including calibration labels. No intra-horizon path is invented.
 

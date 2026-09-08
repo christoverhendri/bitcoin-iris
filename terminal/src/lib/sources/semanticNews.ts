@@ -39,7 +39,7 @@ const unit = (value: unknown): value is number => typeof value === 'number' && N
 
 /** Validate the versioned Python contract before using it to label an article. */
 export function readSemanticNews(rawText: string, parsed: unknown, weighting: unknown): SemanticNews | undefined {
-  if (!object(parsed) || parsed.parser_version !== 'iris-news-rules/1.1.0' ||
+  if (!object(parsed) || parsed.parser_version !== 'iris-news-rules/1.2.0' ||
     parsed.offset_basis !== 'raw_text_unicode_codepoints' || typeof parsed.needs_review !== 'boolean' ||
     !['explicit_mention', 'undetermined'].includes(String(parsed.btc_relevance)) ||
     !Array.isArray(parsed.events) || parsed.events.length > 128) return;

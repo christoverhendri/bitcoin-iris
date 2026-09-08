@@ -5,6 +5,7 @@ const origin = '2026-09-08T00:00:00.000Z';
 const valid = {
   schema_version: 1, instrument: 'BTC/USD', venue: 'research', origin,
   target_end: '2026-10-08T00:00:00.000Z', horizon_days: 30,
+  as_of: '2026-09-08T00:00:00.000Z', generated_at: '2026-09-08T01:00:00.000Z',
   feature_cutoff: '2026-09-07T23:00:00.000Z', training_cutoff: '2026-09-07T00:00:00.000Z',
   data_sha256: 'a'.repeat(64), model_version: 'ridge-v1', reference_price: 100,
   return_quantiles: { p10: -0.1, p50: 0, p90: 0.2 },
@@ -28,6 +29,9 @@ describe('forecast artifact contract', () => {
   });
 
   it.each([
+    ['cutoff before origin', { as_of: '2026-09-07T23:59:00.000Z' }],
+    ['export before cutoff', { generated_at: '2026-09-07T23:59:00.000Z' }],
+    ['missing information cutoff', { as_of: undefined }],
     ['future origin', { origin: '2026-09-09T00:00:00.000Z' }],
     ['stale origin', { origin: '2026-09-01T00:00:00.000Z', target_end: '2026-10-01T00:00:00.000Z' }],
     ['wrong price transform', { price_quantiles: { ...valid.price_quantiles, p50: 101 } }],

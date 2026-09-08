@@ -1,3 +1,5 @@
+> Archived on 2026-09-08. Historical upstream/import observations and decisions; not current operational status. See [current integration contract](../../../../docs/integration.md).
+
 # DECISIONS
 
 Every number this terminal shows is either **data** (fetched from a source, reproducible)

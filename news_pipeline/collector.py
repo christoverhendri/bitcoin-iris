@@ -2,6 +2,8 @@
 import json
 import re
 import time
+from datetime import timedelta, timezone
+from email.utils import parsedate_to_datetime
 
 import requests
 import truststore
@@ -60,8 +62,7 @@ def page_records(html, observed):
     return records, ids, media
 
 
-@exclusive_writer
-def collect(database, max_pages=5, fetcher=fetch_page):
+def _collect(database, max_pages=5, fetcher=fetch_page):
     if not 1 <= max_pages <= 100:
         raise ValueError('max_pages must be 1..100')
     counts = dict(pages=0, inserted=0, duplicate=0, quarantined=0, media_skipped=0)
@@ -77,9 +78,17 @@ def collect(database, max_pages=5, fetcher=fetch_page):
                     raise ValueError('page_too_large')
                 with db:
                     ensure_capacity(db)
-                    cur = db.execute('INSERT INTO fetch_pages(before_id,observed_at,html) VALUES (?,?,?)',
-                                     (state['before'], utcnow().isoformat(), html))
-                page = db.execute('SELECT * FROM fetch_pages WHERE id=?', (cur.lastrowid,)).fetchone()
+                    existing = db.execute(
+                        "SELECT id FROM fetch_pages WHERE state='failed' AND before_id IS ? AND html=? LIMIT 1",
+                        (state['before'], html)).fetchone()
+                    if existing:
+                        page_id = existing['id']
+                        db.execute("UPDATE fetch_pages SET state='pending',observed_at=? WHERE id=?",
+                                   (utcnow().isoformat(), page_id))
+                    else:
+                        page_id = db.execute('INSERT INTO fetch_pages(before_id,observed_at,html) VALUES (?,?,?)',
+                                             (state['before'], utcnow().isoformat(), html)).lastrowid
+                page = db.execute('SELECT * FROM fetch_pages WHERE id=?', (page_id,)).fetchone()
             try:
                 records, ids, media = page_records(page['html'], date(page['observed_at']))
                 if state['before'] is not None and min(ids) >= state['before']:
@@ -108,5 +117,59 @@ def collect(database, max_pages=5, fetcher=fetch_page):
                     db.execute("UPDATE fetch_pages SET state='failed',error=? WHERE id=?",
                                (f'{type(exc).__name__}: {str(exc)[:200]}', page['id']))
                 raise
+        counts['fetched_at'] = page['observed_at']
         counts['checkpoint'] = state
     return counts
+
+
+def source_health(database):
+    with connect(database) as db:
+        row = db.execute("SELECT payload FROM source_health WHERE source='watcher_guru'").fetchone()
+        return json.loads(row[0]) if row else {}
+
+
+def _save_health(database, health):
+    with connect(database) as db, db:
+        db.execute('INSERT OR REPLACE INTO source_health VALUES (?,?)',
+                   ('watcher_guru', json.dumps(health)))
+
+
+@exclusive_writer
+def collect(database, max_pages=5, fetcher=fetch_page):
+    if not 1 <= max_pages <= 100:
+        raise ValueError('max_pages must be 1..100')
+    health = source_health(database)
+    at = utcnow()
+    retry_at = date(health.get('next_retry_at'))
+    if retry_at and at < retry_at:
+        return {'deferred': True, 'next_retry_at': retry_at.isoformat()}
+    health['attempted_at'] = at.isoformat()
+    _save_health(database, health)
+    try:
+        result = _collect(database, max_pages, fetcher)
+    except Exception as exc:
+        failures = health.get('failures', 0) + 1
+        delay = min(3600, 60 * 2 ** min(failures - 1, 6))
+        response = getattr(exc, 'response', None)
+        retry = response.headers.get('Retry-After') if response is not None else None
+        if retry:
+            try:
+                delay = max(delay, max(0, int(retry)))
+            except (ValueError, TypeError):
+                try:
+                    retry_date = parsedate_to_datetime(retry)
+                    if retry_date.tzinfo is None:
+                        retry_date = retry_date.replace(tzinfo=timezone.utc)
+                    delay = max(delay, (retry_date - at).total_seconds())
+                except (ValueError, TypeError, OverflowError):
+                    pass
+        # Bound hostile Retry-After values while allowing provider cooldowns up to seven days.
+        delay = min(delay, 7 * 86400)
+        health.update(status='failed', failures=failures,
+                      next_retry_at=(at + timedelta(seconds=delay)).isoformat())
+        _save_health(database, health)
+        raise
+    health.update(status='ok', failures=0, next_retry_at=None,
+                  fetched_at=result['fetched_at'], coverage=result['checkpoint']['coverage'])
+    _save_health(database, health)
+    return result
