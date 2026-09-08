@@ -50,6 +50,7 @@ export interface Envelope<T> {
   sourceKey: SourceKey;
   /** Copied from `data_source_status.unlock_note`; shown in the MOCK tooltip. */
   unlockNote: string | null;
+  unavailable?: boolean;
 }
 
 export const live = <T>(data: T, sourceKey: SourceKey, asOf: string | null): Envelope<T> => ({
@@ -75,6 +76,11 @@ export const mocked = <T>(
   asOf: null,
   sourceKey,
   unlockNote,
+});
+
+export const unavailable = <T>(data: T, sourceKey: SourceKey, message: string): Envelope<T> => ({
+  data, isMock: false, missingSource: sourceKey, reason: null, asOf: null, sourceKey,
+  unlockNote: message, unavailable: true,
 });
 
 const REASON_TEXT: Record<MockReason, string> = {

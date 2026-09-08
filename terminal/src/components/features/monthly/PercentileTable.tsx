@@ -12,12 +12,12 @@ export function PercentileTable({ forecast }: PercentileTableProps) {
   const f = forecast.data;
   const labels = toMonthlyForecastLabels(f);
   const n = f.pathPct?.length ?? 0;
-  const p50ok = f.p50 !== 0;
+  const p50ok = f.p50 != null && f.p50 !== 0;
 
   const rows = [
-    { pct: 'P90', target: labels.p90, delta: p50ok ? (f.p90 / f.p50 - 1) * 100 : null, color: 'var(--up)' },
+    { pct: 'P90', target: labels.p90, delta: p50ok && f.p90 != null ? (f.p90 / f.p50! - 1) * 100 : null, color: 'var(--up)' },
     { pct: 'P50', target: labels.p50, delta: p50ok ? 0 : null, color: 'var(--blue)' },
-    { pct: 'P10', target: labels.p10, delta: p50ok ? (f.p10 / f.p50 - 1) * 100 : null, color: 'var(--down)' },
+    { pct: 'P10', target: labels.p10, delta: p50ok && f.p10 != null ? (f.p10 / f.p50! - 1) * 100 : null, color: 'var(--down)' },
   ];
 
   return (
@@ -61,9 +61,12 @@ export function PercentileTable({ forecast }: PercentileTableProps) {
         >
           SIMULATION META
         </div>
-        <KeyValueRow label="HORIZON" value={n >= 2 ? `${n - 1} days` : '—'} />
+        <KeyValueRow label="HORIZON" value={f.horizonDays ? `${f.horizonDays} days` : n >= 2 ? `${n - 1} days` : '—'} />
         <KeyValueRow label="PERCENTILE BANDS" value="P10 / P50 / P90" />
-        <KeyValueRow label="METHOD" value="Random-walk Monte Carlo" />
+        <KeyValueRow label="METHOD" value={f.method ?? 'Random-walk Monte Carlo'} />
+        {f.origin && <KeyValueRow label="ORIGIN" value={f.origin.replace('T', ' ').replace('Z', ' UTC')} />}
+        {f.targetEnd && <KeyValueRow label="TARGET END" value={f.targetEnd.replace('T', ' ').replace('Z', ' UTC')} />}
+        {f.provenance && <KeyValueRow label="PROVENANCE" value={f.provenance} />}
       </div>
       <SourceFootnote env={forecast} />
     </Panel>

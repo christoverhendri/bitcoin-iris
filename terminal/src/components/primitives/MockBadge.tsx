@@ -6,6 +6,7 @@ import { type Envelope, explainMock } from '@/lib/envelope';
  * is on it, because both come from the same `isMock` flag.
  */
 export function MockBadge<T>({ env }: { env: Envelope<T> }) {
+  if (env.unavailable) return <span className="iris-micro" title={env.unlockNote ?? 'Forecast unavailable'} style={{ fontFamily: 'var(--mono)', fontSize: 8.5, letterSpacing: '.14em', color: 'var(--amber)', border: '1px solid var(--line2)', padding: '2px 6px', lineHeight: 1 }}>UNAVAILABLE</span>;
   if (!env.isMock) return null;
   return (
     <span
@@ -93,8 +94,8 @@ export function SourceFootnote<T>({ env }: { env: Envelope<T>; now?: number }) {
     >
       SOURCE: {env.sourceKey.toUpperCase().replace(/_/g, ' ')}
       {' · '}
-      {env.isMock ? 'DEMO DATA · NOT LIVE' : `REPORTED AS OF ${validDate ? new Date(env.asOf!).toISOString().replace('T', ' ').slice(0, 16) + ' UTC' : 'UNKNOWN'}`}
-      {env.isMock && env.unlockNote && <div style={{ marginTop: 5, letterSpacing: 0 }}>{env.unlockNote}</div>}
+      {env.unavailable ? 'UNAVAILABLE' : env.isMock ? 'DEMO DATA · NOT LIVE' : `REPORTED AS OF ${validDate ? new Date(env.asOf!).toISOString().replace('T', ' ').slice(0, 16) + ' UTC' : 'UNKNOWN'}`}
+      {(env.isMock || env.unavailable) && env.unlockNote && <div style={{ marginTop: 5, letterSpacing: 0 }}>{env.unlockNote}</div>}
     </div>
   );
 }

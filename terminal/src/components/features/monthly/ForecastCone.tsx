@@ -16,7 +16,7 @@ export function ForecastCone({ forecast }: ForecastConeProps) {
   const labels = toMonthlyForecastLabels(f);
   const path = f.pathPct ?? [];
   const n = path.length;
-  const usable = n >= 2 && f.p50 !== 0;
+  const usable = n >= 2 && f.p50 != null && f.p50 !== 0;
 
   let body: React.ReactNode;
 
@@ -26,7 +26,7 @@ export function ForecastCone({ forecast }: ForecastConeProps) {
         className="iris-micro"
         style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--mut)', padding: '24px 12px' }}
       >
-        INSUFFICIENT SIMULATION PATH DATA
+        {f.endpointOnly ? 'ENDPOINT-ONLY FORECAST · PATH NOT PUBLISHED' : 'INSUFFICIENT SIMULATION PATH DATA'}
       </div>
     );
   } else {
@@ -34,8 +34,8 @@ export function ForecastCone({ forecast }: ForecastConeProps) {
     const rel = path.map((v) => v - base);
     const endShift = rel[n - 1];
     const mid = rel.map((v, i) => v - endShift * (i / (n - 1)));
-    const p10rel = (f.p10 / f.p50 - 1) * 100;
-    const p90rel = (f.p90 / f.p50 - 1) * 100;
+    const p10rel = (f.p10! / f.p50! - 1) * 100;
+    const p90rel = (f.p90! / f.p50! - 1) * 100;
     const lower = mid.map((v, i) => v + p10rel * Math.sqrt(i / (n - 1)));
     const upper = mid.map((v, i) => v + p90rel * Math.sqrt(i / (n - 1)));
 
@@ -98,7 +98,7 @@ export function ForecastCone({ forecast }: ForecastConeProps) {
           <polyline points={poly(lower)} fill="none" stroke="var(--down)" strokeWidth={1} vectorEffect="non-scaling-stroke" />
           <polyline points={poly(mid)} fill="none" stroke="var(--blue)" strokeWidth={1} vectorEffect="non-scaling-stroke" />
         </svg>
-        <div className="chart-scale" aria-label="Illustrative price scale in USD">{[yMax, (yMax+yMin)/2, yMin].map((v,i) => <span key={i}>{(f.p50*(1+v/100)).toLocaleString('en-US',{maximumFractionDigits:0})}</span>)}</div>
+        <div className="chart-scale" aria-label="Illustrative price scale in USD">{[yMax, (yMax+yMin)/2, yMin].map((v,i) => <span key={i}>{(f.p50!*(1+v/100)).toLocaleString('en-US',{maximumFractionDigits:0})}</span>)}</div>
         </div>
         <div className="chart-dates"><span>Day 0</span><span>USD · simulation horizon</span><span>Day {n-1}</span></div>
         <p className="method-note">Illustrative interpolation to terminal P10/P50/P90 targets. The shaded range spans the middle 80% of simulated terminal outcomes; it is not a validated 80% coverage guarantee for the intervening path.</p>

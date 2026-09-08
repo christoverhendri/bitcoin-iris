@@ -111,6 +111,8 @@ pemeriksaan tambahan registry alamat exchange melalui provider eksternal.
 
 ## Dokumentasi
 
+- [Spesifikasi sistem pasar dan keputusan integrasi Quant Iris](docs/market_system_specification.md)
+- [Menjalankan pipeline forecast dan adapter terminal](docs/forecast_pipeline.md)
 - [Panduan teknis terminal](terminal/README.md)
 - [Integrasi semantic parser Watcher.Guru](terminal/docs/WATCHER_GURU_TEST.md)
 - [Integrasi dan batas operasional](terminal/docs/INTEGRATION.md)
