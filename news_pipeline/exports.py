@@ -32,10 +32,21 @@ def export_data(database, output, as_of, daily=False, time_basis='ready'):
             available = date(payload['feature_ready_at'] if time_basis == 'ready' else payload['published_at'])
             if available is None or available > cutoff:
                 continue
-            # One known version per post at the requested cutoff. Publication mode is retrospective.
+            # Content versions can be imported out of order, and old versions may
+            # be processed after newer edits. Never choose a version from raw id
+            # or processing completion order alone. For live exports the source
+            # observation timestamp is the version order; for retrospective
+            # research, publication time is the only available approximation.
+            version_at = date(row['observed_at']) if time_basis == 'ready' else date(payload['published_at'])
+            if version_at is None or version_at > cutoff:
+                continue
             key = (row['source_id'], available.date()) if daily else row['source_id']
-            selected[key] = (available, row, payload)
-        ordered = sorted(selected.values(), key=lambda item: (item[0], item[1]['id']))
+            previous = selected.get(key)
+            version_order = (version_at, row['id'])
+            if previous is None or version_order > previous[0]:
+                selected[key] = (version_order, available, row, payload)
+        ordered = sorted((entry[1:] for entry in selected.values()),
+                         key=lambda item: (item[0], item[1]['id']))
         seen, records = set(), []
         for available, row, payload in ordered:
             duplicate = row['text_hash'] in seen
@@ -63,7 +74,6 @@ def export_data(database, output, as_of, daily=False, time_basis='ready'):
                 group['btc_mentions'] += p['btc_relevance'] == 'explicit_mention'
                 group['supported_events'] += len(p['events'])
                 group['review_posts'] += p['needs_review']
-                # Daily weights are evaluated at day-end, capped by the requested cutoff.
                 end = date(record['export']['available_at'][:10] + 'T23:59:59.999999+00:00')
                 group['weight_sum'] += weight_post(p, record['published_at'], min(end, cutoff))['post_weight']
             writer = csv.DictWriter(dest, fieldnames=['date', 'posts', 'unique_texts', 'btc_mentions',
