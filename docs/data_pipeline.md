@@ -159,3 +159,8 @@ forecast contribution before using it as a decision signal.
 No automatic data deletion occurs at the database budget. Archive/rotate the
 database before continuing. Future production needs include retention policy,
 disk monitoring and long-running availability tests.
+
+## Free market/on-chain data foundation (separate)
+
+The `news_pipeline data` commands remain the canonical Watcher.Guru inbox.
+The independent `market_data/` package adds a **free, noncommercial** Coin Metrics Community collector, a validated local observation store, and as-of queries. It does not mix sources into research price CSVs or activate any forecasting model. Read [free-data sources and commands](free_data_sources.md). Legacy master CSVs with backfills or estimated macro release lags remain retrospective research inputs, not point-in-time-validated historical features.

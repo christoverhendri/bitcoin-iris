@@ -93,6 +93,10 @@ terekam tidak bisa dipulihkan dari arsip lokal. Backfill sitemap dan API berita
 berbayar belum ditambahkan. SSE memperbarui daftar berita; skor sentiment dan
 marker peta masih snapshot saat halaman dibuka. Detail feed hanya muncul di development.
 
+## Free research data foundation
+
+`market_data/` collects Coin Metrics **Community** Bitcoin on-chain metrics without a paid key, stores immutable CSV + SHA-256 provenance, and imports validated observations into an append-only local SQLite store. Missing values stay missing; as-of queries cannot use measurements that were not observed at the forecast origin. This is for **noncommercial research**, not automatically deployed forecasting. See [free data sources, setup and limitations](docs/free_data_sources.md).
+
 ## Pipeline news Python
 
 Pipeline Watcher.Guru dijalankan terpisah dengan Python 3.11+. Lihat [setup dan baseline](docs/news_pipeline_quickstart.md), [durable data pipeline](docs/data_pipeline.md), dan [modelling annotation-free](docs/annotation_free_modelling.md). Dependensi root Python tidak diperlukan untuk terminal web.
