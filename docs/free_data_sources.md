@@ -64,6 +64,10 @@ forgery**, and the store does not claim historical vintages or vendor release
 hours. A local administrator with database access can still edit records.
 Do not set `historical_backtest_safe=true` to bypass this restriction.
 
+## Optional Parquet + DuckDB analytical snapshots (implemented)
+
+Canonical SQLite remains authoritative for revisions, `observed_at`, ingestion and checkpoint state. The optional warehouse reads SQLite in a snapshot transaction and exports ZSTD Parquet with all versions and missingness, while Coinbase price Parquet is built only from the hash-verified OHLCV CSV artifact. Existing Python diagnostic and forecast entry points can read the Parquet price path without altering their statistical methods. No model promotion, expensive inference, paid provider, or always-on server was added. See [research warehouse guide](warehouse.md); install `requirements-warehouse.txt` separately.
+
 ## Data correctness gates for next phase
 
 1. **Quarantine existing `bitcoin iris/dataset/master/*.csv` for retrospective research only** until rebuilt with verified availability. The legacy README explicitly documents `bfill()` and estimated macro release lags. `.ffill()` can only carry forward values already known at the forecasting origin; never `bfill()` for deployable history. Treat undefined periods as missing and report coverage. Fixed guessed publication lags do not replace an authoritative release/vintage calendar.
