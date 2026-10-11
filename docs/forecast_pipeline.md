@@ -5,6 +5,10 @@ the existing scikit-learn stack, with a terminal artifact adapter. It does not c
 Quant Iris source. The [system specification](market_system_specification.md) and
 [source audit](quant_iris_source_audit.md) explain the feature and architecture choices.
 
+## Optional Parquet price inputs
+
+The original CSV workflow remains supported. `market_data.warehouse prices` can create a hash-verified Coinbase `prices.parquet` with a sibling `provenance.json`. Pass that Parquet path to the existing `--prices` option after installing `requirements-warehouse.txt`. The loader verifies the warehouse manifest, column schema and hash; model inference still enforces venue identity. This is a research read model, **not** proof of original daily-bar publication latency or valid historical vintages. See [warehouse guide](warehouse.md).
+
 ## Run from the repository root
 
 Use the existing modelling environment (`requirements-model.txt`). All outputs

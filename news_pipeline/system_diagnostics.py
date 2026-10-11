@@ -12,7 +12,21 @@ DEFAULT_PRICES = Path(__file__).resolve().parents[1] / 'bitcoin iris/dataset/btc
 
 
 def load_close(path, as_of):
-    raw = pd.read_csv(path)
+    path = Path(path)
+    if path.suffix.lower() == '.parquet':
+        # Optional warehouse: validate its immutable manifest/hash before modelling.
+        from market_data.warehouse import verify_export
+        verified = verify_export(path.parent)
+        if verified['kind'] != 'prices' or path.name != 'prices.parquet':
+            raise ValueError('Expected a verified Coinbase prices.parquet warehouse')
+        import duckdb
+        with duckdb.connect(':memory:') as connection:
+            rows = connection.execute(
+                'SELECT date, Close FROM read_parquet(?)', [str(path)]
+            ).fetchall()
+        raw = pd.DataFrame(rows, columns=['date', 'Close'])
+    else:
+        raw = pd.read_csv(path)
     dates = pd.to_datetime(raw['date'], utc=True, errors='raise')
     if dates.isna().any() or dates.duplicated().any() or not dates.eq(dates.dt.normalize()).all():
         raise ValueError('Expected unique, nonmissing midnight UTC daily dates')

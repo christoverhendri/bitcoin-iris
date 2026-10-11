@@ -1,0 +1,2 @@
+# Optional offline analytics. SQLite ingestion and the Next.js terminal do NOT require this.
+duckdb>=1.3,<2
