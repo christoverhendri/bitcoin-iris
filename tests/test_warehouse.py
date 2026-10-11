@@ -102,6 +102,14 @@ class WarehouseTests(unittest.TestCase):
         self.assertEqual(exported['rows'], 400)
         self.assertEqual(verify_export(out)['rows'], 400)
         path = out / 'prices.parquet'
+        from market_data.quality import prices_report
+        from news_pipeline.forecast_model import require_price_quality
+        quality = prices_report(out, as_of='2026-10-12T00:00:00Z')
+        self.assertEqual(quality['quality_gate'], 'pass')
+        self.assertFalse(quality['historical_backtest_safe'])
+        report_file = self.root / 'verified_prices_quality.json'
+        report_file.write_text(json.dumps(quality), encoding='utf-8')
+        self.assertEqual(require_price_quality(path, report_file)['quality_gate'], 'pass')
         self.assertEqual(source_venue(path), 'coinbase-exchange')
         cutoff = '2026-02-06T00:00:00Z'
         close = load_close(path, cutoff)

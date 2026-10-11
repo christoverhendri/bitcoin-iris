@@ -176,7 +176,24 @@ def write_json(path, value):
         handle.write('\n')
 
 
+def require_price_quality(prices, quality_report=None):
+    """Parquet inputs must pass the immutable research data-quality gate.
+
+    CSV legacy research remains backward compatible; when a CSV report is
+    supplied, it is checked against the exact bytes before fitting/inference.
+    A quality pass is never model approval or historical-vintage certification.
+    """
+    prices = Path(prices)
+    if prices.suffix.lower() == '.parquet' and not quality_report:
+        raise ValueError('Parquet forecasting requires --quality-report; run market_data.quality prices first')
+    if quality_report:
+        from market_data.quality import verify_quality_report
+        return verify_quality_report(quality_report, prices)
+    return None
+
+
 def train(args):
+    require_price_quality(args.prices, getattr(args, 'quality_report', None))
     venue = source_venue(args.prices, args.venue)
     close = load_close(args.prices, args.as_of)
     frame = frame_from_close(close, args.horizon)
@@ -260,6 +277,7 @@ def main():
     parser.add_argument('--as-of', required=True)
     parser.add_argument('--horizon', type=int, choices=[7, 30], default=30)
     parser.add_argument('--venue', help='Source identity for custom CSV without provenance.json')
+    parser.add_argument('--quality-report', type=Path, help='Passing SHA-256-bound price quality report; required for Parquet')
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--model', type=Path, help='Trusted local joblib only (predict)')
     args = parser.parse_args()
@@ -268,6 +286,8 @@ def main():
     else:
         if args.model is None:
             parser.error('--model is required for predict')
+        # Guard an unverified Parquet input before trusting the local model file.
+        require_price_quality(args.prices, args.quality_report)
         bundle = joblib.load(args.model)
         if bundle.get('model_version') != VERSION or bundle.get('features') != FEATURES:
             raise ValueError('Unsupported model contract')

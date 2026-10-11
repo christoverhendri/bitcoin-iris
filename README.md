@@ -101,6 +101,22 @@ marker peta masih snapshot saat halaman dibuka. Detail feed hanya muncul di deve
 
 `market_data/warehouse.py` converts canonical SQLite on-chain revisions and verified Coinbase CSV snapshots into immutable ZSTD Parquet read-models. The optional `requirements-warehouse.txt` installs DuckDB for local analytics; terminal startup and ordinary ingestion remain unchanged. Existing Python forecasting and diagnostics accept verified `prices.parquet` through `--prices` with the same training/evaluation restrictions. See [warehouse setup, quality gates and integration tests](docs/warehouse.md).
 
+## Data Quality Gate and storage benchmarks
+
+`market_data.quality` validates hash-bound Coinbase OHLCV and canonical on-chain
+SQLite observations, reports missingness/revisions/freshness, and cross-checks
+separately sourced daily market candles. It emits new-only `data_quality_report.json`
+and exits nonzero for a failing operational gate. The existing legacy dataset
+is always labelled **research_only**. Parquet forecasting now requires a passing
+quality report bound to the exact file bytes; it still cannot become a validated
+market forecast automatically.
+
+`market_data.benchmark` compares equivalent SQLite and DuckDB/Parquet as-of read
+workloads, refuses data disagreement, and publishes measured timings without
+claiming one engine is always faster. See [M1 Trusted Data guide](docs/data_quality.md).
+CI also inventories the checked-in historical BTC CSV as a downloadable,
+non-gating research-only artifact. No collector is scheduled and no paid API added.
+
 ## Pipeline news Python
 
 Pipeline Watcher.Guru dijalankan terpisah dengan Python 3.11+. Lihat [setup dan baseline](docs/news_pipeline_quickstart.md), [durable data pipeline](docs/data_pipeline.md), dan [modelling annotation-free](docs/annotation_free_modelling.md). Dependensi root Python tidak diperlukan untuk terminal web.
