@@ -48,13 +48,29 @@ python -m market_data.warehouse verify --artifact artifacts/warehouse/coinbase_2
 
 A Coinbase Parquet build verifies the source CSV against its SHA-256 manifest, daily UTC date continuity, unique chronological observations, OHLC consistency, finite values, and volume nonnegativity. No extra cross-venue blend or guessed candle is inserted. Every new warehouse output directory must be unique; existing outputs are refused instead of overwritten. The original CSV is never deleted.
 
+## Data quality and benchmark integration
+
+The additional [Data Quality Gate](data_quality.md) checks immutable snapshots
+before they enter modelling and exposes explicit failure reports; it does not
+overwrite the SQLite operational source. For on-chain revisions, run
+`python -m market_data.quality onchain --database artifacts/market/observations.sqlite --output artifacts/quality/onchain.json`.
+Then compare SQLite indexed lookups with the **same** DuckDB/Parquet as-of query
+using `python -m market_data.benchmark`. Benchmarks verify output parity before
+measuring; timings exclude network, ingestion and data integrity hashing.
+
+**Parquet model inputs must provide a passing SHA-256-bound price quality
+report** via `--quality-report`. CSV model input remains compatible; see the
+command below and [full guide](data_quality.md). A passing report does not
+promote any model artifact or prove historical vendor release times.
+
 ## Forecast and diagnostic integration
 
 The existing `news_pipeline.system_diagnostics` / `news_pipeline.forecast_model` entry points accept **either their existing CSV input or the verified warehouse price Parquet path** through `--prices`:
 
 ```bash
 python -m news_pipeline.system_diagnostics --prices artifacts/warehouse/coinbase_20261011/prices.parquet --as-of 2026-10-11T00:00:00Z --output artifacts/warehouse/diagnostics_20261011.json
-python -m news_pipeline.forecast_model train --prices artifacts/warehouse/coinbase_20261011/prices.parquet --as-of 2026-10-11T00:00:00Z --output artifacts/system/model_20261011
+python -m market_data.quality prices --artifact artifacts/warehouse/coinbase_20261011 --output artifacts/quality/coinbase_20261011.json
+python -m news_pipeline.forecast_model train --prices artifacts/warehouse/coinbase_20261011/prices.parquet --quality-report artifacts/quality/coinbase_20261011.json --as-of 2026-10-11T00:00:00Z --output artifacts/system/model_20261011
 ```
 
 The warehouse writes a `provenance.json` beside price Parquet, with `instrument=BTC/USD`, Coinbase `venue` and the hash of the **Parquet itself**. The model's existing `source_venue` check therefore rejects a mismatched file/hash/venue. The model's existing chronological evaluation, feature definitions, artifact status and forecast promotion gates are unchanged.

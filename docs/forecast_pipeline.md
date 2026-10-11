@@ -7,7 +7,7 @@ Quant Iris source. The [system specification](market_system_specification.md) an
 
 ## Optional Parquet price inputs
 
-The original CSV workflow remains supported. `market_data.warehouse prices` can create a hash-verified Coinbase `prices.parquet` with a sibling `provenance.json`. Pass that Parquet path to the existing `--prices` option after installing `requirements-warehouse.txt`. The loader verifies the warehouse manifest, column schema and hash; model inference still enforces venue identity. This is a research read model, **not** proof of original daily-bar publication latency or valid historical vintages. See [warehouse guide](warehouse.md).
+The original CSV workflow remains supported. `market_data.warehouse prices` can create a hash-verified Coinbase `prices.parquet` with a sibling `provenance.json`. Pass that Parquet path to the existing `--prices` option after installing `requirements-warehouse.txt`. The loader verifies the warehouse manifest, column schema and hash; model inference still enforces venue identity. This is a research read model, **not** proof of original daily-bar publication latency or valid historical vintages. See [warehouse guide](warehouse.md). **Parquet training and inference now require a passing `--quality-report` from `market_data.quality prices`, bound to the same Parquet bytes; CSV remains backward compatible.** This tests dataset integrity and completeness, not historical release vintages or model profitability. See [M1 Trusted Data](data_quality.md).
 
 ## Run from the repository root
 

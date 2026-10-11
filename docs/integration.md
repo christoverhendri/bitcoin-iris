@@ -35,6 +35,18 @@ persist exponential retry backoff (60 seconds up to one hour), honoring Retry-Af
 restart does not reset it. Initial collection covers the latest public page; later collection
 catches up to the prior anchor. This does not promise full historical coverage.
 
+## Research quality gate (optional warehouse)
+
+`market_data.quality` reports operational integrity, coverage, revisions and
+freshness of verified Coinbase and canonical on-chain files. `market_data.benchmark`
+compares equivalent as-of SQLite vs Parquet reads. Both are offline research
+utilities and do not fetch from providers or alter terminal runtime.
+The research forecasting CLI **requires a passing quality report for Parquet
+input**, pinned to the exact Parquet SHA-256. CSV model workflows remain
+backward compatible. The quality gate does not attest to historical release
+vintages or authorize a forecast as validated. Legacy datasets carry
+`research_only` status. See [M1 guide](data_quality.md).
+
 ## Other terminal paths
 
 RSS uses direct bounded requests, conditional GET, retry backoff and local 30-day archives.

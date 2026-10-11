@@ -21,6 +21,15 @@ jobs:
       # Include optional DuckDB to exercise actual Parquet/SQLite/model integration.
       - run: python -m pip install -r requirements.txt -r requirements-warehouse.txt numpy==2.2.6 pandas==2.3.2
       - run: python -m unittest discover -s tests -p 'test_*.py'
+      - name: Inventory checked-in BTC history (research-only, no provider calls)
+        run: python -m market_data.quality legacy --csv "bitcoin iris/dataset/btc/btc_daily_features.csv" --output artifacts/quality/legacy_btc_inventory.json
+      - name: Publish quality inventory
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: iris-legacy-btc-quality
+          path: artifacts/quality/legacy_btc_inventory.json
+          if-no-files-found: warn
 
   terminal-tests:
     name: Terminal tests

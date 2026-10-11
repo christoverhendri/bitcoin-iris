@@ -68,6 +68,16 @@ Do not set `historical_backtest_safe=true` to bypass this restriction.
 
 Canonical SQLite remains authoritative for revisions, `observed_at`, ingestion and checkpoint state. The optional warehouse reads SQLite in a snapshot transaction and exports ZSTD Parquet with all versions and missingness, while Coinbase price Parquet is built only from the hash-verified OHLCV CSV artifact. Existing Python diagnostic and forecast entry points can read the Parquet price path without altering their statistical methods. No model promotion, expensive inference, paid provider, or always-on server was added. See [research warehouse guide](warehouse.md); install `requirements-warehouse.txt` separately.
 
+## Data-quality and storage benchmark (implemented)
+
+`market_data.quality` now emits fail-closed operational checks of Coinbase
+OHLCV snapshots, on-chain revisions/missingness, legacy research-only history,
+and overlap-only Coinbase/reference cross-venue differences. `market_data.benchmark`
+tests numerical equivalence of SQLite vs DuckDB/Parquet as-of lookups before
+reporting warm read times. Verified Parquet input into the existing forecast model
+requires a passing SHA-256-bound quality report, but **no historical vendor
+availability or model promotion is inferred**. See [Data Quality Gate guide](data_quality.md).
+
 ## Data correctness gates for next phase
 
 1. **Quarantine existing `bitcoin iris/dataset/master/*.csv` for retrospective research only** until rebuilt with verified availability. The legacy README explicitly documents `bfill()` and estimated macro release lags. `.ffill()` can only carry forward values already known at the forecasting origin; never `bfill()` for deployable history. Treat undefined periods as missing and report coverage. Fixed guessed publication lags do not replace an authoritative release/vintage calendar.
