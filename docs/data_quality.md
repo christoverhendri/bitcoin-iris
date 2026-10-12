@@ -12,6 +12,15 @@ python -m pip install -r requirements.txt -r requirements-warehouse.txt
 
 `duckdb` is optional unless inspecting Parquet or running the benchmark. SQLite/CSV-only quality reporting works with the Python standard library and the existing baseline dependencies.
 
+## Coinbase hourly BTC/USD quality
+
+Use `python -m market_data.quality hourly --artifact artifacts/warehouse/coinbase_hourly_2020_20261011 --output artifacts/quality/hourly.json`
+after exporting with `market_data.hourly_prices export`. This is a separate
+SHA-bound `prices_hourly` schema. The gate fails on missing completed hours,
+corrupt OHLCV, unverified hash, inconsistent timestamps or duplicates. It never
+certifies vendor historical release times or model quality.
+See [hourly collection and verification](hourly_backfill.md).
+
 ## 1. Validate verified Coinbase daily OHLCV
 
 Given a Coinbase `prices.csv` plus its matching `provenance.json` from `news_pipeline.market_prices`:
