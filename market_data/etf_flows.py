@@ -55,7 +55,7 @@ def _asof(raw=None) -> datetime:
     return value.astimezone(timezone.utc)
 
 
-def _timestamp(value) -> str:
+def _timestamp(value=None) -> str:
     return _asof(value).isoformat(timespec='microseconds').replace('+00:00', 'Z')
 
 
