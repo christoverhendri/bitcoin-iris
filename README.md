@@ -117,6 +117,19 @@ claiming one engine is always faster. See [M1 Trusted Data guide](docs/data_qual
 CI also inventories the checked-in historical BTC CSV as a downloadable,
 non-gating research-only artifact. No collector is scheduled and no paid API added.
 
+## Keyless hourly BTC/USD history
+
+The separate `market_data.hourly_prices` collector downloads Coinbase Exchange
+**1-hour** BTC/USD candles in bounded, resumable 240-hour windows, preserving
+source revisions and last-seen evidence in SQLite. It excludes unfinished
+hours, records gaps rather than filling them, and exports verified, immutable
+hourly Parquet for DuckDB. Complete 24-hour sets can be aggregated to
+Coinbase-derived **daily research** artifacts for the existing quality-gated
+forecast pipeline; no live terminal collector or new paid service is activated.
+An optional, non-gating GitHub Actions workflow probes real Coinbase API
+responses and can produce a temporary full backfill artifact.
+See [hourly backfill and verification guide](docs/hourly_backfill.md).
+
 ## Pipeline news Python
 
 Pipeline Watcher.Guru dijalankan terpisah dengan Python 3.11+. Lihat [setup dan baseline](docs/news_pipeline_quickstart.md), [durable data pipeline](docs/data_pipeline.md), dan [modelling annotation-free](docs/annotation_free_modelling.md). Dependensi root Python tidak diperlukan untuk terminal web.

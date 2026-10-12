@@ -27,6 +27,7 @@ VERSION = 'iris-warehouse/v1'
 SCHEMAS = {
     'onchain': 'observations.parquet',
     'prices': 'prices.parquet',
+    'prices_hourly': 'hourly.parquet',
 }
 MAX_ROWS = 2_000_000
 MAX_PRICE_CSV_BYTES = 128 * 1024 * 1024
@@ -240,8 +241,11 @@ def verify_export(artifact: str | Path) -> dict:
     with closing(duckdb.connect(':memory:')) as con:
         count = con.execute('SELECT count(*) FROM read_parquet(?)', [str(path)]).fetchone()[0]
         names = [r[0] for r in con.execute(f'DESCRIBE SELECT * FROM read_parquet({_sql_path(path)})').fetchall() if r[0] != 'filename']
-    expected = (['source', 'metric', 'day', 'observed_at', 'value', 'state', 'snapshot_sha256']
-                if meta['kind'] == 'onchain' else ['date', 'Low', 'High', 'Open', 'Close', 'Volume'])
+    expected = {
+        'onchain': ['source', 'metric', 'day', 'observed_at', 'value', 'state', 'snapshot_sha256'],
+        'prices': ['date', 'Low', 'High', 'Open', 'Close', 'Volume'],
+        'prices_hourly': ['ts', 'Low', 'High', 'Open', 'Close', 'Volume', 'observed_at', 'payload_sha256'],
+    }[meta['kind']]
     if names != expected or count != meta.get('row_count'):
         raise ValueError('Warehouse Parquet schema or row count mismatch')
     if meta['kind'] == 'prices':

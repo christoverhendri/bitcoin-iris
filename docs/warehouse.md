@@ -24,6 +24,17 @@ python -m pip install -r requirements.txt -r requirements-warehouse.txt
 
 The default ingestion CLI and the terminal need **neither DuckDB nor Parquet**. The optional warehouse package installs just the `duckdb` Python wheel; no PyArrow, server, login or paid API is required.
 
+## Coinbase hourly backfill
+
+The optional [hourly backfill guide](hourly_backfill.md) adds a separate
+`prices_hourly` Parquet kind to this verifier. It stores completed 1h Coinbase
+candles with provenance and revisions in dedicated SQLite, exports immutable
+hourly snapshots, and requires 24 verified consecutive hourly bars for derived
+daily prices. **Do not** feed `prices_hourly` into the daily price model:
+convert to the existing derived daily CSV -> verified prices Parquet -> quality gate
+contract first. Hourly and daily are distinct market data products; historical
+source arrival latency is not certified by a retrospective backfill.
+
 ## From free data to Parquet
 
 Use the existing no-key Coin Metrics collector and canonical ingestion first:

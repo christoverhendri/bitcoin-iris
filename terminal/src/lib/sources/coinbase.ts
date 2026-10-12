@@ -55,7 +55,7 @@ const GRANULARITY: Record<string, number> = {
   '5m': 300,
   '15m': 900,
   '1h': 3600,
-  '4h': 14400,
+  '6h': 21600,
   '1d': 86400,
 };
 
@@ -69,7 +69,8 @@ export async function getCandles(
   limit = 300,
   product = 'BTC-USD',
 ): Promise<Candle[]> {
-  const g = GRANULARITY[interval] ?? 86400;
+  const g = GRANULARITY[interval];
+  if (g === undefined) throw new Error(`coinbase: unsupported candle interval ${interval}`);
   // Match the 60s cache window; second-by-second URLs defeat fetch caching.
   const end = Math.floor(Date.now() / 60_000) * 60;
   const start = end - g * Math.min(limit, 300);

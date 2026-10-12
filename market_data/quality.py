@@ -157,6 +157,27 @@ def prices_report(artifact: str | Path, *, as_of: str | None = None,
     return report
 
 
+def hourly_prices_report(artifact: str | Path) -> dict:
+    """Verify SHA-bound hourly Parquet; incomplete hours remain a failing gate."""
+    from .hourly_prices import verify_hourly
+    verified = verify_hourly(artifact)
+    report = _report('prices_hourly', 'coinbase-exchange', verified['data_sha256'])
+    report['quality_gate'] = verified['quality_gate']
+    report['summary'] = {
+        'observed_hours': verified['observed_hours'],
+        'expected_hours': verified['expected_hours'],
+        'missing_hours': verified['missing_hours'],
+        'coverage_pct': verified['coverage_pct'],
+        'first_hour': verified['first_hour'],
+        'last_hour': verified['last_hour'],
+    }
+    _check(report, 'hourly_integrity', True,
+           detail='Parquet hash, schema, rows, UTC bounds and OHLCV invariants verified')
+    _check(report, 'hourly_coverage', verified['missing_hours'] == 0,
+           detail=f"{verified['observed_hours']}/{verified['expected_hours']} hourly candles present")
+    return report
+
+
 def onchain_report(database: str | Path, *, as_of: str | None = None,
                    max_age_days: int | None = None, min_coverage: float = 0.95) -> dict:
     if not 0 <= min_coverage <= 1:
@@ -348,6 +369,8 @@ def main(argv=None):
     pr.add_argument('--as-of')
     pr.add_argument('--max-age-days', type=int)
     pr.add_argument('--min-coverage', type=float, default=1.0)
+    hh = sub.add_parser('hourly', help='Validate Coinbase hourly Parquet warehouse')
+    hh.add_argument('--artifact', type=Path, required=True)
     on = sub.add_parser('onchain', help='Validate canonical Coin Metrics observation SQLite')
     on.add_argument('--database', type=Path, required=True)
     on.add_argument('--as-of')
@@ -361,13 +384,15 @@ def main(argv=None):
     x.add_argument('--max-difference-bps', type=float, default=100.0)
     x.add_argument('--min-overlap', type=int, default=10)
     x.add_argument('--max-breach-pct', type=float, default=5.0)
-    for command in (pr, on, lg, x):
+    for command in (pr, hh, on, lg, x):
         command.add_argument('--output', type=Path, required=True)
     args = p.parse_args(argv)
     try:
         if args.kind == 'prices':
             report = prices_report(args.artifact, as_of=args.as_of, max_age_days=args.max_age_days,
                                    min_coverage=args.min_coverage)
+        elif args.kind == 'hourly':
+            report = hourly_prices_report(args.artifact)
         elif args.kind == 'onchain':
             report = onchain_report(args.database, as_of=args.as_of, max_age_days=args.max_age_days,
                                    min_coverage=args.min_coverage)
