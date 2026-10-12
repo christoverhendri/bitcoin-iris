@@ -1,27 +1,93 @@
-# IRIS Data Specification: Bitcoin On-chain Metrics (v2 proposal)
+# IRIS Data Specification: Bitcoin On-chain Metrics and Transaction Intelligence (v2 proposal)
 
 **Decision recorded:** 2026-10-12. **Status:** specification only; the v2 expansion
 is **not implemented, enabled or scheduled** by this document.
-**Scope:** free-source, noncommercial research; BTC mainnet; UTC daily aggregates
-first. This is a data-ingestion contract, not a prediction model or claim of
-complete access to every blockchain metric.
+**Scope:** free-source, noncommercial research; BTC mainnet; **two complementary
+tracks**: (A) daily provider-computed network aggregates and (B) independent
+**block/transaction/UTXO-level analytics**. Both are candidates for
+time-causal features. This is a design specification, not an implemented Bitcoin
+node, universal wallet attribution, forecasting model or an already indexed chain.
 
 ## 1. Historical raw data is NOT the v2 blocker
 
-Three different data products must never be confused:
+Four different data products must never be confused:
 
-| Data product | Historical strategy | v2 requirement | Access constraint |
+| Data product | Historical strategy | v2 priority | Practical constraint |
 |---|---|---|---|
-| Daily aggregated network metrics | Free Coin Metrics Community asset-metrics API and/or vetted historical CSV; Blockchain.com historical charts where supported | **Required** once source entitlement/coverage is verified | Free metric set may change; chart sampling/units must be checked |
-| Recent raw transactions, addresses and UTXO queries | Coin Metrics Atlas Community or permitted public explorer endpoints | **Optional research** | Atlas Community's documented **30-day search window** does not give eleven years of raw access |
-| Fully reconstructed historical UTXO/transaction-level datasets | Independently indexed Bitcoin node or a separately licensed/authorized archive | **Deferred** | Hardware, storage, indexing, computation and possibly paid data can be substantial |
+| Daily aggregated network metrics | Coin Metrics Community asset-metrics API or vetted free historical CSV; Blockchain.com charts where permitted | **Track A: production-quality research source** | Free metric entitlement, vintage, sampling and units must be checked |
+| Confirmed block and transaction contents | Bounded [Blockstream Esplora](https://github.com/Blockstream/esplora/blob/master/API.md) REST reads for a pilot; own Bitcoin Core node for repeatable, bulk analysis | **Track B: required bounded proof of concept** | Public explorer is not a free unlimited bulk crawl; self-hosting consumes storage, bandwidth and compute |
+| UTXO-linked transaction analytics over historical blocks | Replay available blocks and consume prior outpoints, ideally using an **unpruned Bitcoin Core node** and its block/undo data | **Track B: staged research implementation** | Input prevout availability, chain reorgs, UTXO state and full-history indexing increase resources |
+| Unconfirmed/mempool transaction events | Locally observed Bitcoin Core mempool notifications (e.g. ZMQ `rawtx` / `sequence`) | **Optional live extension** | Node-relative observations cannot retroactively reconstruct historic global mempool arrivals |
 
-**Policy:** Do not allow an Atlas 30-day *raw* lookback to block acquisition of
-available historical *aggregate* daily metrics. Conversely, do not claim a full
-raw transaction history can be recovered from the Community metrics CSV.
-SOPR, historical UTXO age distributions, exact holder attribution and any
-other metrics requiring raw history stay pending until a reproducible free
-calculation or authorized historical source is verified.
+**Policy:** Atlas Community's documented **30-day raw search lookback** is
+only a limit on that provider's query service; it does **not** limit confirmed
+Bitcoin transactions publicly recorded in older blocks. We can process them
+using an unpruned Bitcoin Core node or bounded public proofs without a paid
+market-data subscription. Do not claim the paid-free API limit disappears:
+full-chain indexing has substantial **local** disk/network/compute costs.
+A free daily CSV also cannot replace transaction data. Derived SOPR, age
+distributions or wallet/holder measures require separately validated algorithms
+and previous outputs; address/transaction-level links do not prove identity.
+
+## 1A. Transaction intelligence pipeline: deriving our own evidence
+
+This is the user-intended direction for **Track B**, not an implemented
+feature. See [On-chain transaction analytics issue #11](https://github.com/christoverhendri/bitcoin-iris/issues/11).
+
+```text
+Confirmed block (height, hash, parent hash)
+  -> transaction (txid, weight, version, locktime)
+  -> inputs (spent txid:vout) + outputs (vout, satoshis, script)
+  -> prevout/UTXO resolution + chain/reorg tracking
+  -> validated block and transaction statistics
+  -> immutable block/day feature Parquet + availability/provenance
+  -> time-safe research features (not automatically fed into Quant IRIS)
+```
+
+**Starter analytics directly measurable from valid confirmed blocks:**
+transaction count and virtual size, BTC fees and fee-rate percentiles,
+number/value of new and spent outputs, approximate distribution of transferred
+output value, script-type frequencies, and UTXO set count changes. Bitcoin
+Core's `getblockstats` can provide an independent per-block check for many of
+these measurements. **Total output value is not equivalent to economic value
+transferred**, because it often includes wallet change and self-transfers.
+
+**Prevout/UTXO-linked candidates:** spent output age, coin days destroyed,
+age and value cohorts, consolidation behavior, realized-value/cost-basis
+features and SOPR-like ratios. These require resolving each input to the
+previous output with its creation height/time and satoshis. Historical BTC
+price alignment is additionally required for realized-value signals.
+No claim of identical methodology to third-party commercial metrics until
+definitions and validation agree.
+
+**Do not confuse:**
+- On-chain block inclusion vs the moment a transaction first appeared.
+  Block time and first local mempool observation are different, and public
+  historical blocks cannot recover global historic mempool arrival times.
+- **Transaction inputs/outputs vs people or wallets.** Change, CoinJoin and
+  batching mean a single Bitcoin transaction may not represent one economic
+  transfer. Exchanges hold many unknown addresses; registry-based labels are
+  explicitly incomplete and heuristic.
+- A miner's **coinbase transaction** (block subsidy plus fees) vs Coinbase
+  Exchange the BTC/USD venue. Coinbase inputs are special and not normal prevouts.
+- `block_time`, `block_connected_at`, `source_observed_at`,
+  `processed_at` and `feature_ready_at`. Never backdate our local observation
+  or misrepresent a revised block as known in an older backtest.
+
+**Operational safety:** use integer satoshis, explicit block hash and
+parent-link verification, idempotent `txid:vout` state changes and reversible
+reorg handling. If prevouts are unavailable, leave input-value/age/fee metrics
+`UNKNOWN` rather than inferring them. Public Esplora allows bounded sample
+retrieval but should not be treated as an unlimited full-chain source.
+An unpruned Bitcoin Core node can expose historical blocks; a pruned node may
+no longer have the necessary old block or undo data. Historical confirmed
+transaction backfills are possible at an infrastructure cost, while realtime
+mempool coverage must start at the moment our node observes events.
+
+**Phases:** (1) audited small block-range reader and `getblockstats` parity;
+(2) bounded prevout-linked UTXO state and block/day feature export;
+(3) incremental indexing, reorg repair, optional ZMQ notifications; (4)
+historical scale-up only after measuring actual disk/RAM/CPU/network budgets.
 
 ## 2. Actual repository state vs candidate metric inventory
 
@@ -36,6 +102,10 @@ Already implemented in `market_data/coinmetrics.py`:
   optional ZSTD Parquet for DuckDB analytics.
 - No always-on on-chain ingestion daemon and no confirmed persistent source
   data in a checked-in repository artifact.
+- **No confirmed full-block or general-purpose transaction/UTXO analytics
+  pipeline** is implemented under `market_data/`. The terminal has limited
+  current explorer reads for a curated exchange-address set, not a complete
+  chain index. The transaction parser/UTXO state described above is proposed.
 
 Candidates for free-metric discovery, **not approved entitlements or verified
 coverage in the current IRIS installation**: `HashRate`, `BlkCnt`,
@@ -58,7 +128,9 @@ vintages are re-audited; its presence does not mean v2 ingests 19 metrics.
 | `coinmetrics/data` `csv/btc.csv` | Bootstrap candidate only when schema and date coverage pass | README advertises daily updates, but the latest BTC CSV commit **observed on 2026-10-12 was dated 2026-05-24**. Treat freshness as unverified until checked at download time; don't assume it contains October observations |
 | Blockchain.com Charts API | Alternative daily chart metrics and independent comparisons | Verify chart unit, UTC alignment, `sampled` behavior, chronological bounds, payload cap, missingness and availability |
 | Coin Metrics **Atlas Community** | Optional recent raw/on-chain lookups | Historical raw search window is **last 30 days**, according to current Atlas documentation; NOT a 30-day cap on Community daily aggregate histories |
-| Public mempool/explorer endpoints | Optional recent mempool, address and block context | Provider reachability can vary; do not infer complete historical market/holder coverage from current data |
+| Public mempool/explorer endpoints | Bounded block and transaction **pilot**, recent mempool/address context | Public Esplora supports `/block/:hash/txs` (25 transactions/page), `/tx/:txid` and raw blocks, but provider reachability/terms may vary; not a bulk-chain archive |
+| Own unpruned Bitcoin Core node | Independently validate blocks, transaction inputs/outputs, previous outputs and per-block statistics | `getblockhash` + `getblock` verbosity 2/3 where undo data exists; `getblockstats` fee, vsize and UTXO deltas. Running a node has local disk/bandwidth costs even with no paid API key |
+| Bitcoin Core ZMQ | Optional live first-seen mempool/block event observations | `rawtx`, `rawblock`, `sequence` report events at our node, not historical universal first-seen times |
 
 **Access design:**
 1. Discover supported `btc` metrics and actual earliest/latest **non-null**
@@ -94,6 +166,17 @@ The existing on-chain store is the starting point; its smaller
 `date,metric,value,state,observed_at` schema should **not** be mislabeled as
 already supporting every target field.
 
+**Separate Track B transaction schema (proposed):** preserve
+`chain_id`, `block_height`, `block_hash`, `prev_block_hash`,
+`block_time`, `txid`, `wtxid`, `vin_index`, `prev_txid`,
+`prev_vout`, `vout_index`, `value_sat`, `script_type`,
+`source`, `source_sha256`, `observed_at`, `confirmation_state`
+and `is_coinbase` where applicable. UTXO rows require created/spent heights
+and the raw integer amount. Unknown prevouts remain null and untrusted. Keep
+aggregated daily metric revisions separate from event-level raw/derived tables.
+Use immutable Parquet only for validated read-models, not as a substitute for
+a reversible UTXO/reorg state machine.
+
 **As-of discipline:** Retrospectively downloading a value from 2015 today
 doesn't establish that this exact revision was available in 2015. Revisions,
 `bfill`, guessed release times and future feature-selection statistics
@@ -121,11 +204,24 @@ Retrospective research remains possible when explicitly labeled.
   **CC BY-NC 4.0**, requiring attribution and restricting commercial reuse.
   Free-to-view data does not automatically grant automated scraping or
   redistribution rights.
-- [ ] No paid fallback, raw-chain archival crawl, or automatic model promotion.
+- [ ] Deliver a separate bounded, real **transaction/block analysis pilot**
+  using public Esplora or a locally operated Bitcoin Core node, and verify
+  measured block features against `getblockstats`.
+- [ ] Resolve prevouts before reporting input amounts, fees or coin age;
+  construct UTXO state with reorg-safe, reversible updates, integer satoshis,
+  and explicit Unknown states for missing input evidence.
+- [ ] Classify outputs, fees and address clusters as *observations* vs
+  *heuristic economic inferences*, with source and confidence metadata.
+- [ ] Emit deterministic, hash-bound block/day feature exports and tests for
+  duplicate UTXOs, intra-block spends, block detach/reorgs and unavailable
+  prior outputs; include observed-versus-confirmed timestamp checks.
+- [ ] No paid fallback, default full-chain archival crawl, or automatic model
+  promotion. Expanded scans require explicit resource budget/approval.
 
-**Research priority:** validated daily network activity, fees, hashrate and
-supply first; MVRV / tracked exchange flow candidates only after free entitlement
-and unit/source checks. Advanced SOPR and UTXO-derived metrics can wait.
+**Research priority:** daily source-verified aggregates and a **bounded
+transaction-level validation pilot** can advance in parallel. Complete
+historic UTXO reconstruction, SOPR-like calculations and mempool event history
+are later scaling stages, not fundamentally ruled out by the Atlas API limit.
 
 ## 6. References and related specifications
 
@@ -135,6 +231,11 @@ and unit/source checks. Advanced SOPR and UTXO-derived metrics can wait.
 - [Coin Metrics Atlas historical limits](https://docs.coinmetrics.io/network-data/atlas-overview)
 - [Community asset-metrics API](https://docs.coinmetrics.io/api/v4/)
 - [Blockchain.com Charts documentation](https://www.blockchain.com/explorer/api/charts_api)
+- [Bitcoin Core getblock RPC (full transaction and prevout response)](https://bitcoincore.org/en/doc/23.0.0/rpc/blockchain/getblock/)
+- [Bitcoin Core getblockstats RPC](https://bitcoincore.org/en/doc/26.0.0/rpc/blockchain/getblockstats/)
+- [Bitcoin Core ZMQ notifications](https://github.com/bitcoin/bitcoin/blob/master/doc/zmq.md)
+- [Blockstream Esplora API](https://github.com/Blockstream/esplora/blob/master/API.md)
+- [Transaction/UTXO Analytics Issue #11](https://github.com/christoverhendri/bitcoin-iris/issues/11)
 - [Current collector and store](../market_data/coinmetrics.py) / [observations](../market_data/observation_store.py)
 - [Free source policy](free_data_sources.md) / [data quality](data_quality.md) /
   [forecasting system specification](market_system_specification.md)

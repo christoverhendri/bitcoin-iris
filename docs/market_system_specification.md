@@ -108,11 +108,14 @@ baseline. Other measurements are candidates when they resolve a stated mechanism
 mathematics alone does not identify a unique sufficient feature set.
 
 For on-chain features, use the [On-chain Data Specification](onchain_data_specification.md).
-The limited 30-day Atlas Community **raw data** lookback is not a reason to
-discard available historical **daily aggregate** metrics. Validate which aggregates
-are actually accessible through free sources, their provider identity and freshness,
-and the timestamp at which each metric first became usable before admitting it
-to a strict historical backtest.
+The limited 30-day Atlas Community **raw API** lookback is not a reason to
+discard available historical **daily aggregate** metrics **or** to exclude
+our own analysis of confirmed Bitcoin transactions from an unpruned node.
+Validate provider source identity, completeness, UTXO/prevout provenance,
+reorg state, source freshness and the timestamp at which a feature became
+usable. Separately distinguish direct blockchain evidence from change-output,
+exchange-address and wallet-owner **heuristics** before admitting any
+transaction-derived metrics to a strict historical backtest.
 
 | System property or hypothesis | Measurement / candidate variable | Availability and admission rule |
 |---|---|---|

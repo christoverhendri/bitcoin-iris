@@ -17,9 +17,13 @@
 Avoid claiming free-commercial-use from a free API endpoint. Review license/redistribution terms before enabling a public paid deployment.
 
 **On-chain v2 decision:** the short Atlas Community *raw* query window is **not a blocker**
-for historical **daily aggregated network metrics**. Bootstrap those from qualified
-free historical archives or the Community asset-metrics API, then perform bounded
-incremental updates. Do not promise that every legacy metric is free or that a
+for historical **daily aggregated network metrics**, nor does it prevent
+an independent Bitcoin Core-based **confirmed transaction/UTXO analytics**
+track. Bootstrap source-reported aggregates from qualified free historical
+archives or the Community asset-metrics API, then perform bounded
+incremental updates. Develop block-to-transactions analysis as a separately
+bounded pilot with reorg handling and prevout evidence; a full-node index has
+hardware/network costs but needn't use a paid market-data API. Do not promise that every legacy metric is free or that a
 historical archive is current. The [on-chain data specification](onchain_data_specification.md)
 records provenance, access limits, metric acceptance rules, and optional raw-query
 work separately. The Coin Metrics public `btc.csv` archive's newest commit observed

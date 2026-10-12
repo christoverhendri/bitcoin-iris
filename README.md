@@ -95,7 +95,7 @@ marker peta masih snapshot saat halaman dibuka. Detail feed hanya muncul di deve
 
 ## Free research data foundation
 
-`market_data/` collects Coin Metrics **Community** Bitcoin on-chain metrics without a paid key, stores immutable CSV + SHA-256 provenance, and imports validated observations into an append-only local SQLite store. Missing values stay missing; as-of queries cannot use measurements that were not observed at the forecast origin. This is for **noncommercial research**, not automatically deployed forecasting. See [free data sources, setup and limitations](docs/free_data_sources.md). Planned expansion, provider rights, archival-data freshness, and the distinction between daily aggregates versus raw transaction history are documented in the [on-chain data specification](docs/onchain_data_specification.md).
+`market_data/` collects Coin Metrics **Community** Bitcoin on-chain metrics without a paid key, stores immutable CSV + SHA-256 provenance, and imports validated observations into an append-only local SQLite store. Missing values stay missing; as-of queries cannot use measurements that were not observed at the forecast origin. This is for **noncommercial research**, not automatically deployed forecasting. See [free data sources, setup and limitations](docs/free_data_sources.md). Planned expansion, provider rights, archive freshness, **independent Bitcoin block/transaction/UTXO analysis** and point-in-time safeguards are documented in the [on-chain data specification](docs/onchain_data_specification.md) and [transaction research issue #11](https://github.com/christoverhendri/bitcoin-iris/issues/11).
 
 ### Optional research warehouse
 
