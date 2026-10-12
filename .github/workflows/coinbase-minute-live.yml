@@ -1,0 +1,45 @@
+name: Coinbase minute activity live verification
+
+on:
+  push:
+    branches:
+      - feat/coinbase-minute-activity-20261012
+    paths:
+      - market_data/minute_activity.py
+      - .github/workflows/coinbase-minute-live.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  public-minute-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install public-source and local Parquet dependencies
+        run: python -m pip install -r requirements.txt -r requirements-warehouse.txt
+      - name: Collect independent Coinbase BTC/USD hourly candles from July 2015
+        run: |
+          python -m market_data.hourly_prices backfill --start 2015-07-21T00:00:00Z --end 2015-07-21T04:00:00Z --database artifacts/market/hourly_check.sqlite --page-hours 4 --max-pages 2 --output artifacts/proofs/hourly_ingest.json
+      - name: Collect 240 completed Coinbase one-minute buckets from July 2015
+        run: |
+          python -m market_data.minute_activity backfill --start 2015-07-21T00:00:00Z --end 2015-07-21T04:00:00Z --database artifacts/market/minute_check.sqlite --max-pages 2 --output artifacts/proofs/minute_ingest.json
+          python -m market_data.minute_activity status --database artifacts/market/minute_check.sqlite > artifacts/proofs/minute_status.json
+      - name: Reconcile activity without inventing zero-trade observations
+        run: |
+          python -m market_data.minute_activity reconcile --minute-database artifacts/market/minute_check.sqlite --hourly-database artifacts/market/hourly_check.sqlite --start 2015-07-21T00:00:00Z --end 2015-07-21T04:00:00Z --output artifacts/proofs/activity_report.json --csv-output artifacts/proofs/activity_rows.csv
+          python -m market_data.minute_activity export --minute-database artifacts/market/minute_check.sqlite --hourly-database artifacts/market/hourly_check.sqlite --start 2015-07-21T00:00:00Z --end 2015-07-21T04:00:00Z --output artifacts/proofs/verified_activity
+          python -m market_data.minute_activity verify --artifact artifacts/proofs/verified_activity > artifacts/proofs/activity_verification.json
+      - name: Upload provider evidence and diagnostic rows (not a model-approval artifact)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: iris-coinbase-2015-minute-activity
+          retention-days: 7
+          if-no-files-found: warn
+          path: artifacts/proofs/

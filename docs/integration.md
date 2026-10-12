@@ -47,6 +47,20 @@ backward compatible. The quality gate does not attest to historical release
 vintages or authorize a forecast as validated. Legacy datasets carry
 `research_only` status. See [M1 guide](data_quality.md).
 
+## Coinbase 1-minute activity (optional research)
+
+`market_data.minute_activity` is a separate, bounded 1-minute Coinbase
+ingestor with its own SQLite observations and successful-window checkpoints.
+It retains missing/zero-volume distinctions. An omitted minute can only be
+labeled `INFERRED_NO_TRADE` when fully fetched minute windows agree with an
+independently fetched Coinbase 1-hour OHLCV candle. That is not proof from
+tick-by-tick trades; unknown, incomplete, or conflicting buckets remain
+unavailable. `market_data.quality minute` and immutable Parquet reports
+expose this status with as-of observation timestamps. This pipeline is not
+scheduled, does not write to the terminal, and never promotes a model.
+See [minute activity guide](minute_activity.md) and
+[issue #6](https://github.com/christoverhendri/bitcoin-iris/issues/6).
+
 ## Other terminal paths
 
 RSS uses direct bounded requests, conditional GET, retry backoff and local 30-day archives.
