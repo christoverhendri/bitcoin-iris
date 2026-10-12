@@ -59,6 +59,22 @@ def utc_minute(now=None) -> datetime:
     return now.astimezone(timezone.utc).replace(second=0, microsecond=0)
 
 
+def asof_time(raw=None) -> datetime:
+    """An as-of cutoff includes seconds: collection can occur mid-minute."""
+    if raw is None:
+        value = datetime.now(timezone.utc)
+    elif isinstance(raw, str):
+        try:
+            value = datetime.fromisoformat(raw.replace('Z', '+00:00'))
+        except ValueError as exc:
+            raise ValueError('Invalid as-of datetime') from exc
+    else:
+        value = raw
+    if not isinstance(value, datetime) or value.tzinfo is None:
+        raise ValueError('As-of needs a timezone-aware timestamp')
+    return value.astimezone(timezone.utc)
+
+
 def _validate(payload, start: datetime, end: datetime):
     if not isinstance(payload, list) or len(payload) > 300:
         raise ValueError('Coinbase one-minute response must be a list of at most 300 candles')
@@ -305,7 +321,7 @@ def classify(minutes_db, hourly_db, *, start, end, as_of=None, with_rows=False):
     hours = int((last-first).total_seconds() / HOUR)
     if hours > MAX_HOURS_REPORT:
         raise ValueError('Reconcile no more than 744 hours at once; partition monthly')
-    origin = utc_minute(parse_minute(as_of) if isinstance(as_of, str) else as_of) if as_of is not None else utc_minute()
+    origin = asof_time(as_of)
     if last > origin:
         raise ValueError('Do not classify unfinished or future UTC hours')
     cutoff = observed_stamp(origin)

@@ -124,6 +124,14 @@ class MinuteActivityTests(unittest.TestCase):
         self.assertEqual(report['counts']['INFERRED_NO_TRADE'],0)
         self.assertEqual(rows[14]['status'],'UNKNOWN')
 
+    def test_asof_with_seconds_can_see_newly_collected_minute(self):
+        self.hour(59, timestamp=EVIDENCE.replace(second=12))
+        self.fetch(now=EVIDENCE.replace(second=12))
+        report,rows=self.check(as_of='2026-10-12T08:00:20Z')
+        self.assertEqual(report['counts']['TRADED'],59)
+        self.assertEqual(report['counts']['INFERRED_NO_TRADE'],1)
+        self.assertEqual(report['quality_gate'],'pass')
+
     def test_prospective_observation_guards_against_future_data(self):
         self.hour(59)
         self.fetch()
