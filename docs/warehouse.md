@@ -35,6 +35,19 @@ convert to the existing derived daily CSV -> verified prices Parquet -> quality 
 contract first. Hourly and daily are distinct market data products; historical
 source arrival latency is not certified by a retrospective backfill.
 
+## ETF net-flow research warehouse
+
+The optional [ETF flow guide](etf_flows.md) adds an independent canonical
+SQLite and immutable Parquet read-model for publicly reported daily US spot
+Bitcoin ETF **USD-million net flows**. It has two Parquet files
+(`daily_totals.parquet` and `fund_flows.parquet`), with nullable values,
+source observation timestamps, explicit reported/missing semantics,
+SHA-256 manifest and an independent `market_data.etf_flows verify`
+command. Its own schema is intentionally separate from Coinbase price
+and on-chain `warehouse verify` kinds. The ETF data is neither
+auto-fetched nor passed to the current forecasting model.
+Rights to automated collection and bulk redistribution remain unverified.
+
 ## From free data to Parquet
 
 Use the existing no-key Coin Metrics collector and canonical ingestion first:

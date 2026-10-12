@@ -201,6 +201,28 @@ def minute_activity_report(minute_database: str | Path, hourly_database: str | P
     return report
 
 
+def etf_flows_report(database: str | Path, *, as_of: str | None = None,
+                     start: str | None = None, end: str | None = None) -> dict:
+    """Read observed, versioned ETF net flows without treating unreported as zero."""
+    from .etf_flows import quality_report
+    evidence = quality_report(database, as_of=as_of, start=start, end=end)
+    # Hash here binds the set of effective research values; it is NOT the
+    # source-HTML response SHA or a certified historical provider vintage.
+    result = _report('etf_flows', evidence['source'],
+                     evidence['summary']['effective_source_sha256'])
+    result['quality_gate'] = evidence['quality_gate']
+    result['summary'] = dict(evidence['summary'],
+                             unit=evidence['unit'],
+                             instrument=evidence['instrument'],
+                             as_of=evidence['as_of'])
+    _check(result, 'reported_etf_sessions',
+           evidence['summary']['reported_sessions'] > 0,
+           detail=f"{evidence['summary']['reported_sessions']} sessions have reportable fund and total data")
+    result['warnings'].extend(evidence['warnings'])
+    result['warnings'].append('Report fingerprint identifies effective values, not raw provider bytes.')
+    return result
+
+
 def onchain_report(database: str | Path, *, as_of: str | None = None,
                    max_age_days: int | None = None, min_coverage: float = 0.95) -> dict:
     if not 0 <= min_coverage <= 1:
@@ -400,6 +422,11 @@ def main(argv=None):
     minute.add_argument('--start', required=True)
     minute.add_argument('--end', required=True)
     minute.add_argument('--as-of')
+    etf = sub.add_parser('etf', help='Validate Farside US BTC ETF flows from canonical SQLite')
+    etf.add_argument('--database', type=Path, required=True)
+    etf.add_argument('--as-of')
+    etf.add_argument('--start')
+    etf.add_argument('--end')
     on = sub.add_parser('onchain', help='Validate canonical Coin Metrics observation SQLite')
     on.add_argument('--database', type=Path, required=True)
     on.add_argument('--as-of')
@@ -413,7 +440,7 @@ def main(argv=None):
     x.add_argument('--max-difference-bps', type=float, default=100.0)
     x.add_argument('--min-overlap', type=int, default=10)
     x.add_argument('--max-breach-pct', type=float, default=5.0)
-    for command in (pr, hh, minute, on, lg, x):
+    for command in (pr, hh, minute, etf, on, lg, x):
         command.add_argument('--output', type=Path, required=True)
     args = p.parse_args(argv)
     try:
@@ -425,6 +452,9 @@ def main(argv=None):
         elif args.kind == 'minute':
             report = minute_activity_report(args.minute_database, args.hourly_database,
                                             start=args.start, end=args.end, as_of=args.as_of)
+        elif args.kind == 'etf':
+            report = etf_flows_report(args.database, as_of=args.as_of,
+                                      start=args.start, end=args.end)
         elif args.kind == 'onchain':
             report = onchain_report(args.database, as_of=args.as_of, max_age_days=args.max_age_days,
                                    min_coverage=args.min_coverage)

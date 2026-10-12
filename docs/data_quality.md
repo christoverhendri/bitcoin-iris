@@ -12,6 +12,19 @@ python -m pip install -r requirements.txt -r requirements-warehouse.txt
 
 `duckdb` is optional unless inspecting Parquet or running the benchmark. SQLite/CSV-only quality reporting works with the Python standard library and the existing baseline dependencies.
 
+## Farside US Bitcoin ETF flow quality
+
+`python -m market_data.quality etf --database artifacts/market/etf_flows.sqlite
+--output artifacts/quality/etf_flows.json` reports source/session units,
+per-fund observed vs unreported cells, days with no fund data, and
+an explicit retrospective/information-availability warning.
+The source `-` is NULL, not zero; a holiday-like row reporting an
+aggregate 0 with all fund cells unreported is not a witnessed
+zero-flow session. This is a quality check on *collected research
+records*, not proof of original issuer reporting times or approval
+to use ETF data in a historical trading model.
+See [ETF flow source and warehouse guide](etf_flows.md).
+
 ## Coinbase minute activity and inferred inactivity
 
 `python -m market_data.quality minute --minute-database artifacts/market/coinbase_minute.sqlite

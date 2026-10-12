@@ -12,8 +12,23 @@
 | Sentiment index | Alternative.me `/fng/`, already present | None | Attribution, no evidence of causal BTC returns |
 | Macro | FRED/ALFRED | Original release calendar | Free key required; use vintages/release timestamps, do not backfill future revisions |
 | Headlines and events | Existing RSS, Watcher.Guru preview | Other legally permitted RSS feeds | Publishing dates are not ingestion dates; coverage can be incomplete |
+| US spot BTC ETF daily net flows | Farside all-data public HTML (optional, manual HTML import available) | Bitbo public recent-window table for future separate comparisons | Free-to-view is not guaranteed scraping/redistribution permission; reported session != vendor release time; printed '-' is missing, not zero |
 
 Avoid claiming free-commercial-use from a free API endpoint. Review license/redistribution terms before enabling a public paid deployment.
+
+## Optional free-source ETF daily flow collector
+
+`market_data.etf_flows` supports strict parsing of public Farside
+US spot Bitcoin ETF flow tables (per-fund USD millions and reported totals),
+opt-in single-page access or manually saved HTML, append-only SQLite
+revisions and explicit local observation time. It is **research only**,
+has no source-verified 2024 historical publication vintages, and cannot
+be used as a leak-free feature for 2024 backtests merely because the
+source page can be downloaded now. Publicly visible does not mean
+free bulk data redistribution or guaranteed permission to scrape.
+Source `-` stays null; all-unreported rows do not imply zero flows.
+See [ETF data guide](etf_flows.md) and [issue #9](https://github.com/christoverhendri/bitcoin-iris/issues/9).
+No paid Bitbo API is used or implied.
 
 ## New offline-testable Coin Metrics collector
 
