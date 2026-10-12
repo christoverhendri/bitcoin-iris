@@ -16,6 +16,16 @@
 
 Avoid claiming free-commercial-use from a free API endpoint. Review license/redistribution terms before enabling a public paid deployment.
 
+**On-chain v2 decision:** the short Atlas Community *raw* query window is **not a blocker**
+for historical **daily aggregated network metrics**. Bootstrap those from qualified
+free historical archives or the Community asset-metrics API, then perform bounded
+incremental updates. Do not promise that every legacy metric is free or that a
+historical archive is current. The [on-chain data specification](onchain_data_specification.md)
+records provenance, access limits, metric acceptance rules, and optional raw-query
+work separately. The Coin Metrics public `btc.csv` archive's newest commit observed
+during our 2026-10-12 audit was **2026-05-24**, despite its README advertising daily
+updates: require an explicit freshness test before ingestion uses it as a current source.
+
 ## Optional free-source ETF daily flow collector
 
 `market_data.etf_flows` supports strict parsing of public Farside

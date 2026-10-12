@@ -107,6 +107,13 @@ Only close-derived quantities and timestamp validity are required for the initia
 baseline. Other measurements are candidates when they resolve a stated mechanism;
 mathematics alone does not identify a unique sufficient feature set.
 
+For on-chain features, use the [On-chain Data Specification](onchain_data_specification.md).
+The limited 30-day Atlas Community **raw data** lookback is not a reason to
+discard available historical **daily aggregate** metrics. Validate which aggregates
+are actually accessible through free sources, their provider identity and freshness,
+and the timestamp at which each metric first became usable before admitting it
+to a strict historical backtest.
+
 | System property or hypothesis | Measurement / candidate variable | Availability and admission rule |
 |---|---|---|
 | Multiplicative positive price evolution | log close for reconstruction; 1/7/30-day log returns for inputs | Completed closes; never future prices |
