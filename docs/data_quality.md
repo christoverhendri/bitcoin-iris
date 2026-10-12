@@ -12,6 +12,17 @@ python -m pip install -r requirements.txt -r requirements-warehouse.txt
 
 `duckdb` is optional unless inspecting Parquet or running the benchmark. SQLite/CSV-only quality reporting works with the Python standard library and the existing baseline dependencies.
 
+## Coinbase minute activity and inferred inactivity
+
+`python -m market_data.quality minute --minute-database artifacts/market/coinbase_minute.sqlite
+--hourly-database artifacts/market/coinbase_hourly.sqlite --start 2015-07-21T00:00:00Z
+--end 2015-07-21T04:00:00Z --output artifacts/quality/minute.json` checks actual
+Coinbase one-minute observations against independently requested 1h OHLCV.
+`INFERRED_NO_TRADE` is an explicitly labeled inference, never a proven raw trade
+tick. Unknown minutes and hourly disagreement fail the coverage gate. Missing
+raw OHLCV remains null, not forward-filled or zero-priced. See the
+[minute activity implementation guide](minute_activity.md).
+
 ## Coinbase hourly BTC/USD quality
 
 Use `python -m market_data.quality hourly --artifact artifacts/warehouse/coinbase_hourly_2020_20261011 --output artifacts/quality/hourly.json`

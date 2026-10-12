@@ -130,6 +130,19 @@ An optional, non-gating GitHub Actions workflow probes real Coinbase API
 responses and can produce a temporary full backfill artifact.
 See [hourly backfill and verification guide](docs/hourly_backfill.md).
 
+## Minute-level trading activity research
+
+`market_data/minute_activity.py` provides opt-in, keyless 1-minute Coinbase
+BTC/USD ingestion, append-only source revisions, bounded SQLite checkpoints,
+and conservative cross-resolution activity reconciliation. Missing minutes are
+`UNKNOWN` unless independently fetched 1-hour Coinbase OHLCV supports an
+`INFERRED_NO_TRADE` classification; this is not tick-ledger proof.
+Raw missing OHLC stays null, and inferred zero volume is explicitly labeled.
+Research-grade Parquet export and `market_data.quality minute` are available;
+no full-history minute crawl, live terminal replacement or model promotion is
+automatic. See [minute activity guide](docs/minute_activity.md) and
+[implementation issue #6](https://github.com/christoverhendri/bitcoin-iris/issues/6).
+
 ## Pipeline news Python
 
 Pipeline Watcher.Guru dijalankan terpisah dengan Python 3.11+. Lihat [setup dan baseline](docs/news_pipeline_quickstart.md), [durable data pipeline](docs/data_pipeline.md), dan [modelling annotation-free](docs/annotation_free_modelling.md). Dependensi root Python tidak diperlukan untuk terminal web.

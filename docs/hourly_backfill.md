@@ -90,6 +90,14 @@ python -m market_data.quality prices \
 
 If any hour is missing, daily derivation **raises** instead of interpolating. Derived `prices.csv` has a `derived_from` and `source_hourly_sha256` in the provenance. It is **not** the same product as Coinbase's native daily feed. Compare independently before substituting it for forecasting data; do not splice other venues or BTC/USDT prices.
 
+## Optional activity-aware 1-minute sampling
+
+For research on trading inactivity, the [minute activity collector](minute_activity.md)
+uses the independent Coinbase 1-hour candle as a conservative reconciliation
+reference. It stores minute candles separately and classifies absent minutes as
+`UNKNOWN` by default. No 1-minute data is inserted into the existing hourly
+store or used to fill missing 1-hour price candles.
+
 ## 4. Integration and boundaries
 
 - Existing `news_pipeline.market_prices` remains daily-only and unchanged. Existing `market_data.warehouse prices`, `market_data.quality prices`, and `news_pipeline.forecast_model` continue accepting verified daily artifacts. Hourly is a **separate typed kind** (`prices_hourly`) and cannot be passed directly to daily forecasting.

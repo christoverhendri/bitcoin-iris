@@ -178,6 +178,29 @@ def hourly_prices_report(artifact: str | Path) -> dict:
     return report
 
 
+def minute_activity_report(minute_database: str | Path, hourly_database: str | Path,
+                           *, start: str, end: str, as_of: str | None = None) -> dict:
+    """Activity-aware market quality without treating omitted minutes as ticks."""
+    from .minute_activity import classify
+    evidence = classify(minute_database, hourly_database, start=start, end=end, as_of=as_of)
+    report = _report('minute_activity', 'coinbase-exchange', None)
+    report['quality_gate'] = evidence['quality_gate']
+    report['summary'] = {
+        'start': evidence['start'], 'end_exclusive': evidence['end_exclusive'],
+        'as_of': evidence['as_of'], 'status_counts': evidence['counts'],
+        'diagnostics': evidence['diagnostics'],
+        'reconciled_hours': sum(1 for hour in evidence['hours'] if hour['reconciled']),
+        'hours': evidence['hours'],
+    }
+    report['checks'] = [{
+        'code': 'minute_activity_evidence',
+        'result': 'pass' if evidence['quality_gate'] == 'pass' else 'fail',
+        'detail': 'UNKNOWN minutes and hourly disagreements block a complete-activity pass',
+    }]
+    report['warnings'].append('INFERRED_NO_TRADE is not verified trade-ledger proof.')
+    return report
+
+
 def onchain_report(database: str | Path, *, as_of: str | None = None,
                    max_age_days: int | None = None, min_coverage: float = 0.95) -> dict:
     if not 0 <= min_coverage <= 1:
@@ -371,6 +394,12 @@ def main(argv=None):
     pr.add_argument('--min-coverage', type=float, default=1.0)
     hh = sub.add_parser('hourly', help='Validate Coinbase hourly Parquet warehouse')
     hh.add_argument('--artifact', type=Path, required=True)
+    minute = sub.add_parser('minute', help='Validate 1m activity against a separate 1h Coinbase reference')
+    minute.add_argument('--minute-database', type=Path, required=True)
+    minute.add_argument('--hourly-database', type=Path, required=True)
+    minute.add_argument('--start', required=True)
+    minute.add_argument('--end', required=True)
+    minute.add_argument('--as-of')
     on = sub.add_parser('onchain', help='Validate canonical Coin Metrics observation SQLite')
     on.add_argument('--database', type=Path, required=True)
     on.add_argument('--as-of')
@@ -384,7 +413,7 @@ def main(argv=None):
     x.add_argument('--max-difference-bps', type=float, default=100.0)
     x.add_argument('--min-overlap', type=int, default=10)
     x.add_argument('--max-breach-pct', type=float, default=5.0)
-    for command in (pr, hh, on, lg, x):
+    for command in (pr, hh, minute, on, lg, x):
         command.add_argument('--output', type=Path, required=True)
     args = p.parse_args(argv)
     try:
@@ -393,6 +422,9 @@ def main(argv=None):
                                    min_coverage=args.min_coverage)
         elif args.kind == 'hourly':
             report = hourly_prices_report(args.artifact)
+        elif args.kind == 'minute':
+            report = minute_activity_report(args.minute_database, args.hourly_database,
+                                            start=args.start, end=args.end, as_of=args.as_of)
         elif args.kind == 'onchain':
             report = onchain_report(args.database, as_of=args.as_of, max_age_days=args.max_age_days,
                                    min_coverage=args.min_coverage)
