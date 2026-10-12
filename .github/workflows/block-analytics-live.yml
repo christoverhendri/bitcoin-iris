@@ -1,0 +1,47 @@
+name: Bounded Bitcoin block analytics live proof
+
+on:
+  push:
+    branches:
+      - feat/bitcoin-block-analytics-20261012
+    paths:
+      - 'market_data/chain/**'
+      - '.github/workflows/block-analytics-live.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  public-block-pilot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install existing research dependencies
+        run: python -m pip install -r requirements.txt -r requirements-warehouse.txt
+      - name: Decode a bounded early mainnet range
+        run: |
+          python -m market_data.chain scan --source esplora --start-height 169 --end-height 172 --max-blocks 3 --max-requests 40 --max-prevout-txs 8 --database artifacts/chain/early.sqlite --report artifacts/chain/early_scan.json
+          python -m market_data.chain verify --database artifacts/chain/early.sqlite --report artifacts/chain/early_verify.json
+          python -m market_data.chain status --database artifacts/chain/early.sqlite --report artifacts/chain/early_status.json
+          python -m market_data.chain export --database artifacts/chain/early.sqlite --output artifacts/chain/early_parquet
+          python -m market_data.chain verify-export --artifact artifacts/chain/early_parquet --database artifacts/chain/early.sqlite
+      - name: Decode one modern block with a limited prevout budget
+        run: |
+          python -m market_data.chain scan --source esplora --start-height 800000 --end-height 800001 --max-blocks 1 --max-requests 60 --max-prevout-txs 8 --database artifacts/chain/modern.sqlite --report artifacts/chain/modern_scan.json
+          python -m market_data.chain verify --database artifacts/chain/modern.sqlite --report artifacts/chain/modern_verify.json
+          python -m market_data.chain status --database artifacts/chain/modern.sqlite --report artifacts/chain/modern_status.json
+          python -m market_data.chain export --database artifacts/chain/modern.sqlite --output artifacts/chain/modern_parquet
+          python -m market_data.chain verify-export --artifact artifacts/chain/modern_parquet --database artifacts/chain/modern.sqlite
+      - name: Preserve bounded source evidence, not a production model
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: iris-bounded-block-analytics
+          path: artifacts/chain/
+          retention-days: 7
+          if-no-files-found: warn
