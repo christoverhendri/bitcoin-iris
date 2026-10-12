@@ -46,7 +46,7 @@ class HourlyWarehouseTest(unittest.TestCase):
             self.assertIn('source_hourly_sha256',json.loads((daily/'provenance.json').read_text()))
             p=export_prices(daily,root/'daily_parquet')
             self.assertEqual(p['rows'],2)
-            self.assertEqual(prices_report(root/'daily_parquet')['quality_gate'],'pass')
+            self.assertEqual(prices_report(root/'daily_parquet', as_of='2026-10-13T00:00:00Z')['quality_gate'],'pass')
             with self.assertRaises(FileExistsError):
                 export_hourly(db,warehouse,start='2026-10-10T00:00:00Z',end='2026-10-12T00:00:00Z')
             with self.assertRaises(ValueError):
