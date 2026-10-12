@@ -61,6 +61,24 @@ scheduled, does not write to the terminal, and never promotes a model.
 See [minute activity guide](minute_activity.md) and
 [issue #6](https://github.com/christoverhendri/bitcoin-iris/issues/6).
 
+## ETF flow research (opt-in free-source)
+
+`market_data.etf_flows` imports reported US spot Bitcoin ETF daily net
+inflow/outflow by fund, **USD millions**, from Farside's publicly visible
+table (opt-in single HTTP request, or saved page HTML).
+Fund `-` and all-unreported holiday-like rows remain NULL or
+`NO_FUND_DATA`, never fabricated zero ETF activity.
+A separate canonical SQLite retains each fetch's actual local observation
+timestamp, payload revisions and original response SHA-256.
+`market_data.quality etf` and the immutable ETF Parquet export are
+research-only. A 2024 session downloaded in 2026 is **not** proof that
+the exact value or its corrections were historically available then.
+Automated scraping and redistribution rights require a separate review;
+HTTP 403 is not bypassed. No Next.js ETF page or forecasting model
+has been promoted or connected by this ingestion.
+See [ETF guide](etf_flows.md) and
+[issue #9](https://github.com/christoverhendri/bitcoin-iris/issues/9).
+
 ## Other terminal paths
 
 RSS uses direct bounded requests, conditional GET, retry backoff and local 30-day archives.

@@ -143,6 +143,21 @@ no full-history minute crawl, live terminal replacement or model promotion is
 automatic. See [minute activity guide](docs/minute_activity.md) and
 [implementation issue #6](https://github.com/christoverhendri/bitcoin-iris/issues/6).
 
+## ETF daily inflow/outflow (free-source research)
+
+The optional `market_data.etf_flows` module imports the publicly visible
+Farside Investors US spot Bitcoin ETF per-fund historical table (USD millions),
+with an **explicit opt-in single HTTP fetch** or a saved HTML import when
+access is restricted. Canonical SQLite retains revisions, observed timestamps,
+source hashes and as-of history; the read-model exports immutable daily totals
+and fund-level Parquet with a distinct `market_data.quality etf` gate.
+A printed `-` stays **NULL**, not zero; holidays/all-unreported rows are never
+treated as traded zero-flow observations. Farside public visibility does not
+establish scraping/redistribution rights, historical release timestamps, or
+forecast-model approval. No paid ETF API or background worker is started.
+See [ETF collection and rights guide](docs/etf_flows.md) and
+[tracking issue #9](https://github.com/christoverhendri/bitcoin-iris/issues/9).
+
 ## Pipeline news Python
 
 Pipeline Watcher.Guru dijalankan terpisah dengan Python 3.11+. Lihat [setup dan baseline](docs/news_pipeline_quickstart.md), [durable data pipeline](docs/data_pipeline.md), dan [modelling annotation-free](docs/annotation_free_modelling.md). Dependensi root Python tidak diperlukan untuk terminal web.

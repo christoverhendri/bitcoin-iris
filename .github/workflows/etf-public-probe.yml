@@ -1,0 +1,55 @@
+name: ETF public Farside access probe (non-gating)
+
+on:
+  push:
+    branches:
+      - feat/etf-data-foundation-20261012
+      - data-pipeline
+    paths:
+      - market_data/etf_flows.py
+      - .github/workflows/etf-public-probe.yml
+
+permissions:
+  contents: read
+
+jobs:
+  public-etf-probe:
+    name: Explicit public-page access and parse check
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install normal free-data Python dependencies
+        run: python -m pip install -r requirements.txt -r requirements-warehouse.txt
+      - name: Try one public historical ETF data snapshot (no credentials or access bypass)
+        shell: bash
+        run: |
+          set -uo pipefail
+          mkdir -p artifacts/probes
+          if python -m market_data.etf_flows fetch --database artifacts/market/etf_flows.sqlite --output artifacts/probes/etf_fetch.json; then
+            python -m market_data.etf_flows status --database artifacts/market/etf_flows.sqlite > artifacts/probes/etf_status.json
+            python -m market_data.etf_flows quality --database artifacts/market/etf_flows.sqlite --output artifacts/probes/etf_quality.json
+            python -m market_data.etf_flows export --database artifacts/market/etf_flows.sqlite --output artifacts/warehouse/etf_probe
+            python -m market_data.etf_flows verify --artifact artifacts/warehouse/etf_probe > artifacts/probes/etf_parquet_verify.json
+            python - <<'PY'
+          import json
+          from pathlib import Path
+          r=json.loads(Path('artifacts/probes/etf_status.json').read_text())
+          print('LIVE_ETF_PROBE_SUCCESS: actual source sessions:',r['distinct_sessions'])
+          print('Historical source is retrospective, not publication-vintage evidence.')
+          PY
+          else
+            echo 'LIVE_ETF_PROBE_UNAVAILABLE: source access or source format must be reviewed; no bypass performed.'
+            printf '%s\n' '{"provider":"farside-investors","status":"unavailable","meaning":"HTTP denied or source format changed; do not claim verified live data"}' > artifacts/probes/etf_probe_unavailable.json
+          fi
+      - name: Upload non-bulk verification summaries only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: iris-etf-source-probe
+          path: artifacts/probes/
+          retention-days: 7
+          if-no-files-found: warn
