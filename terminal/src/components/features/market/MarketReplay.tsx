@@ -10,6 +10,12 @@ import type { ArchivePage } from '@/lib/sources/marketArchive';
 import { buildMarketSnapshot, marketVersion, validCandle,availabilityGaps, type MarketSnapshot, type MarketEvent } from '@/lib/marketSnapshot';
 import { TechReadout } from '../overview/TechReadout';
 import { MarketCoverage, MarketStudiesPanel } from './MarketResearchPanels';
+import {LiveCoinbasePanel} from './LiveCoinbasePanel';
+import {liveEligible} from '@/lib/liveTrades';
+import {useLiveMarket} from '@/components/shell/LiveMarketContext';
+import {applyLiveMarket} from '@/lib/liveMarket';
+import {INTERVAL_MS} from '@/lib/features/ohlcv/replay';
+import {OrderBookDom} from './OrderBookDom';
 
 export function MarketReplay({ initial, timeframe,events=[] }: {
   initial: MarketSnapshot;
@@ -18,6 +24,7 @@ export function MarketReplay({ initial, timeframe,events=[] }: {
 }) {
   const {ohlcv,cutoff}=initial;
   const [replaying, setReplaying] = useState(false);
+  const [replayBase,setReplayBase]=useState<MarketSnapshot|null>(null);
   const [playing, setPlaying] = useState(false);
   const [cursor, setCursor] = useState(0);
   const [speed, setSpeed] = useState(1);
@@ -28,11 +35,16 @@ export function MarketReplay({ initial, timeframe,events=[] }: {
   const [archive, setArchive] = useState<ArchivePage | null>(null);
   const [loadingArchive, setLoadingArchive] = useState(false);
   const [archiveError, setArchiveError] = useState<string | null>(null);
+  const {snapshot:liveSnapshot,transport,configure}=useLiveMarket();
+  const enabled=liveEligible(replaying,!!archive,ohlcv.sourceKey,!!(ohlcv.isMock||ohlcv.unavailable));
+  const liveFrom=ohlcv.data.at(-1)?ohlcv.data.at(-1)!.ts+INTERVAL_MS[ohlcv.data.at(-1)!.interval]:null;
+  useEffect(()=>{configure(enabled&&initial.interval&&liveFrom!==null?{interval:initial.interval,from:liveFrom,book:true}:null);return ()=>configure(null);},[configure,enabled,initial.interval,liveFrom]);
+  const applied=applyLiveMarket(initial,liveSnapshot,enabled);
   const abortRef = useRef<AbortController | null>(null);
   const playback=useRef<{key:string;remaining:number}|null>(null);
   useEffect(() => () => abortRef.current?.abort(), []);
-  const activeOhlcv = archive ?? ohlcv;
-  const activeCutoff=archive?Date.parse(archive.archive.snapshotAt):cutoff;
+  const activeOhlcv = archive ?? (replaying&&replayBase?replayBase.ohlcv:ohlcv);
+  const activeCutoff=archive?Date.parse(archive.archive.snapshotAt):replaying&&replayBase?replayBase.cutoff:cutoff;
   const replayCandles = useMemo(() => activeOhlcv.unavailable ? [] : completedReplayCandles(activeOhlcv.data, activeCutoff), [activeOhlcv, activeCutoff]);
   const timeline = useMemo(() => replayTimeline(replayCandles, archive?.gaps), [replayCandles, archive]);
   const total = timeline.length;
@@ -57,10 +69,10 @@ export function MarketReplay({ initial, timeframe,events=[] }: {
   const archiveGap = replaying ? snapshot?.entry?.gap : undefined;
   // Preserve the loaded source timestamp: replay is retrospective reconstruction.
   const version=useMemo(()=>marketVersion(activeOhlcv),[activeOhlcv]);
-  const market=buildMarketSnapshot(snapshot?{...activeOhlcv,data:snapshot.candles}:activeOhlcv,replaying?position?.end??activeCutoff:activeCutoff,{version,strict:replaying&&strict});
-  const shownGaps=market.strict?availabilityGaps(market.ohlcv.data,timeline[0]?.start??market.cutoff,market.cutoff,interval):revealedGaps;
+  const market=enabled?applied.market:buildMarketSnapshot(snapshot?{...activeOhlcv,data:snapshot.candles}:activeOhlcv,replaying?position?.end??activeCutoff:activeCutoff,{version,strict:replaying&&strict});
+  const shownGaps=enabled?availabilityGaps(market.ohlcv.data,ohlcv.data[0]?.ts??market.cutoff,Math.floor(market.cutoff/INTERVAL_MS[interval])*INTERVAL_MS[interval],interval):market.strict?availabilityGaps(market.ohlcv.data,timeline[0]?.start??market.cutoff,market.cutoff,interval):revealedGaps;
   const gap=market.strict?shownGaps.find(g=>position&&position.start>=g.start&&position.start<g.end):archiveGap;
-  const shownOhlcv=market.ohlcv;
+  const shownOhlcv=enabled?applied.display:market.ohlcv;
   const shownLevels: Envelope<SupportResistanceLevels> = gap?{...market.levels,unavailable:true,data:{r1:NaN,r2:NaN,s1:NaN,s2:NaN,vwap:NaN}}:market.levels;
   const seek = (index: number) => { setPlaying(false); setCursor(index);playback.current=null; };
   const loadArchive = async (append = false) => {
@@ -111,7 +123,7 @@ export function MarketReplay({ initial, timeframe,events=[] }: {
         {archiveError && <p role="alert" className="market-archive-error">{archiveError}</p>}
         <div className="market-replay-toolbar">
           <span className="market-replay-label">{replaying ? 'BAR REPLAY' : 'HISTORICAL REPLAY'}</span>
-          {!replaying ? <button disabled={total < 2 || loadingArchive} onClick={() => { setCursor(0); setPlaying(false); setReplaying(true); }}>Start replay</button> : <>
+          {!replaying ? <button disabled={total < 2 || loadingArchive} onClick={() => { setReplayBase(applied.market);setCursor(0); setPlaying(false); setReplaying(true); }}>Start replay</button> : <>
             <button disabled={cursor === 0 || loadingArchive} onClick={() => seek(Math.max(0, cursor - 1))} aria-label="Previous replay step">← Back</button>
             <button disabled={loadingArchive} onClick={() => {
               if (isPlaying) setPlaying(false);
@@ -139,17 +151,20 @@ export function MarketReplay({ initial, timeframe,events=[] }: {
           {strict&&<span role="status">{market.rejected} revealed versions excluded. Missing historical versions remain unavailable; reconstruction is not a point-in-time backtest.</span>}
         </div>}
       </section>
+      <LiveCoinbasePanel key={`${replaying}:${!!archive}`} enabled={liveEligible(replaying,!!archive,ohlcv.sourceKey,!!(ohlcv.isMock||ohlcv.unavailable))} />
       <div className="market-snapshot-meta">Snapshot {market.version} · cutoff {new Date(market.cutoff).toISOString()} · {strict&&replaying?'STRICT OBSERVATION ELIGIBILITY':'RETROSPECTIVE RECONSTRUCTION'} · integrity {market.integrity}</div>
+      {enabled&&<p role="status">Chart stream {transport==='CONNECTED'?liveSnapshot?.state??'CONNECTING':transport} · {applied.forming?`forming ${initial.interval} candle${applied.partial?' · PARTIAL captured coverage':''}`:'awaiting captured interval'} · Indicators and pivots use completed bars at this cutoff; forming chart overlays are provisional. {liveSnapshot?.chart?.error}</p>}
       {replaying && <p className="market-replay-disclosure">REPLAY · Only revealed candles determine price and levels. Replay covers {archive ? 'loaded local archive pages' : 'the loaded timeframe window'}; the header ticker remains current. Historical data is reconstructed from the source available today.</p>}
       {replaying && shownGaps.length ? <div className="market-replay-disclosure" role="status">
         {gap ? `${gap.status} · ${new Date(gap.start).toISOString()} → ${new Date(gap.end).toISOString()} · ${(gap.end - gap.start) / 60_000} min · OHLC unavailable. ` : ''}
         Revealed gaps: {shownGaps.filter((g) => g.status === 'UNKNOWN').reduce((n, g) => n + (g.end - g.start) / 60_000, 0)} min UNKNOWN · {shownGaps.filter((g) => g.status === 'INFERRED_NO_TRADE').reduce((n, g) => n + (g.end - g.start) / 60_000, 0)} min INFERRED_NO_TRADE. Inference is not trade-ledger proof.
       </div> : null}
       <div className="market-price-workspace">
-        <PriceChartLarge key={`${archive ? 'archive' : 'window'}-${replaying ? 'replay' : 'current'}`} ohlcv={shownOhlcv} levels={shownLevels} timeframe={archive ? 'ARCHIVE' : timeframe} replay={replaying} gaps={shownGaps} replayGap={gap} replayInterval={interval} events={events} eventCutoff={market.cutoff} />
+        <PriceChartLarge key={`${archive ? 'archive' : 'window'}-${replaying ? 'replay' : 'current'}`} ohlcv={shownOhlcv} levels={shownLevels} timeframe={archive ? 'ARCHIVE' : timeframe} replay={replaying} gaps={shownGaps} replayGap={gap} replayInterval={interval} events={events} eventCutoff={market.cutoff} liveForming={enabled&&applied.forming} partial={enabled&&applied.partial} />
         <LevelsLadder levels={shownLevels} price={gap?0:shownOhlcv.data.at(-1)?.close??0} replay={replaying} reference={market.reference} />
       </div>
       <TechReadout indicators={gap?{...market.indicators,unavailable:true}:market.indicators} timeframe={`${interval} · ${market.ohlcv.data.length} eligible bars`} />
+      <OrderBookDom enabled={enabled} />
       <MarketCoverage snapshot={market} archive={archive} gaps={shownGaps} />
       <MarketStudiesPanel candles={gap?[]:market.ohlcv.data} cutoff={market.cutoff} strict={market.strict} source={activeOhlcv.isMock||activeOhlcv.unavailable?'unavailable':activeOhlcv.sourceKey} profileStart={timeline[0]?.start??null} />
     </div>

@@ -317,6 +317,30 @@ table.iris-table tbody tr:hover {
 .market-replay-workspace { min-width: 0; padding: 8px; }
 .market-replay-workspace .market-price-workspace { padding: 0; }
 .market-replay-controls { background: var(--sunk); border: 1px solid var(--line); margin-bottom: 8px; padding: 10px 12px; }
+.market-live-panel { min-width:0; }
+.market-live-panel h3 { color:var(--amber); text-transform:uppercase; }
+.market-live-panel h3 [role="status"] { color:var(--blue); margin-left:12px; }
+.market-live-panel details { max-width:100%; overflow-x:auto; }
+.market-live-panel table { width:100%; text-align:left; border-collapse:collapse; }
+.market-live-panel th,.market-live-panel td { padding:5px 8px; border-bottom:1px solid var(--line); white-space:nowrap; }
+.market-dom-panel { margin:8px 0; }
+.market-dom-body { padding:12px; display:grid; gap:12px; min-width:0; }
+.market-dom-body p { margin:0; font-size:10px; color:var(--mut); overflow-wrap:anywhere; }
+.dom-state { font-size:10px; color:var(--blue); }
+.market-dom-scroll { max-width:100%; overflow:auto; max-height:620px; border:1px solid var(--line); }
+.market-dom-ladder { width:100%; min-width:650px; border-collapse:collapse; font-size:11px; font-variant-numeric:tabular-nums; }
+.market-dom-ladder thead { position:sticky; top:0; background:var(--header-bg); z-index:1; }
+.market-dom-ladder th,.market-dom-ladder td { text-align:right; padding:5px 9px; border-bottom:1px solid var(--line); white-space:nowrap; }
+.market-dom-ladder th:first-child,.market-dom-ladder td:first-child { text-align:left; }
+.market-dom-ladder .dom-quantity { position:relative; width:22%; }
+.dom-quantity > span:last-child { position:relative; }
+.dom-bar { position:absolute; top:2px; bottom:2px; opacity:.2; }
+.dom-bid { color:var(--up); }
+.dom-bid .dom-bar { right:0; background:var(--up); }
+.dom-ask { color:var(--down); }
+.dom-ask .dom-bar { left:0; background:var(--down); }
+.dom-spread { background:var(--header-bg); color:var(--amber); }
+.dom-spread td { text-align:center!important; }
 .market-replay-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
 .market-replay-label { color: var(--amber); font-size: 11px; font-weight: 700; margin-right: 8px; }
 .market-replay-toolbar button, .market-replay-toolbar select { padding: 6px 10px; border: 1px solid var(--line2); color: var(--txt); background: var(--panel); font: inherit; }

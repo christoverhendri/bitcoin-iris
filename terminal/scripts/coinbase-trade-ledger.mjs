@@ -45,22 +45,35 @@ export function openTradeLedger(path) {
       CREATE TABLE IF NOT EXISTS trades(trade_id INTEGER PRIMARY KEY,ts_us INTEGER NOT NULL,price_units TEXT NOT NULL,size_units TEXT NOT NULL,maker_side TEXT NOT NULL CHECK(maker_side IN ('buy','sell')),observed_at_us INTEGER NOT NULL,content_sha256 TEXT NOT NULL);
       CREATE INDEX IF NOT EXISTS trades_time ON trades(ts_us,trade_id);
       CREATE INDEX IF NOT EXISTS trades_observation ON trades(observed_at_us,ts_us);
+      CREATE TABLE IF NOT EXISTS trade_time_aliases(trade_id INTEGER NOT NULL,ts_us INTEGER NOT NULL,observed_at_us INTEGER NOT NULL,content_sha256 TEXT NOT NULL,PRIMARY KEY(trade_id,ts_us));
       CREATE TABLE IF NOT EXISTS trade_pages(id INTEGER PRIMARY KEY,fetched_at_us INTEGER NOT NULL,request_after TEXT,response_after TEXT,row_count INTEGER NOT NULL,min_id INTEGER,max_id INTEGER,payload_sha256 TEXT NOT NULL);`);
     if(db.prepare("SELECT value FROM iris_trade_meta WHERE key='product'").get()?.value!=='BTC-USD')throw new Error('Trade ledger product mismatch');
     return db;
   }catch(error){db.close();throw error;}
 }
 /** One immutable page transaction; conflicting versions never overwrite trades. */
-export function storeTradePage(db,raw,observedAtUs,{after=null,next=null}={}) {
+export function storeTradePage(db,raw,observedAtUs,{after=null,next=null,allowTimestampRounding=false}={}) {
   if(!Array.isArray(raw)||raw.length>1000||!Number.isSafeInteger(observedAtUs))throw new Error('Invalid trade page');
   const parsed=raw.map(t=>parseTrade(t,observedAtUs));
   for(let i=1;i<parsed.length;i++)if(parsed[i].tradeId>=parsed[i-1].tradeId)throw new Error('Trade page must be strictly newest-ID first');
   const put=db.prepare('INSERT OR IGNORE INTO trades VALUES(?,?,?,?,?,?,?)');
-  const existing=db.prepare('SELECT content_sha256 FROM trades WHERE trade_id=?');
+  const existing=db.prepare('SELECT * FROM trades WHERE trade_id=?');
   let inserted=0;
   db.exec('BEGIN IMMEDIATE');
   try {
-    for(const t of parsed){const old=existing.get(t.tradeId);if(old&&old.content_sha256!==t.hash)throw new Error(`Conflicting immutable trade ${t.tradeId}`);inserted+=Number(put.run(t.tradeId,t.tsUs,t.priceUnits,t.sizeUnits,t.makerSide,observedAtUs,t.hash).changes);}
+    for(const t of parsed){
+      const old=existing.get(t.tradeId);
+      if(old&&old.content_sha256!==t.hash){
+        // Coinbase REST and WS can differ by one microsecond in their timestamp
+        // serialization. Preserve the canonical first observation and both hashes.
+        const same=old.price_units===t.priceUnits&&old.size_units===t.sizeUnits&&old.maker_side===t.makerSide;
+        if(!allowTimestampRounding||!same||Math.abs(Number(old.ts_us)-t.tsUs)!==1)throw new Error(`Conflicting immutable trade ${t.tradeId}`);
+        const canonical={tradeId:t.tradeId,tsUs:Number(old.ts_us),priceUnits:String(old.price_units),sizeUnits:String(old.size_units),makerSide:old.maker_side};
+        if(tradeHash(canonical)!==old.content_sha256)throw new Error(`Corrupt immutable trade ${t.tradeId}`);
+        db.prepare('INSERT OR IGNORE INTO trade_time_aliases VALUES(?,?,?,?)').run(t.tradeId,t.tsUs,observedAtUs,t.hash);
+      }
+      inserted+=Number(put.run(t.tradeId,t.tsUs,t.priceUnits,t.sizeUnits,t.makerSide,observedAtUs,t.hash).changes);
+    }
     const min=parsed.at(-1)?.tradeId??null,max=parsed[0]?.tradeId??null;
     db.prepare('INSERT INTO trade_pages(fetched_at_us,request_after,response_after,row_count,min_id,max_id,payload_sha256) VALUES(?,?,?,?,?,?,?)').run(observedAtUs,after,next,parsed.length,min,max,createHash('sha256').update(JSON.stringify(raw)).digest('hex'));
     const oldest=Number(db.prepare("SELECT value FROM iris_trade_meta WHERE key='oldest_id'").get()?.value??Infinity);

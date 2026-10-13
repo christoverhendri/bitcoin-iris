@@ -24,6 +24,8 @@ export interface PriceChartLargeProps {
   replayInterval?: string;
   events?:MarketEvent[];
   eventCutoff?:number;
+  liveForming?:boolean;
+  partial?:boolean;
 }
 
 const W = 1000;
@@ -33,7 +35,7 @@ const PRICE_BOTTOM = 320;
 const VOLUME_TOP = 350;
 const dateLabel = (ts: number) => new Date(ts).toISOString().slice(0, 16).replace('T', ' ');
 
-export function PriceChartLarge({ ohlcv, levels, timeframe, replay = false, gaps = [], replayGap, replayInterval,events=[],eventCutoff=Infinity }: PriceChartLargeProps) {
+export function PriceChartLarge({ ohlcv, levels, timeframe, replay = false, gaps = [], replayGap, replayInterval,events=[],eventCutoff=Infinity,liveForming=false,partial=false }: PriceChartLargeProps) {
   const research = useResearchFocus();
   const [selected, setSelected] = useState<number | null>(null);
   const [crossY,setCrossY]=useState<number|null>(null);
@@ -112,7 +114,7 @@ export function PriceChartLarge({ ohlcv, levels, timeframe, replay = false, gaps
     <div ref={host} className={expanded?'market-chart-fullscreen':undefined} role={expanded?'dialog':undefined} aria-modal={expanded?true:undefined} aria-label={expanded?'Fullscreen market chart':undefined}><Panel className="market-price-panel">
       <PanelHeader title={replay ? 'PRICE ACTION · REPLAY' : 'PRICE ACTION'} note={`${timeframe ?? '1D'} · ${n} ${latest?.interval ?? ''} candles`} right={<MockBadge env={ohlcv} />} />
       <div className="market-price-heading">
-        <div><span className="market-caption">BTC / USD · {replayGap?.status ?? (replay ? 'REPLAY CLOSE' : 'LATEST CLOSE')}</span><div className="market-last-price">{fmtUsd(replayGap ? null : latest?.close)}</div></div>
+        <div><span className="market-caption">BTC / USD · {replayGap?.status ?? (replay ? 'REPLAY CLOSE' : liveForming?`FORMING${partial?' · PARTIAL':''}`:'LATEST CLOSE')}</span><div className="market-last-price">{fmtUsd(replayGap ? null : latest?.close)}</div></div>
         <div className="market-window-change"><span className="market-caption">DISPLAYED WINDOW</span><strong style={{ color: windowChange === null ? 'var(--mut)' : windowChange >= 0 ? 'var(--up)' : 'var(--down)' }}>{fmtPct(windowChange)}</strong></div>
       </div>
       <div className="market-chart-body">

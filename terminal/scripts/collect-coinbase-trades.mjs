@@ -31,7 +31,7 @@ try {
     if(next&&(!/^[\w.:-]{1,128}$/.test(next)||next===after))throw new Error('Coinbase pagination cursor did not advance');
     if(Array.isArray(raw)&&raw.length&&raw.at(-1).trade_id>=previousMin)throw new Error('Older pagination did not move backwards');
     // Conservative upper bound of this millisecond; preserve exchange microseconds.
-    const result=storeTradePage(db,raw,Date.now()*1000+999,{after,next});
+    const result=storeTradePage(db,raw,Date.now()*1000+999,{after,next,allowTimestampRounding:true});
     fetched+=result.count;inserted+=result.inserted;oldest=Math.min(oldest,result.oldestTsUs??Infinity);previousMin=result.minId??previousMin;
     console.log(JSON.stringify({page:page+1,...result,nextCursor:next}));
     after=next;if(until!==null&&oldest<=until){reachedUntil=true;break;}if(!next||!result.count)break;

@@ -2,13 +2,27 @@
 import {useEffect,useRef,useState} from 'react';
 import type {TradeProfile} from '@/lib/tradeProfile';
 import {fmtUsd} from '@/lib/format';
-export function TradeVolumeProfile({start,cutoff,strict,source}:{start:number|null;cutoff:number;strict:boolean;source:string}) {
+export function TradeVolumeProfile({start,cutoff,strict,source,live=false}:{start:number|null;cutoff:number;strict:boolean;source:string;live?:boolean}) {
   const [window,setWindow]=useState('snapshot'),[profile,setProfile]=useState<TradeProfile|null>(null),[error,setError]=useState(''),[loading,setLoading]=useState(false);
   const abort=useRef<AbortController|null>(null);
   useEffect(()=>()=>abort.current?.abort(),[]);
+  useEffect(()=>{
+    if(!live||source!=='coinbase')return;
+    let active=true,controller:AbortController|null=null;
+    const refresh=async()=>{
+      if(controller)return;
+      controller=new AbortController();const end=Date.now();
+      const params=new URLSearchParams({start:new Date(end-15*60000).toISOString(),end:new Date(end).toISOString(),cutoff:new Date(end).toISOString(),strict:'false'});
+      try{const response=await fetch(`/api/market/trades/profile?${params}`,{signal:controller.signal,cache:'no-store'});const value=await response.json();if(!response.ok||value.unavailable)throw new Error(value.error??'Live profile unavailable');if(active){setProfile(value);setError('');}}
+      catch(e){if(active)setError(e instanceof Error?e.message:'Live profile unavailable');}
+      finally{controller=null;}
+    };
+    void refresh();const timer=setInterval(()=>void refresh(),5000);
+    return ()=>{active=false;clearInterval(timer);controller?.abort();};
+  },[live,source]);
   const queryStart=start===null?null:window==='snapshot'?start:Math.max(start,cutoff-Number(window)*60000);
   // Explicit load avoids doing a large ledger query on every playback tick.
-  const matching=profile&&queryStart!==null&&Date.parse(profile.range.start)===queryStart&&Date.parse(profile.range.endExclusive)===cutoff&&profile.strict===strict&&source==='coinbase';
+  const matching=profile&&source==='coinbase'&&(live||queryStart!==null&&Date.parse(profile.range.start)===queryStart&&Date.parse(profile.range.endExclusive)===cutoff&&profile.strict===strict);
   const shown=matching?profile:null;
   const load=async()=>{
     if(queryStart===null||source!=='coinbase')return;
@@ -20,7 +34,7 @@ export function TradeVolumeProfile({start,cutoff,strict,source}:{start:number|nu
   };
   const max=Math.max(.00000001,...(shown?.bins??[]).map(b=>Number(b.volumeBtc)));
   return <section aria-label="Executed trade volume profile"><h3>Executed-trade volume profile</h3>
-    <div className="market-chart-tools"><label>Trade window <select aria-label="Trade profile window" value={window} onChange={e=>setWindow(e.target.value)}><option value="snapshot">Snapshot window</option><option value="15">Last 15 minutes</option><option value="60">Last hour</option><option value="1440">Last 24 hours</option></select></label><button disabled={loading||queryStart===null||source!=='coinbase'} onClick={()=>void load()}>{loading?'Reading trade ledger…':'Load trade profile'}</button></div>
+    {live?<p>Live rolling 15-minute profile · refreshes every 5 seconds · observation watermark shown below.</p>:<div className="market-chart-tools"><label>Trade window <select aria-label="Trade profile window" value={window} onChange={e=>setWindow(e.target.value)}><option value="snapshot">Snapshot window</option><option value="15">Last 15 minutes</option><option value="60">Last hour</option><option value="1440">Last 24 hours</option></select></label><button disabled={loading||queryStart===null||source!=='coinbase'} onClick={()=>void load()}>{loading?'Reading trade ledger…':'Load trade profile'}</button></div>}
     <p>Bins sum actual execution size at actual execution price. No OHLCV fallback. Venue must match the chart. Side is the maker side, not inferred buying/selling pressure.</p>
     {source!=='coinbase'&&<p role="status">Unavailable: chart venue does not match the trade ledger.</p>}
     {queryStart===null&&<p role="status">Unavailable: no eligible candle range at this position.</p>}

@@ -9,6 +9,7 @@ import {
 } from '@/components/shell';
 import { getFeedHealth, isStale } from '@/lib/features/feedHealth';
 import { getBtcSnapshot } from '@/lib/features/snapshot';
+import {LiveMarketProvider} from '@/components/shell/LiveMarketContext';
 
 /** The topbar ticker must not look stale under a pulsing LIVE dot. */
 export const revalidate = 30;
@@ -32,6 +33,7 @@ async function LiveTopbar() {
 export default function TerminalLayout({ children }: { children: ReactNode }) {
   return (
     <AppShell>
+      <LiveMarketProvider>
       <Suspense fallback={<Topbar ticker={{ symbol: 'BTC/USD', price: null, changePct: null, stale: true }} />}>
         <LiveTopbar />
       </Suspense>
@@ -63,6 +65,7 @@ export default function TerminalLayout({ children }: { children: ReactNode }) {
         {children}
         <Disclaimer />
       </main>
+      </LiveMarketProvider>
     </AppShell>
   );
 }

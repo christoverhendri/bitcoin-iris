@@ -8,6 +8,7 @@ import { Clock } from './Clock';
 import { LiveBadge } from './LiveBadge';
 import { CommandPalette } from './CommandPalette';
 import { fmtPct, fmtUsd } from '@/lib/format';
+import {useLiveMarket} from './LiveMarketContext';
 
 export interface TickerState {
   symbol: string; price: number | null; changePct: number | null; stale: boolean;
@@ -16,6 +17,11 @@ export interface TickerState {
 export function Topbar({ ticker }: { ticker: TickerState }) {
   const pathname = usePathname();
   const section = sectionFromPath(pathname);
+  const {snapshot,transport}=useLiveMarket();
+  const execution=snapshot?.latest;
+  const price=execution?Number(execution.price):ticker.price;
+  const change=execution?snapshot?.change24hPct??null:ticker.changePct;
+  const stale=execution?transport!=='CONNECTED'||snapshot?.state!=='LIVE':true;
   return <>
     <header className="terminal-topnav">
       <Link href="/overview" className="terminal-brand" aria-label="IRIS BTC overview">
@@ -28,13 +34,13 @@ export function Topbar({ ticker }: { ticker: TickerState }) {
         </Link>)}
       </nav>
       <CommandPalette compact />
-      <div className="terminal-header-status"><LiveBadge stale={ticker.stale} /><Clock /></div>
+      <div className="terminal-header-status"><LiveBadge stale={stale} /><Clock /></div>
     </header>
     <div className="terminal-section-intro">
       <div><h1><span>BTC</span> / {section?.title ?? 'OVERVIEW'}</h1><p>{section?.key === 'overview' ? 'Signals. Evidence. A Clearer Picture.' : section?.blurb}</p></div>
       <div className="terminal-intro-quote">More signal. Less noise.<br />A deeper understanding of Bitcoin.</div>
       <div className="terminal-intro-art" aria-hidden="true" />
-      <div className="terminal-intro-ticker"><span>{ticker.symbol}</span><strong>{fmtUsd(ticker.price)}</strong><small style={{color: (ticker.changePct ?? 0) >= 0 ? 'var(--up)' : 'var(--down)'}}>{fmtPct(ticker.changePct)} · 24h</small></div>
+      <div className="terminal-intro-ticker"><span>{ticker.symbol}</span><strong>{fmtUsd(price)}</strong><small style={{color: (change ?? 0) >= 0 ? 'var(--up)' : 'var(--down)'}}>{fmtPct(change)} · 24h</small>{execution&&<small title={execution.time}>Execution {execution.time.slice(11,19)} UTC · {stale?'LAST CAPTURED':'LIVE'}</small>}</div>
     </div>
   </>;
 }

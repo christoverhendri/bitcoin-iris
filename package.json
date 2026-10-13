@@ -9,6 +9,7 @@
     "test": "npm --prefix terminal test",
     "lint": "npm --prefix terminal run lint",
     "ingest:trades": "node terminal/scripts/collect-coinbase-trades.mjs",
+    "stream:trades": "node terminal/scripts/stream-coinbase-trades.mjs",
     "verify:registry": "npm --prefix terminal run verify:registry"
   },
   "engines": { "node": ">=22.13.0" }
