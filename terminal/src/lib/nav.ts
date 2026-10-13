@@ -101,7 +101,7 @@ export const SECTIONS: Section[] = [
     title: 'MACRO',
     blurb: 'Country data · regime',
     group: 'Evidence',
-    icon: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM3 12h18M12 3c3 3.6 3 14.4 0 18',
+    icon: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0-18zM3 12h18M12 3c3 3.6 3 14.4 0 18',
     scope: 'country',
     subs: [
       { slug: 'data', label: 'ECONOMIC DATA' },
@@ -127,7 +127,10 @@ export const SECTIONS: Section[] = [
     blurb: 'Confluence · correlation · findings',
     group: 'Model',
     icon: 'M4 5h12M4 10h16M4 15h10M4 20h14',
-    subs: [{ slug: 'confluence', label: 'CONFLUENCE' }],
+    subs: [
+      { slug: 'confluence', label: 'CONFLUENCE' },
+      { slug: 'market-memory', label: 'MARKET MEMORY' },
+    ],
   },
 ];
 
