@@ -3,22 +3,15 @@ import {
   AppShell,
   CountryScopeTabs,
   Disclaimer,
-  Sidebar,
   SubTabs,
   TimeframePills,
   Topbar,
 } from '@/components/shell';
 import { getFeedHealth, isStale } from '@/lib/features/feedHealth';
 import { getBtcSnapshot } from '@/lib/features/snapshot';
-import { CommandPalette } from '@/components/shell/CommandPalette';
 
 /** The topbar ticker must not look stale under a pulsing LIVE dot. */
 export const revalidate = 30;
-
-async function LiveSidebar() {
-  const health = await getFeedHealth();
-  return <Sidebar health={health} />;
-}
 
 async function LiveTopbar() {
   const [health, snapshot] = await Promise.all([
@@ -38,17 +31,16 @@ async function LiveTopbar() {
 
 export default function TerminalLayout({ children }: { children: ReactNode }) {
   return (
-    <AppShell sidebar={<Suspense fallback={<Sidebar />}><LiveSidebar /></Suspense>}>
+    <AppShell>
       <Suspense fallback={<Topbar ticker={{ symbol: 'BTC/USD', price: null, changePct: null, stale: true }} />}>
         <LiveTopbar />
       </Suspense>
-      <CommandPalette />
       {/* nuqs reads the query string, so these must sit behind a Suspense
           boundary or the whole route opts out of static prerendering. */}
       <Suspense fallback={null}>
         <CountryScopeTabs />
       </Suspense>
-      <div
+      <div className="terminal-section-controls"
         style={{
           display: 'flex',
           alignItems: 'center',

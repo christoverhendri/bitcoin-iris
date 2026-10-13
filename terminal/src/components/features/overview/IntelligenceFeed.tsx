@@ -11,6 +11,7 @@ import type { SentimentData } from '@/lib/features/sentiment';
 import type { NewsArticle } from '@/lib/features/news';
 import { newsSentimentWord, newsAssessmentLabel, newsRankingLabel, newsCategoryColor, newsImpactColor } from '@/lib/features/news/present';
 import { SemanticDetails } from '../news/SemanticDetails';
+import { useResearchFocus } from './ResearchFocusContext';
 
 export interface IntelligenceFeedProps {
   sentiment: Envelope<SentimentData>;
@@ -22,6 +23,7 @@ function toneFor(s: NewsArticle['sentiment']): 'up' | 'down' | 'txt' {
 }
 
 export function IntelligenceFeed({ sentiment, news: initialNews }: IntelligenceFeedProps) {
+  const research = useResearchFocus();
   const liveNews = useLiveNews(initialNews);
   const { news } = liveNews;
   const s = sentiment.data;
@@ -180,6 +182,7 @@ export function IntelligenceFeed({ sentiment, news: initialNews }: IntelligenceF
                       {open ? '−' : '+'}
                     </span>
                   </button>
+                  <div className="news-investigate-row"><button onClick={() => research.investigate({title:a.title,publishedAt:a.publishedAt,url:a.url})} disabled={!Number.isFinite(a.publishedAt)} aria-label={`Investigate ${a.title}`}>Investigate</button>{research.focus?.event?.title===a.title&&research.focus.event.publishedAt===a.publishedAt&&<span>ACTIVE INVESTIGATION</span>}</div>
 
                   {open && (
                     <div

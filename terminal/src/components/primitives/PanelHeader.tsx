@@ -13,7 +13,7 @@ export function PanelHeader({
   note?: string;
 }) {
   return (
-    <div
+    <div className="iris-panel-header"
       style={{
         display: 'flex',
         alignItems: 'center',
@@ -26,8 +26,7 @@ export function PanelHeader({
       }}
     >
       <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', columnGap: 8, rowGap: 2, minWidth: 0 }}>
-        <span
-          className="iris-micro"
+        <span className="iris-panel-title iris-micro"
           style={{
             fontFamily: 'var(--mono)',
             fontSize: 11,

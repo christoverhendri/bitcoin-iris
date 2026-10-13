@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { commandsFor, filterCommands, timeframeHref, type TerminalCommand } from '@/lib/commands';
 
-export function CommandPalette() {
+export function CommandPalette({ compact = false }: { compact?: boolean }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const input = useRef<HTMLInputElement>(null);
   const returnFocus = useRef<HTMLElement | null>(null);
@@ -47,9 +47,9 @@ export function CommandPalette() {
   };
 
   return <>
-    <div className="iris-command-bar">
-      <button type="button" onClick={open} aria-haspopup="dialog">⌕ Commands <kbd>Ctrl/⌘ K</kbd></button>
-      <span>Navigate sections · change timeframe</span>
+    <div className={compact ? 'terminal-command-search' : 'iris-command-bar'}>
+      <button type="button" onClick={open} aria-haspopup="dialog">{compact ? 'Type a command or search…' : 'Commands'} <kbd>{compact ? '/' : 'Ctrl/⌘ K'}</kbd></button>
+      {!compact && <span>Navigate sections · change timeframe</span>}
     </div>
     <dialog ref={dialog} className="iris-command-dialog" aria-labelledby="iris-command-title"
       onClick={(event) => { if (event.target === event.currentTarget) dialog.current?.close(); }}

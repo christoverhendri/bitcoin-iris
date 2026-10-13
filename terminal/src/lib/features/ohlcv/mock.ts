@@ -1,15 +1,17 @@
 import { seeded, walk } from '@/lib/rng';
 import type { OhlcvCandle, OhlcvArgs } from './types';
+import { INTERVAL_MS } from './replay';
 
 export function mockOhlcv({ symbol = 'BTC', interval = '1h', limit = 100 }: OhlcvArgs): OhlcvCandle[] {
   const r = seeded('ohlcv');
-  const now = Date.now();
   
   // Generate price walk in 100-120K range
   const closes = walk(r, 110000, limit, 2, 0);
   
   const candles: OhlcvCandle[] = [];
-  const intervalMs = interval === '1h' ? 3600000 : interval === '4h' ? 14400000 : 86400000;
+  const intervalMs = INTERVAL_MS[interval];
+  if (!intervalMs) throw new Error(`Unsupported mock candle interval ${interval}`);
+  const now = Math.floor(Date.now() / intervalMs) * intervalMs;
   
   for (let i = 0; i < limit; i++) {
     const close = closes[i];

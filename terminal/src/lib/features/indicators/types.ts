@@ -9,6 +9,8 @@ export interface IndicatorData {
   bollingerUpper: number;
   bollingerMiddle: number;
   bollingerLower: number;
+  lastClose?: number;
+  atrPct?: number;
 }
 
 export interface IndicatorArgs {

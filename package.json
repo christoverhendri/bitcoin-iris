@@ -8,7 +8,8 @@
     "start": "npm --prefix terminal run start -- --hostname 127.0.0.1",
     "test": "npm --prefix terminal test",
     "lint": "npm --prefix terminal run lint",
+    "ingest:trades": "node terminal/scripts/collect-coinbase-trades.mjs",
     "verify:registry": "npm --prefix terminal run verify:registry"
   },
-  "engines": { "node": ">=22.0.0" }
+  "engines": { "node": ">=22.13.0" }
 }

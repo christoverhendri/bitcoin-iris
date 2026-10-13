@@ -10,7 +10,7 @@ export interface FeatureSpec<A, T> {
    * Reads the real data. Returns `null` when the query found nothing usable —
    * that is a normal state before the ingestion job has run, not an error.
    */
-  live: (args: A) => Promise<{ data: T; asOf: string; synthetic: boolean } | null>;
+  live: (args: A) => Promise<{ data: T; asOf: string; synthetic: boolean; sourceKey?: SourceKey } | null>;
   /**
    * Produces placeholder data of the *same type*. Must be pure and deterministic
    * for a given `args` (use `@/lib/rng`, never `Math.random` or `Date.now`),
@@ -55,9 +55,9 @@ export function defineFeature<A, T>(spec: FeatureSpec<A, T>) {
       // They still get badged — there is only one way for synthetic data to
       // reach a pixel, and it is always labelled.
       if (row.synthetic) {
-        return mocked(row.data, spec.source, 'synthetic_rows', unlockNote);
+        return mocked(row.data, row.sourceKey ?? spec.source, 'synthetic_rows', unlockNote);
       }
-      return live(row.data, spec.source, row.asOf);
+      return live(row.data, row.sourceKey ?? spec.source, row.asOf);
     } catch (err) {
       console.error(`[feature:${spec.key}]`, err);
       return mocked(spec.mock(args), spec.source, 'query_error', unlockNote);

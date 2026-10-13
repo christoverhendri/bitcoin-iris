@@ -50,7 +50,7 @@ export async function getSpot(product = 'BTC-USD'): Promise<{ price: number; vol
   return { price: Number(j.price), volume: Number(j.volume) };
 }
 
-const GRANULARITY: Record<string, number> = {
+export const COINBASE_GRANULARITY: Record<string, number> = {
   '1m': 60,
   '5m': 300,
   '15m': 900,
@@ -69,7 +69,7 @@ export async function getCandles(
   limit = 300,
   product = 'BTC-USD',
 ): Promise<Candle[]> {
-  const g = GRANULARITY[interval];
+  const g = COINBASE_GRANULARITY[interval];
   if (g === undefined) throw new Error(`coinbase: unsupported candle interval ${interval}`);
   // Match the 60s cache window; second-by-second URLs defeat fetch caching.
   const end = Math.floor(Date.now() / 60_000) * 60;

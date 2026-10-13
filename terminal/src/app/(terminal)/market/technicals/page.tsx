@@ -1,10 +1,11 @@
-import { getIndicators } from '@/lib/features/indicators';
+import { getMarketSnapshot } from '@/lib/getMarketSnapshot';
 import { TIMEFRAME_SPEC, resolveTimeframe } from '@/lib/nav';
 import { PanelGrid } from '@/components/primitives';
 import { RsiOscillator } from '@/components/features/technicals/RsiOscillator';
 import { MacdHistogram } from '@/components/features/technicals/MacdHistogram';
 import { MaTable } from '@/components/features/technicals/MaTable';
 import { BollingerState } from '@/components/features/technicals/BollingerState';
+import {TechReadout} from '@/components/features/overview/TechReadout';
 
 export const revalidate = 30;
 
@@ -15,9 +16,9 @@ export default async function TechnicalsPage({
 }) {
   const tf = resolveTimeframe((await searchParams).tf);
   const { interval, limit } = TIMEFRAME_SPEC[tf];
-  const [indicators] = await Promise.all([
-    getIndicators({ symbol: 'BTC-USD', interval, limit }),
-  ]);
+  const snapshot = await getMarketSnapshot({ symbol: 'BTC-USD', interval, limit });
+  const {indicators}=snapshot;
+  if(indicators.unavailable)return <TechReadout indicators={indicators} timeframe={`${tf} · insufficient eligible history`} />;
 
   return (
     <div
@@ -29,6 +30,7 @@ export default async function TechnicalsPage({
         minWidth: 0,
       }}
     >
+      <div className="market-snapshot-meta">Snapshot {snapshot.version} · cutoff {new Date(snapshot.cutoff).toISOString()}</div>
       <PanelGrid columns="repeat(auto-fit, minmax(340px, 1fr))">
         <RsiOscillator indicators={indicators} />
         <MacdHistogram indicators={indicators} />

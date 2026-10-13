@@ -20,8 +20,8 @@ export function TechReadout({ indicators, timeframe }: TechReadoutProps) {
   const labels = toIndicatorLabels(ind);
 
   const bbRange = ind.bollingerUpper - ind.bollingerLower;
-  const bbPct = bbRange > 0 ? (ind.bollingerMiddle - ind.bollingerLower) / bbRange : 0.5;
-  const atrPct = ((ind.bollingerUpper - ind.bollingerLower) / ind.bollingerMiddle) * 100;
+  const bbPct = bbRange > 0 && ind.lastClose!==undefined ? (ind.lastClose - ind.bollingerLower) / bbRange : NaN;
+  const atrPct = ind.atrPct??NaN;
   const emaGapPct = ((ind.ema5 - ind.ema21) / ind.ema21) * 100;
 
   const rows: { label: string; value: string; tone: Tone }[] = [
@@ -51,7 +51,7 @@ export function TechReadout({ indicators, timeframe }: TechReadoutProps) {
       />
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
         {rows.map((r) => (
-          <KeyValueRow key={r.label} label={r.label} value={r.value} tone={r.tone} />
+            <KeyValueRow key={r.label} label={r.label} value={indicators.unavailable||r.value.includes('NaN')?'—':r.value} tone={indicators.unavailable?'mut':r.tone} />
         ))}
       </div>
       <SourceFootnote env={indicators} />

@@ -10,13 +10,18 @@ import type { NewsArticle } from '@/lib/features/news';
 import { ArchiveMore } from '../news/ArchiveMore';
 import { useLiveNews } from '../news/useLiveNews';
 import { NewsRefreshStatus } from '../news/NewsRefreshStatus';
-import { WorldMap, type DetailPayload } from './WorldMap';
+import type { DetailPayload } from './WorldMap';
 import { EventNewsRail } from './EventNewsRail';
 import { EventDetail } from './EventDetail';
 import { EventLayerToggle } from './EventLayerToggle';
 
 const GlobeMap = dynamic(() => import('./GlobeMap').then((mod) => mod.GlobeMap), {
+  ssr: false,
   loading: () => <div role="status" style={{ minHeight: 460, padding: 16 }}>Loading 3D map…</div>,
+});
+
+const WorldMap = dynamic(() => import('./WorldMap').then((mod) => mod.WorldMap), {
+  loading: () => <div role="status" style={{ minHeight: 440, padding: 16 }}>Loading 2D map…</div>,
 });
 
 export interface GlobalSentimentPanelProps {
@@ -46,7 +51,7 @@ export function GlobalSentimentPanel({ events: baseEvents, news: initialNews, fl
     ? null : new Set(cats.split(',').filter(Boolean) as EventCategory[]);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [detail, setDetail] = useState<DetailPayload | null>(null);
-  const [view, setView] = useState<'globe' | 'flat'>('flat');
+  const [view, setView] = useState<'globe' | 'flat'>('globe');
 
   return (
     <Panel style={{ display: 'flex', flexDirection: 'column', minHeight: 460 }}>

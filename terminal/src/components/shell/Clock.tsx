@@ -20,6 +20,7 @@ export function Clock() {
           hour: '2-digit',
           minute: '2-digit',
           second: '2-digit',
+          timeZone: 'UTC',
         }),
       );
     tick();
@@ -40,7 +41,7 @@ export function Clock() {
         textAlign: 'right',
       }}
     >
-      {time ?? '--:--:--'}
+      {time ?? '--:--:--'} UTC
     </span>
   );
 }

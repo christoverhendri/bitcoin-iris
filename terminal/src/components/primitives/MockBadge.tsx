@@ -77,7 +77,7 @@ export function PlaceholderBadge() {
 }
 
 /** `SOURCE: coinbase · 2m ago` footnote pinned to the bottom of a panel. */
-export function SourceFootnote<T>({ env }: { env: Envelope<T>; now?: number }) {
+export function SourceFootnote<T>({ env, compact = false }: { env: Envelope<T>; now?: number; compact?: boolean }) {
   const validDate = env.asOf && Number.isFinite(Date.parse(env.asOf));
   return (
     <div
@@ -92,9 +92,8 @@ export function SourceFootnote<T>({ env }: { env: Envelope<T>; now?: number }) {
         color: 'var(--mut)',
       }}
     >
-      SOURCE: {env.sourceKey.toUpperCase().replace(/_/g, ' ')}
-      {' · '}
-      {env.unavailable ? 'UNAVAILABLE' : env.isMock ? 'DEMO DATA · NOT LIVE' : `REPORTED AS OF ${validDate ? new Date(env.asOf!).toISOString().replace('T', ' ').slice(0, 16) + ' UTC' : 'UNKNOWN'}`}
+      {process.env.NODE_ENV === 'development' && <>SOURCE: {env.sourceKey.toUpperCase().replace(/_/g, ' ')}{' · '}</>}
+      {env.unavailable ? 'UNAVAILABLE' : env.isMock ? 'DEMO DATA · NOT LIVE' : `${compact ? 'AS OF' : 'REPORTED AS OF'} ${validDate ? new Date(env.asOf!).toISOString().replace('T', ' ').slice(0, 16) + ' UTC' : 'UNKNOWN'}`}
       {(env.isMock || env.unavailable) && env.unlockNote && <div style={{ marginTop: 5, letterSpacing: 0 }}>{env.unlockNote}</div>}
     </div>
   );

@@ -11,13 +11,10 @@ const DrawerCtx = createContext<DrawerState>({ open: false, setOpen: () => {} })
 export const useDrawer = () => useContext(DrawerCtx);
 
 /**
- * The app shell: a fixed-height two-column grid, exactly as the original
- * (`grid-template-columns: 198px 1fr; height: 100vh; overflow: hidden`).
- *
- * `--rail` collapses to 0 below 1024px (see globals.css) and the sidebar
- * becomes an overlay drawer instead — the original had no mobile behaviour at all.
+ * Fixed-height terminal shell with horizontal navigation and a scrolling workspace.
+ * Retains the drawer context for components that still consume that interface.
  */
-export function AppShell({ sidebar, children }: { sidebar: ReactNode; children: ReactNode }) {
+export function AppShell({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
 
   // Escape closes it, as any overlay should.
@@ -32,16 +29,8 @@ export function AppShell({ sidebar, children }: { sidebar: ReactNode; children: 
 
   return (
     <DrawerCtx.Provider value={{ open, setOpen }}>
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'var(--rail) minmax(0, 1fr)',
-          height: '100dvh',
-          overflow: 'hidden',
-        }}
-      >
-        {sidebar}
-        <div style={{ gridColumn: 2, display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}>
+      <div className="terminal-shell">
+        <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, height: '100%', overflow: 'hidden' }}>
           {children}
         </div>
       </div>

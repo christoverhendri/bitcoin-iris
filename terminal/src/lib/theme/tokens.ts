@@ -9,19 +9,19 @@
  * IRIS amber terminal palette; see docs/DESIGN_TOKENS.md.
  */
 export const TOKENS = {
-  bg: '#000000',
-  panel: '#080808',
-  sunk: '#101010',
-  line: '#303030',
-  line2: '#4a4a4a',
-  txt: '#eeeeee',
-  mut: '#aaaaaa',
-  dim: '#858585',
-  up: '#37e76d',
-  down: '#ff4545',
-  blue: '#48bfff',
-  amber: '#ff9d00',
-  purple: '#c898ff',
+  bg: '#060b10',
+  panel: '#090f15',
+  sunk: '#0c141d',
+  line: '#203449',
+  line2: '#35516d',
+  txt: '#e1edf9',
+  mut: '#8eabc7',
+  dim: '#718aa4',
+  up: '#12df93',
+  down: '#ff5265',
+  blue: '#36a8ff',
+  amber: '#ffad22',
+  purple: '#ba8dff',
 } as const;
 
 /** Hover background for nav / indicator buttons (not a :root var in the original). */

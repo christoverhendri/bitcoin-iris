@@ -1,8 +1,7 @@
 import type { CSSProperties, ReactNode } from 'react';
 
 /**
- * A panel surface. No radius, no shadow — depth comes from the surface ramp
- * (bg #08090c -> sunk #0b0d11 -> panel #0e1014) and 1px hairlines.
+ * Shared panel surface; the CSS frame adds angled corners and thin signal seams.
  */
 export function Panel({
   children,

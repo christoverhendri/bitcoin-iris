@@ -2,46 +2,45 @@ import { getWeeklyForecast } from '@/lib/features/weeklyForecast';
 import { getFearGreed } from '@/lib/features/fearGreed';
 import { getConfluence } from '@/lib/features/confluence';
 import { getBtcSnapshot } from '@/lib/features/snapshot';
-import { getOhlcv } from '@/lib/features/ohlcv';
-import { getIndicators } from '@/lib/features/indicators';
+import { getMarketSnapshot } from '@/lib/getMarketSnapshot';
 import { getSentiment } from '@/lib/features/sentiment';
 import { getNews } from '@/lib/features/news';
+import { getChainNetwork } from '@/lib/features/chainNetwork';
+import { getChainFlows } from '@/lib/features/chainFlows';
+import { getMacroCountry } from '@/lib/features/macroCountry';
 import { TIMEFRAME_SPEC, resolveTimeframe } from '@/lib/nav';
-import { PanelGrid } from '@/components/primitives';
 import { AsyncPanel } from '@/components/primitives/AsyncPanel';
-import { SignalCards } from '@/components/features/overview/SignalCards';
-import { FearGreedBand } from '@/components/features/overview/FearGreedBand';
 import { BtcSnapshotPanel } from '@/components/features/overview/BtcSnapshot';
 import { PriceChartLarge } from '@/components/features/market/PriceChartLarge';
 import { TechReadout } from '@/components/features/overview/TechReadout';
 import { IntelligenceFeed } from '@/components/features/overview/IntelligenceFeed';
+import { CustomDashboard } from '@/components/features/overview/CustomDashboard';
+import { OverviewSummary } from '@/components/features/overview/OverviewSummary';
+import { OverviewChain, OverviewMacro, SourceInspector } from '@/components/features/overview/OverviewWidgets';
+import { OverviewPriceWidget } from '@/components/features/overview/OverviewPriceWidget';
 
 export const revalidate = 30;
 
 export default async function OverviewPage({ searchParams }: { searchParams: Promise<{ tf?: string }> }) {
   const tf = resolveTimeframe((await searchParams).tf);
   const { interval, limit } = TIMEFRAME_SPEC[tf];
-  const fearGreed = getFearGreed({ limit: 2 });
-  const signals = Promise.all([getWeeklyForecast({ symbol: 'BTC-USD' }), getConfluence({ symbol: 'BTC-USD' }), fearGreed]);
   const snapshot = getBtcSnapshot({ symbol: 'BTC-USD' });
-  const candles = getOhlcv({ symbol: 'BTC-USD', interval, limit });
-  const indicators = getIndicators({ symbol: 'BTC-USD', interval, limit });
+  const summary = Promise.all([snapshot, getWeeklyForecast({symbol:'BTC-USD'}), getFearGreed({limit:2}), getConfluence({symbol:'BTC-USD'})]);
+  const market = getMarketSnapshot({ symbol: 'BTC-USD', interval, limit });
+  const candles = market.then(s=>s.ohlcv);
+  const indicators = market.then(s=>s.indicators);
   const intelligence = Promise.all([getSentiment({ days: 7 }), getNews({ limit: 400 })]);
-
-  return <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12, minWidth: 0 }}>
-    <AsyncPanel title="Market signals" data={signals}>{([weeklyForecast, confluence, fearGreed]) =>
-      <SignalCards weeklyForecast={weeklyForecast} confluence={confluence} fearGreed={fearGreed} />
-    }</AsyncPanel>
-    <AsyncPanel title="Fear & greed" data={fearGreed}>{(data) => <FearGreedBand fearGreed={data} />}</AsyncPanel>
-    <PanelGrid className="ov-split" columns="minmax(0, 2fr) minmax(0, 1fr)" style={{ alignItems: 'stretch' }}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-        <AsyncPanel key={`price-${tf}`} title="Price action" height={350} data={candles}>{(ohlcv) => <PriceChartLarge ohlcv={ohlcv} timeframe={tf} />}</AsyncPanel>
-        <AsyncPanel title="News & sentiment" height={300} data={intelligence}>{([sentiment, news]) => <IntelligenceFeed sentiment={sentiment} news={news} />}</AsyncPanel>
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-        <AsyncPanel title="BTC snapshot" height={320} data={snapshot}>{(data) => <BtcSnapshotPanel snapshot={data} />}</AsyncPanel>
-        <AsyncPanel key={`technical-${tf}`} title="Technicals" data={indicators}>{(data) => <TechReadout indicators={data} timeframe={tf} />}</AsyncPanel>
-      </div>
-    </PanelGrid>
+  const chain = Promise.all([getChainNetwork({symbol:'BTC'}),getChainFlows({symbol:'BTC'})]);
+  const macro = getMacroCountry({countries:['US']});
+  return <div className="overview-page">
+    <CustomDashboard development={process.env.NODE_ENV === 'development'} summary={<AsyncPanel title="Market summary" data={summary}>{([snapshot,weekly,fear,evidence]) => <OverviewSummary snapshot={snapshot} weekly={weekly} fear={fear} evidence={evidence} />}</AsyncPanel>} widgets={{
+      price: <OverviewPriceWidget price={<AsyncPanel key={`price-${tf}`} title="Price action" height={350} data={candles}>{(ohlcv) => <PriceChartLarge ohlcv={ohlcv} timeframe={tf} />}</AsyncPanel>} technicals={<AsyncPanel key={`price-technical-${tf}`} title="Technicals" data={indicators}>{(data) => <TechReadout indicators={data} timeframe={tf} />}</AsyncPanel>} />,
+      chain: <AsyncPanel title="On-chain intelligence" data={chain}>{([network,flows]) => <OverviewChain network={network} flows={flows} />}</AsyncPanel>,
+      macro: <AsyncPanel title="Macro snapshot" data={macro}>{(data) => <OverviewMacro macro={data} />}</AsyncPanel>,
+      evidence: <AsyncPanel title="Recent evidence" data={intelligence}>{([sentiment, news]) => <IntelligenceFeed sentiment={sentiment} news={news} />}</AsyncPanel>,
+      snapshot: <AsyncPanel title="BTC snapshot" data={snapshot}>{(data) => <BtcSnapshotPanel snapshot={data} />}</AsyncPanel>,
+      technicals: <AsyncPanel key={`technical-${tf}`} title="Technicals" data={indicators}>{(data) => <TechReadout indicators={data} timeframe={tf} />}</AsyncPanel>,
+      sources: process.env.NODE_ENV === 'development' ? <SourceInspector /> : null,
+    }} />
   </div>;
 }

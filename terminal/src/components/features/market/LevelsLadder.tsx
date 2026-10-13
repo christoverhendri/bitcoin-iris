@@ -1,4 +1,4 @@
-import { Panel, PanelHeader, KeyValueRow, MockBadge, SourceFootnote } from '@/components/primitives';
+import { Panel, PanelHeader, MockBadge, SourceFootnote } from '@/components/primitives';
 import type { Envelope } from '@/lib/envelope';
 import type { SupportResistanceLevels } from '@/lib/features/levels';
 import { toLevelsLabels } from '@/lib/features/levels/present';
@@ -7,11 +7,13 @@ import type { Tone } from '@/lib/theme/tokens';
 
 export interface LevelsLadderProps {
   levels: Envelope<SupportResistanceLevels>;
-  /** Latest traded price — used to compute distance-from-price. */
+  /** Latest chart candle close — used to compute distance from that reference. */
   price: number;
+  replay?: boolean;
+  reference?: {start:number;end:number;interval:string}|null;
 }
 
-export function LevelsLadder({ levels, price }: LevelsLadderProps) {
+export function LevelsLadder({ levels, price, replay = false, reference }: LevelsLadderProps) {
   const l = levels.data;
   const labels = toLevelsLabels(l);
 
@@ -24,27 +26,27 @@ export function LevelsLadder({ levels, price }: LevelsLadderProps) {
   ];
 
   return (
-    <Panel style={{ display: 'flex', flexDirection: 'column' }}>
+    <Panel className="market-levels-panel">
       <PanelHeader
         title="SUPPORT / RESISTANCE"
-        note={price > 0 ? `SPOT ${fmtUsd(price)}` : undefined}
         right={<MockBadge env={levels} />}
       />
-      <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+      <div className="market-levels-reference"><span className="market-caption">REFERENCE · {replay ? 'REPLAY CLOSE' : 'LATEST CHART CLOSE'}</span><strong>{fmtUsd(price > 0 ? price : null)}</strong><span>Level distances use this candle close.</span></div>
+      <div className="market-levels-columns"><span>LEVEL / USD</span><span>FROM CLOSE</span></div>
+      <div className="market-levels-list">
         {ladder.map((row) => {
           const v = l[row.key];
-          const distPct = price > 0 ? ((v - price) / price) * 100 : 0;
+          const valid = !levels.unavailable && Number.isFinite(v) && v > 0;
+          const distPct = valid && price > 0 ? ((v - price) / price) * 100 : null;
           return (
-            <KeyValueRow
-              key={row.key}
-              label={row.label}
-              value={labels[row.key]}
-              tone={row.tone}
-              sub={price > 0 ? `${fmtPct(distPct)} vs spot` : undefined}
-            />
+            <div className="market-level-row" key={row.key}>
+              <div><span className="market-level-name" style={{ color: `var(--${row.tone})` }}>{row.label}</span><strong>{valid ? labels[row.key] : '—'}</strong>{valid&&price>0&&(row.key==='s1'||row.key==='s2')&&price<v&&<small className="market-broken-level">BROKEN SUPPORT · close below level</small>}{valid&&price>0&&(row.key==='r1'||row.key==='r2')&&price>v&&<small className="market-broken-level">BROKEN RESISTANCE · close above level</small>}</div>
+              <span className="market-level-distance" style={{ color: distPct === null ? 'var(--mut)' : distPct >= 0 ? 'var(--up)' : 'var(--down)' }}>{fmtPct(distPct)}</span>
+            </div>
           );
         })}
       </div>
+      <div className="market-levels-note">Method: classic floor-trader pivot · prior completed {reference?.interval??'native'} candle H/L/C.<br />Reference: {reference?`${new Date(reference.start).toISOString()} → ${new Date(reference.end).toISOString()}`:'unavailable'}<br />VWAP: trailing ≤100 eligible candles.<br />Broken labels describe the latest close relative to the level, not an independently confirmed breakout.</div>
       <SourceFootnote env={levels} />
     </Panel>
   );

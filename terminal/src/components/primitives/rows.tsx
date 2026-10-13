@@ -15,7 +15,7 @@ export function KeyValueRow({
   sub?: string;
 }) {
   return (
-    <div
+    <div className="iris-keyvalue-row"
       style={{
         display: 'flex',
         justifyContent: 'space-between',

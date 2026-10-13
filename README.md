@@ -13,7 +13,11 @@ Repositori riset forecasting Bitcoin dan **IRIS BTC Intelligence Terminal**.
 
 ## Menjalankan terminal
 
-Prasyarat: **Node.js 22+**, npm, dan internet untuk sumber eksternal. Python tidak diperlukan untuk aplikasi web.
+Prasyarat: **Node.js 22.13+**, npm, dan internet untuk sumber eksternal. Python tidak diperlukan untuk aplikasi web; arsip harga dibaca melalui SQLite bawaan Node.
+
+Label penyedia pada footnote sumber hanya ditampilkan dalam **`npm run dev`**.
+Production tetap membaca data dan melayani API seperti biasa; timestamp, status
+mock/unavailable, dan replay tetap tersedia. Lihat [source label visibility](docs/development_data_policy.md).
 Jalankan dari root repositori:
 
 ```powershell
@@ -129,6 +133,14 @@ forecast pipeline; no live terminal collector or new paid service is activated.
 An optional, non-gating GitHub Actions workflow probes real Coinbase API
 responses and can produce a temporary full backfill artifact.
 See [hourly backfill and verification guide](docs/hourly_backfill.md).
+
+The market chart can load the local hourly or minute archive for candle replay.
+`GET /api/market/history` reads canonical SQLite files read-only, paginates
+oldest-first, retains observation times and revision hashes, and reports gaps
+without fabricating candles. The default directory is `artifacts/market` in
+this repository; set server-only `IRIS_MARKET_ARCHIVE_DIR` to use another copy.
+Missing or incompatible archives return HTTP 503 with `unavailable: true`.
+See [archive API and replay integration](docs/market_archive_api.md).
 
 ## Minute-level trading activity research
 

@@ -10,7 +10,7 @@ import type { Candle } from './coinbase';
 
 const BASE = 'https://api.kraken.com/0/public';
 
-const INTERVAL_MIN: Record<string, number> = {
+export const KRAKEN_INTERVAL_MIN: Record<string, number> = {
   '1m': 1,
   '5m': 5,
   '15m': 15,
@@ -27,7 +27,8 @@ interface KrakenOhlcResponse {
 
 /** Candles oldest-first. Kraken shape: `[time,o,h,l,c,vwap,volume,count]`. */
 export async function getCandles(interval = '1d', pair = 'XBTUSD'): Promise<Candle[]> {
-  const min = INTERVAL_MIN[interval] ?? 1440;
+  const min = KRAKEN_INTERVAL_MIN[interval];
+  if (min === undefined) throw new Error(`kraken: unsupported candle interval ${interval}`);
   const j = await fetchJson<KrakenOhlcResponse>(
     `${BASE}/OHLC?pair=${pair}&interval=${min}`,
     { revalidate: 60 },

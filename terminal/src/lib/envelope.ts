@@ -9,6 +9,7 @@
 
 export type SourceKey =
   | 'coinbase'
+  | 'kraken'
   | 'yfinance'
   | 'coingecko'
   | 'alternative_me'
