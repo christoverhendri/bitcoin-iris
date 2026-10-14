@@ -32,6 +32,7 @@ export function MarketReplay({ initial, timeframe,events=[] }: {
   const [seekDate,setSeekDate]=useState('');
   const [seekError,setSeekError]=useState('');
   const [archiveInterval, setArchiveInterval] = useState<'1m' | '1h'>('1h');
+  const [archiveBasis,setArchiveBasis]=useState<'derived'|'original'>('derived');
   const [archive, setArchive] = useState<ArchivePage | null>(null);
   const [loadingArchive, setLoadingArchive] = useState(false);
   const [archiveError, setArchiveError] = useState<string | null>(null);
@@ -81,6 +82,7 @@ export function MarketReplay({ initial, timeframe,events=[] }: {
     const controller = new AbortController(); abortRef.current = controller;
     const interval = append && archive ? archive.archive.interval : archiveInterval;
     const params = new URLSearchParams({ interval, limit: '500' });
+    params.set('basis',append&&archive?archive.marketDataset?.basis==='minute-derived'?'derived':'original':archiveBasis);
     if (append && archive?.nextCursor) params.set('cursor', archive.nextCursor);
     try {
       const response = await fetch(`/api/market/history?${params}`, { signal: controller.signal, cache: 'no-store' });
@@ -89,6 +91,7 @@ export function MarketReplay({ initial, timeframe,events=[] }: {
       if (!Array.isArray(page.data) || page.isMock || page.sourceKey !== 'coinbase' || page.archive?.interval !== interval) throw new Error('Invalid archive response');
       if(page.data.some((c:Parameters<typeof validCandle>[0])=>!validCandle(c)||c.interval!==interval))throw new Error('Archive contains invalid candles');
       if(append&&archive&&page.archive.snapshotAt!==archive.archive.snapshotAt)throw new Error('Archive observation cutoff changed between pages');
+      if(append&&archive&&page.marketDataset?.version!==archive.marketDataset?.version)throw new Error('Archive dataset changed between pages');
       if (!page.data.length && !page.gaps?.length && !append) throw new Error('No completed candles are saved in this local archive yet.');
       const previous = append && archive ? archive.data : [];
       if (previous.length && page.data.length && page.data[0].ts <= previous[previous.length - 1].ts) throw new Error('Archive pages overlap');
@@ -113,6 +116,9 @@ export function MarketReplay({ initial, timeframe,events=[] }: {
           <label>Local archive <select aria-label="Archive interval" value={archiveInterval} disabled={loadingArchive} onChange={(event) => setArchiveInterval(event.target.value as '1m' | '1h')}>
             <option value="1h">1-hour candles</option><option value="1m">1-minute candles</option>
           </select></label>
+          {archiveInterval==='1h'&&<label>Hourly basis <select aria-label="Hourly archive basis" value={archiveBasis} disabled={loadingArchive} onChange={e=>setArchiveBasis(e.target.value as 'derived'|'original')}>
+            <option value="derived">Derived from complete minutes</option><option value="original">Original Coinbase hourly</option>
+          </select></label>}
           <button disabled={loadingArchive} onClick={() => void loadArchive()}>{loadingArchive ? 'Loading archive…' : 'Load local archive'}</button>
           {archive && <>
             <button disabled={loadingArchive || !archive.nextCursor || archive.data.length >= 5000} onClick={() => void loadArchive(true)}>Load next page</button>
@@ -153,7 +159,8 @@ export function MarketReplay({ initial, timeframe,events=[] }: {
       </section>
       <LiveCoinbasePanel key={`${replaying}:${!!archive}`} enabled={liveEligible(replaying,!!archive,ohlcv.sourceKey,!!(ohlcv.isMock||ohlcv.unavailable))} />
       <div className="market-snapshot-meta">Snapshot {market.version} · cutoff {new Date(market.cutoff).toISOString()} · {strict&&replaying?'STRICT OBSERVATION ELIGIBILITY':'RETROSPECTIVE RECONSTRUCTION'} · integrity {market.integrity}</div>
-      {enabled&&<p role="status">Chart stream {transport==='CONNECTED'?liveSnapshot?.state??'CONNECTING':transport} · {applied.forming?`forming ${initial.interval} candle${applied.partial?' · PARTIAL captured coverage':''}`:'awaiting captured interval'} · Indicators and pivots use completed bars at this cutoff; forming chart overlays are provisional. {liveSnapshot?.chart?.error}</p>}
+      {market.ohlcv.marketDataset&&<p role="status">Dataset: {market.ohlcv.marketDataset.basis} · version {market.ohlcv.marketDataset.version.slice(0,12)} · stored data end {market.ohlcv.marketDataset.dataEnd}. Chart, indicators, pivots and replay share this basis.</p>}
+      {enabled&&(ohlcv.marketDataset?.basis==='minute-derived'?<p role="status">Frozen minute-derived chart · live executions and DOM remain separate. New live candles are not spliced into this dataset.</p>:<p role="status">Chart stream {transport==='CONNECTED'?liveSnapshot?.state??'CONNECTING':transport} · {applied.forming?`forming ${initial.interval} candle${applied.partial?' · PARTIAL captured coverage':''}`:'awaiting captured interval'} · Indicators and pivots use completed bars at this cutoff; forming chart overlays are provisional. {liveSnapshot?.chart?.error}</p>)}
       {replaying && <p className="market-replay-disclosure">REPLAY · Only revealed candles determine price and levels. Replay covers {archive ? 'loaded local archive pages' : 'the loaded timeframe window'}; the header ticker remains current. Historical data is reconstructed from the source available today.</p>}
       {replaying && shownGaps.length ? <div className="market-replay-disclosure" role="status">
         {gap ? `${gap.status} · ${new Date(gap.start).toISOString()} → ${new Date(gap.end).toISOString()} · ${(gap.end - gap.start) / 60_000} min · OHLC unavailable. ` : ''}

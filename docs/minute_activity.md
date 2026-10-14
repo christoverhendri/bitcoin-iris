@@ -93,6 +93,14 @@ pipeline does **not** silently start that backfill.
 
 ## Operational behavior and revisions
 
+During `npm run dev` in `terminal`, Market → Price shows a minute-backfill
+progress panel when the local `artifacts/market/minute-fullhistory/progress.json`
+job is available. It refreshes every 30 seconds using a read-only archive query,
+showing distinct stored minutes, successful request coverage, monthly batches,
+and an ETA measured from recent fetches. Stopped or stale collectors have no ETA.
+Request coverage includes empty responses and does not certify complete candles.
+The panel and `/api/market/backfill` endpoint are disabled in production.
+
 - `minute_candles`: immutable distinct payloads per minute.
 - `minute_seen`: append-only observations with the actual local collection time.
 - `minute_windows`: successful window fetches, UTC bounds, raw HTTP response

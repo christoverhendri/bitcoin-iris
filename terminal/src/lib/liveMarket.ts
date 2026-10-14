@@ -5,7 +5,7 @@ import {INTERVAL_MS} from './features/ohlcv/replay';
 /** Replace by bar timestamp, never add snapshot volume to a previously applied bar. */
 export function applyLiveMarket(initial:MarketSnapshot,live:LiveTradeSnapshot|null,enabled:boolean) {
   const chart=live?.chart;
-  if(!enabled||!chart||chart.error||initial.ohlcv.isMock||initial.ohlcv.sourceKey!=='coinbase'||chart.interval!==initial.interval||chart.cutoff<initial.cutoff)return {market:initial,display:initial.ohlcv,forming:false,partial:false};
+  if(initial.ohlcv.marketDataset?.basis==='minute-derived'||!enabled||!chart||chart.error||initial.ohlcv.isMock||initial.ohlcv.sourceKey!=='coinbase'||chart.interval!==initial.interval||chart.cutoff<initial.cutoff)return {market:initial,display:initial.ohlcv,forming:false,partial:false};
   const base=initial.ohlcv.data.filter(c=>c.ts+INTERVAL_MS[c.interval]<=initial.cutoff);
   const tail=chart.candles.filter(c=>validCandle(c)&&c.ts>=chart.from&&c.ts+INTERVAL_MS[c.interval]>initial.cutoff);
   const completed=tail.filter(c=>!c.forming&&c.complete);

@@ -15,7 +15,7 @@ export interface MarketSnapshot {
 /** A deterministic content fingerprint, not a cryptographic integrity certificate. */
 export function marketVersion(env:Envelope<OhlcvCandle[]>) {
   let hash=2166136261;
-  const text=JSON.stringify([env.sourceKey,env.asOf,env.isMock,env.data]);
+  const text=JSON.stringify([env.sourceKey,env.asOf,env.isMock,env.marketDataset,env.data]);
   for(let i=0;i<text.length;i++)hash=Math.imul(hash^text.charCodeAt(i),16777619);
   return `market-v1-${(hash>>>0).toString(16).padStart(8,'0')}`;
 }
@@ -43,7 +43,7 @@ export function buildMarketSnapshot(env:Envelope<OhlcvCandle[]>,cutoff:number,op
   const average=(period:number)=>closes.length>=period?ema(closes,period).at(-1)!:nan;
   const data:IndicatorData={rsi:closes.length>=15?rsi(closes):nan,macd:m.macd,macdSignal:m.signal,ema5:average(5),ema8:average(8),ema13:average(13),ema21:average(21),bollingerUpper:bb.upper,bollingerMiddle:bb.middle,bollingerLower:bb.lower,lastClose:last?.close??nan,atrPct:closes.length>=15?atrPct(candles.slice(segment),14):nan};
   const p=ref?pivotPoints(ref.high,ref.low,ref.close):null;
-  const levels:SupportResistanceLevels={r1:p?.r1??nan,r2:p?.r2??nan,s1:p?.s1??nan,s2:p?.s2??nan,vwap:last?vwap(candles.slice(-100)):nan};
+  const levels:SupportResistanceLevels={r1:p?.r1??nan,r2:p?.r2??nan,s1:p?.s1??nan,s2:p?.s2??nan,vwap:last?vwap(candles.slice(segment).slice(-100)):nan};
   const basis={...ohlcv,sourceKey:'internal_quant' as const};
   return {ohlcv,indicators:{...basis,data,unavailable:unavailable||closes.length<35,unlockNote:closes.length<35?'Needs at least 35 eligible candles for full indicator warmup.':basis.unlockNote},
     levels:{...basis,data:levels,unavailable:unavailable||!ref,unlockNote:!ref?'Pivot requires a prior completed candle.':basis.unlockNote},

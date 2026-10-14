@@ -42,6 +42,7 @@ export type MockReason =
   | 'query_error';
 
 export interface Envelope<T> {
+  marketDataset?: { basis: 'minute-derived' | 'coinbase-original' | 'minute-raw'; version: string; dataEnd: string; partialHours?: number; noDataHours?: number };
   data: T;
   isMock: boolean;
   missingSource: SourceKey | null;

@@ -4,6 +4,7 @@ import { MarketReplay } from '@/components/features/market/MarketReplay';
 import { getNews } from '@/lib/features/news';
 import { getWhaleEvents } from '@/lib/features/whaleEvents';
 import type {MarketEvent} from '@/lib/marketSnapshot';
+import { MinuteBackfillPanel } from '@/components/features/market/MinuteBackfillPanel';
 
 export const revalidate = 30;
 
@@ -26,6 +27,9 @@ export default async function PriceActionPage({
   const snapshot = await getMarketSnapshot({ symbol: 'BTC-USD', interval, limit });
 
   return (
-    <MarketReplay key={tf} initial={snapshot} timeframe={tf} events={events} />
+    <>
+      {process.env.NODE_ENV === 'development' && <MinuteBackfillPanel />}
+      <MarketReplay key={tf} initial={snapshot} timeframe={tf} events={events} />
+    </>
   );
 }

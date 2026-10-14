@@ -728,6 +728,13 @@ table.iris-table tbody tr:hover {
 .market-coverage-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; margin:0; }
 .market-coverage-grid dt { color:var(--mut); font-size:10px; }
 .market-coverage-grid dd { margin:0; overflow-wrap:anywhere; }
+.minute-backfill-progress { display:grid; gap:6px; margin-bottom:14px; }
+.minute-backfill-progress label { display:flex; justify-content:space-between; color:var(--mut); }
+.minute-backfill-progress strong { color:var(--amber); font-variant-numeric:tabular-nums; }
+.minute-backfill-progress progress { width:100%; height:8px; appearance:none; accent-color:var(--amber); background:var(--line); border:0; }
+.minute-backfill-progress progress::-webkit-progress-bar { background:var(--line); }
+.minute-backfill-progress progress::-webkit-progress-value { background:var(--amber); }
+.minute-backfill-progress progress::-moz-progress-bar { background:var(--amber); }
 .market-volume-profile > div { display:grid; grid-template-columns:minmax(150px,1fr) minmax(0,2fr) 130px; gap:8px; }
 .market-volume-profile > div > span:last-child { overflow-wrap:anywhere; }
 .market-volume-profile meter { width:100%; height:18px; }

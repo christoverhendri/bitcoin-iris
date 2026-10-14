@@ -21,6 +21,8 @@ export function MarketCoverage({snapshot,archive,gaps}:{snapshot:MarketSnapshot;
       {archive&&<div><dt>Archive observation watermark (loaded vintage)</dt><dd>{archive.archive.snapshotAt}</dd></div>}
       <div><dt>Revealed gaps</dt><dd>{gaps.length} spans · {gaps.reduce((n,g)=>n+(g.end-g.start)/60000,0)} minutes</dd></div>
       <div><dt>Content version</dt><dd>{snapshot.version}</dd></div>
+      {snapshot.ohlcv.marketDataset&&<><div><dt>Dataset basis / version</dt><dd>{snapshot.ohlcv.marketDataset.basis} · {snapshot.ohlcv.marketDataset.version}</dd></div>
+        <div><dt>Excluded partial / empty hourly buckets</dt><dd>{snapshot.ohlcv.marketDataset.partialHours??'—'} / {snapshot.ohlcv.marketDataset.noDataHours??'—'}</dd></div></>}
       {snapshot.strict&&<div><dt>Versions excluded by observation cutoff</dt><dd>{snapshot.rejected}</dd></div>}
       {process.env.NODE_ENV==='development'&&<div><dt>Source</dt><dd>{archive?.archive.venue??snapshot.ohlcv.sourceKey}</dd></div>}
     </dl><p>Loaded integrity validates OHLCV values, ordering and native resolution. Fingerprints identify payloads; they are not cryptographic certificates. Archive revision hashes are retained, not recomputed here. Loaded coverage is separate from full archive bounds.</p>

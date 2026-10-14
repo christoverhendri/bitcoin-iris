@@ -1,5 +1,5 @@
 import { DatabaseSync } from 'node:sqlite';
-import { lstatSync } from 'node:fs';
+import { existsSync, lstatSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { live, type Envelope } from '@/lib/envelope';
 import type { OhlcvCandle } from '@/lib/features/ohlcv/types';
@@ -7,7 +7,7 @@ import { archiveGaps } from './archiveGaps';
 import type { ReplayGap } from '@/lib/features/ohlcv/replay';
 
 type Interval = '1m' | '1h';
-interface Cursor { v: 1; interval: Interval; start: number; end: number; after: number; asOf: string }
+interface Cursor { v: 1; interval: Interval; start: number; end: number; after: number; asOf: string; basis?: string; datasetVersion?: string }
 export interface ArchiveCandle extends OhlcvCandle { observedAt: string; revisionHash: string }
 export interface ArchivePage extends Envelope<ArchiveCandle[]> {
   gaps: ReplayGap[];
@@ -35,6 +35,9 @@ export function readArchivePage(params: URLSearchParams, directory = process.env
   const rawInterval = params.get('interval') ?? '1h';
   if (rawInterval !== '1m' && rawInterval !== '1h') throw new ArchiveRequestError('Archive interval must be 1m or 1h');
   const interval: Interval = rawInterval;
+  const requestedBasis = params.get('basis');
+  if (requestedBasis && requestedBasis !== 'derived' && requestedBasis !== 'original') throw new ArchiveRequestError('Basis must be derived or original');
+  const basis = interval === '1m' ? 'raw' : requestedBasis ?? (existsSync(resolve(directory, 'coinbase_hourly_from_minutes.sqlite')) ? 'derived' : 'original');
   const step = interval === '1m' ? 60 : 3600;
   const rawLimit = params.get('limit') ?? '500';
   if (!/^\d+$/.test(rawLimit) || Number(rawLimit) < 1 || Number(rawLimit) > 1000) throw new ArchiveRequestError('Limit must be 1..1000');
@@ -53,10 +56,11 @@ export function readArchivePage(params: URLSearchParams, directory = process.env
         || cursor.start > cursor.after || cursor.after >= cursor.end || cursor.end > completedCutoff
         || !/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{6}Z$/.test(cursor.asOf)
         || !Number.isFinite(Date.parse(cursor.asOf)) || Date.parse(cursor.asOf) > now
+        || (cursor.basis !== undefined && cursor.basis !== basis)
         || (requestedStart !== null && requestedStart !== cursor.start) || (requestedEnd !== null && requestedEnd !== cursor.end)) throw new Error();
     } catch { throw new ArchiveRequestError('Invalid or mismatched archive cursor'); }
   }
-  const file = resolve(directory, interval === '1m' ? 'coinbase_minute.sqlite' : 'coinbase_hourly.sqlite');
+  const file = resolve(directory, interval === '1m' ? 'coinbase_minute.sqlite' : basis === 'derived' ? 'coinbase_hourly_from_minutes.sqlite' : 'coinbase_hourly.sqlite');
   try { const info = lstatSync(file); if (!info.isFile() || info.isSymbolicLink()) throw new Error(); }
   catch { throw new ArchiveUnavailableError(`Local ${interval} archive is not available. Run the Coinbase collector first.`); }
   let db: DatabaseSync;
@@ -66,6 +70,9 @@ export function readArchivePage(params: URLSearchParams, directory = process.env
     db.exec('PRAGMA query_only = ON; PRAGMA busy_timeout = 1000; BEGIN');
     const identity = Object.fromEntries(db.prepare('SELECT key,value FROM store_identity').all().map((r) => [r.key, r.value]));
     if (identity.source !== 'coinbase-exchange' || identity.instrument !== 'BTC/USD' || identity.granularity_seconds !== String(step)) throw new ArchiveUnavailableError('Local archive has an incompatible source or interval');
+    const datasetVersion = basis === 'derived' ? String(identity.dataset_version) : basis;
+    if (basis === 'derived' && (identity.dataset_kind !== 'minute_derived_hourly' || !/^[a-f\d]{64}$/.test(datasetVersion))) throw new ArchiveUnavailableError('Invalid derived snapshot identity');
+    if (cursor && ((basis === 'derived' && (cursor.basis !== basis || cursor.datasetVersion !== datasetVersion)) || (cursor.datasetVersion && cursor.datasetVersion !== datasetVersion))) throw new ArchiveRequestError('Dataset version changed; reload the archive');
     const table = interval === '1m' ? 'minute_candles' : 'hourly_candles';
     // Both lookups use the ts prefix of the primary key, even for multi-year archives.
     const asOf = cursor?.asOf ?? observationStamp(now);
@@ -107,10 +114,13 @@ export function readArchivePage(params: URLSearchParams, directory = process.env
     const scannedEnd = hasExtraRow ? data[data.length - 1].ts / 1000 + step : queryEnd;
     const after = scannedEnd - step;
     const expected = Math.max(0, (scannedEnd - left) / step);
-    const nextCursor = hasMore ? Buffer.from(JSON.stringify({ v: 1, interval, start, end, after, asOf } satisfies Cursor)).toString('base64url') : null;
+    const nextCursor = hasMore ? Buffer.from(JSON.stringify({ v: 1, interval, start, end, after, asOf, basis, datasetVersion } satisfies Cursor)).toString('base64url') : null;
     const gaps = archiveGaps(db, directory, interval, data, left * 1000, scannedEnd * 1000, asOf);
     db.exec('COMMIT');
-    return { ...live(data, 'coinbase', asOf), nextCursor, gaps,
+    const quality = basis === 'derived' ? db.prepare("SELECT SUM(status='PARTIAL') AS partial,SUM(status='NO_DATA') AS empty FROM hourly_quality").get()! : null;
+    return { ...live(data, 'coinbase', asOf), marketDataset: { basis: basis === 'derived' ? 'minute-derived' : interval === '1m' ? 'minute-raw' : 'coinbase-original', version: datasetVersion,
+      dataEnd: basis === 'derived' ? iso(Number(identity.range_end_exclusive)) : iso(completedCutoff),
+      ...(quality ? { partialHours: Number(quality.partial), noDataHours: Number(quality.empty) } : {}) }, nextCursor, gaps,
       archive: { venue: 'coinbase-exchange', interval, historicalBacktestSafe: false, snapshotAt: asOf,
         availableStart: bounds.first === null ? null : iso(Number(bounds.first)), availableEndExclusive: bounds.last === null ? null : iso(Number(bounds.last) + step),availableCandles:Number(bounds.total) },
       range: { start: iso(start), endExclusive: iso(end), scannedEndExclusive: iso(scannedEnd) },
