@@ -30,6 +30,7 @@ export function mockWeeklyForecast({ symbol = 'BTC' }: WeeklyForecastArgs): Week
     score > 0.15 ? 'BULLISH' : score < -0.15 ? 'BEARISH' : 'NEUTRAL';
 
   return {
+    method: 'rule',
     label,
     score,
     confidence: Math.min(95, 50 + Math.abs(score) * 60),

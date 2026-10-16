@@ -8,7 +8,12 @@ import { getCandles as coinbaseCandles } from '@/lib/sources/coinbase';
 import { getCandles as krakenCandles } from '@/lib/sources/kraken';
 import { getFearGreed } from '@/lib/sources/alternativeme';
 import { ema, rsi, macd, realizedVolPct } from '@/lib/quant/series';
+import { getSupabase, asRow } from '@/lib/supabase/server';
+import { rowToForecast, type ClfSignalRow } from './transform';
 import type { WeeklyForecastData, WeeklyForecastArgs } from './types';
+
+const CLF_COLUMNS =
+  'as_of, horizon_days, signal, p_up, t_bear, t_bull, threshold_binary, direction_binary, margin, gate_pass, per_domain, n_nan_features, rule_method, model_name, model_created_utc, model_train_end, model_domains, val_f1_macro, test_f1_macro, is_synthetic, created_at';
 
 /**
  * Arbitrary internal weights for the rule. They sum to 1.0 and express how much
@@ -27,6 +32,40 @@ const clamp = (x: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, x
 export async function fetchWeeklyForecast({ symbol = 'BTC' }: WeeklyForecastArgs) {
   void symbol;
 
+  // 1. Fallback Tier 1: Baca sinyal model klasifikasi terlatih dari Supabase jika ada (D5)
+  const db = getSupabase();
+  if (db) {
+    try {
+      const { data: clfRows, error } = await db
+        .from('clf_signals')
+        .select(CLF_COLUMNS)
+        .order('as_of', { ascending: false })
+        .limit(1);
+
+      if (error) {
+        console.warn('[weeklyForecast:clf_signals]', error.message);
+      } else if (clfRows && clfRows.length > 0) {
+        const row = asRow<ClfSignalRow>(clfRows[0]);
+        let candles;
+        try {
+          candles = await coinbaseCandles('1d', 60, 'BTC-USD');
+        } catch {
+          candles = await krakenCandles('1d', 'XBTUSD').catch(() => []);
+        }
+        const closes = (candles ?? []).map((c) => c.close);
+        const data = rowToForecast(row, closes);
+        return {
+          data,
+          asOf: row.created_at,
+          synthetic: row.is_synthetic,
+        };
+      }
+    } catch (err) {
+      console.warn('[weeklyForecast:clf_signals_catch]', err);
+    }
+  }
+
+  // 2. Fallback Tier 2: Aturan berbobot (rule-based) candle asli tanpa perubahan perilaku (D5)
   let candles;
   try {
     candles = await coinbaseCandles('1d', 300, 'BTC-USD');
@@ -105,6 +144,7 @@ export async function fetchWeeklyForecast({ symbol = 'BTC' }: WeeklyForecastArgs
   ];
 
   const data: WeeklyForecastData = {
+    method: 'rule',
     label,
     confidence,
     range: { min, max },

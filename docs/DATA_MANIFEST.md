@@ -26,6 +26,7 @@ file. This file explains *why*.
 | Macro: Indonesia | FRED coverage for ID is effectively absent for most of the eight indicators | BPS API, Trading Economics, or a manual CSV | — | Mark ID as MOCK. Do not fill the tab with plausible-looking numbers. |
 | On-chain metrics (MVRV, SOPR, NUPL) | No free provider covers the valuation ratios — they are outputs of proprietary cost-basis clustering | paid on-chain data subscription | varies | Still blocked. Note that **hash rate is no longer in this row**: mempool.space serves it keyless, with three months of history. |
 | Network conditions (fees, mempool, difficulty, pools) | ~~blocked~~ **shipped** — mempool.space, keyless | none | free | Live on `/chain/network`. Blockchair supplies `volume_24h` / `blocks_24h` as a keyless supplement. |
+| Weekly direction forecast (`weekly_forecast`) | ~~rule only~~ **shipped** — 7-day BTC classifier (MacroCrossAsset + Universal) | `SUPABASE_SERVICE_ROLE_KEY` + `clf_weekly` worker job | free | Live when worker writes to `clf_signals`. Tiered fallback to candle rule when table is empty. |
 | New addresses (first-seen) | No keyless source publishes the series | (a) invent a ratio, (b) pay a provider, (c) drop it | — | **Dropped.** It was shipping as 6% of active addresses, a made-up constant rendered as a measurement. Replaced with 24h transferred volume, which is measured. |
 
 ## Keys to register

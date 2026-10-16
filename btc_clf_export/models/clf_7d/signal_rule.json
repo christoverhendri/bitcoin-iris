@@ -1,0 +1,25 @@
+{
+  "t_bear": 0.23,
+  "t_bull": 0.70,
+  "method": "dual_threshold_oof",
+  "threshold_selected_from": "expanding development OOF only",
+  "validation": {
+    "signal_f1_macro": 0.532742,
+    "signal_f1_bear": 0.534783,
+    "signal_f1_bull": 0.530702,
+    "coverage": 0.612299,
+    "no_signal_rate": 0.387701,
+    "bear_signals": 261,
+    "bull_signals": 197
+  },
+  "test_confirmation": {
+    "signal_f1_macro": 0.5024,
+    "signal_f1_bear": 0.2791,
+    "signal_f1_bull": 0.7257,
+    "coverage": 0.2349,
+    "no_signal_rate": 0.7651,
+    "bear_signals": 6,
+    "bull_signals": 72,
+    "no_signal": 254
+  }
+}

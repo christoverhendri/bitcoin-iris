@@ -7,8 +7,8 @@ Python worker  ──service_role──▶  Supabase Postgres  ──anon read�
 (APScheduler)                     RLS: public read                   (Vercel)
 pandas / numpy                    service writes only                App Router, SSR
    │
-   └─ not built. The one table that exists today (`whale_events`) is written
-      by a Next.js route handler instead — see "The ingestion exception".
+   └─ worker exists for one job (`clf_weekly` -> `clf_signals`).
+      `whale_events` continues to be written by the Next.js route handler.
 ```
 
 ## Why not Streamlit + SQLite
@@ -33,7 +33,7 @@ would guarantee drift between the two paths.
 
 | Process | Reads | Writes | Runs |
 |---|---|---|---|
-| `worker/` | upstream APIs | every data table, `data_source_status` | **not built yet** |
+| `worker/` | raw data CSVs (`CLF_DATA_DIR`) | `clf_signals` (job `clf_weekly` only) | APScheduler / cron VPS / Task Scheduler |
 | Next.js | every data table (anon) | `whale_events` only, via `/api/ingest/whale` | Vercel |
 
 ### The ingestion exception

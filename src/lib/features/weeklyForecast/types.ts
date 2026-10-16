@@ -18,14 +18,35 @@ export interface ForecastDriver {
   reading: string;
 }
 
+export type ForecastSignal = 'BULL' | 'BEAR' | 'NONE';
+
+export interface ClassifierProvenance {
+  signal: ForecastSignal;
+  pUp: number;
+  tBear: number;
+  tBull: number;
+  thresholdBinary: number;
+  directionBinary: 'BULL' | 'BEAR';
+  perDomain: Record<string, number>;
+  dataAsOf: string;
+  createdAt: string;
+  modelTrainEnd: string;
+  modelDomains: string[];
+  valF1: number;
+  testF1: number;
+  stale: boolean;
+}
+
 export interface WeeklyForecastData {
+  method: 'classifier' | 'rule';
   label: ForecastDirection;
   confidence: number;
   range: { min: number; max: number };
   /** Signed weighted contributions that produced `label`. */
   drivers: ForecastDriver[];
-  /** The composite, in [-1, 1]. `label` is a bucketing of this. */
+  /** The composite score (sum of driver contributions). */
   score: number;
+  classifier?: ClassifierProvenance;
 }
 
 export interface WeeklyForecastArgs {

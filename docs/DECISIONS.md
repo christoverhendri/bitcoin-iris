@@ -154,13 +154,29 @@ measurement.
 
 ### Weekly forecast
 
-Rule-based, not a trained model. A weighted vote over normalised RSI, MACD histogram,
-EMA(21) vs EMA(50) gap, and Fear & Greed. Label thresholds ±0.15;
-`confidence = min(95, 50 + |score| × 60)`. The forecast range uses realised volatility scaled
-to one week (`σ × √(7/365)`) plus a drift term proportional to the score.
+Replaced the initial rule with a trained 7-day BTC direction classifier (Average Ensemble:
+MacroCrossAsset + Universal XGBoost models), while retaining the heuristic rule as an automatic fallback.
 
-The UI renders a `RULE-BASED PLACEHOLDER` badge next to it. That badge must stay until an
-actual trained model replaces the rule.
+1. **Thresholds are opinions, not facts**: `t_bear = 0.23` and `t_bull = 0.70` were chosen by the
+   researcher on expanding development OOF (validation) to balance class F1 and signal coverage.
+   A probability between `t_bear` and `t_bull` yields `NO SIGNAL` (represented internally as `NEUTRAL`).
+2. **Tiered fallback**:
+   - Tier 1: Latest row in Supabase `clf_signals` → classifier mode (`method: 'classifier'`). The
+     `RULE-BASED PLACEHOLDER` badge is removed, displaying model probability P(UP, 7D), domain contributions,
+     and model provenance.
+   - Tier 2: If `clf_signals` is empty or Supabase is unconfigured → the original weighted rule over
+     real Coinbase/Kraken candles and Fear & Greed runs unchanged, with the `RULE-BASED PLACEHOLDER` badge.
+   - Tier 3: Complete upstream failure → `defineFeature` renders the deterministic seeded mock with a `MOCK` badge.
+3. **No new source key / no `data_source_status` writes**: We deliberately use the existing `internal_forecast`
+   source key and the worker does not write status to `data_source_status`. Because `defineFeature` forces any
+   feature to MOCK if its source status is `failed/degraded`, a worker failure writing `failed` would kill
+   Tier 2's candle-based rule fallback.
+4. **Volatility band without drift**: Forward return range uses realized volatility (`σ × √(7/365)`)
+   **without a drift term**, because the classification model predicts direction probability, not price magnitude.
+5. **Staleness threshold**: A signal row is marked `STALE` in the UI if `created_at` is older than 9 days
+   (indicating one scheduled weekly run was missed).
+
+The `RULE-BASED PLACEHOLDER` badge renders only when `method === 'rule'`.
 
 ### Monthly forecast — REMOVED
 

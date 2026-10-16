@@ -106,7 +106,7 @@ export function DriverBreakdown({ forecast }: DriverBreakdownProps) {
             padding: '8px 12px 2px',
           }}
         >
-          FORWARD RETURN RANGE
+          FORWARD RETURN RANGE · VOLATILITY BAND (BUKAN PREDIKSI ARAH/BESARAN)
         </div>
         <KeyValueRow label="RANGE LOW" value={fmtUsd(f.range.min)} tone="down" />
         <KeyValueRow label="MIDPOINT" value={fmtUsd(mid)} tone="txt" />
