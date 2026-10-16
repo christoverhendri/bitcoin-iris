@@ -15,8 +15,7 @@ export type SectionKey =
   | 'forecast'
   | 'chain'
   | 'sentiment'
-  | 'macro'
-  | 'research';
+  | 'macro';
 
 export type NavGroup = 'Dashboard' | 'Market' | 'Evidence' | 'Model';
 
@@ -135,15 +134,6 @@ export const SECTIONS: Section[] = [
       { slug: 'calibration', label: 'CALIBRATION' },
       { slug: 'weekly', label: 'DIRECTION' },
     ],
-  },
-  {
-    key: 'research',
-    label: 'Research',
-    title: 'RESEARCH',
-    blurb: 'Confluence · correlation · findings',
-    group: 'Model',
-    icon: 'M4 5h12M4 10h16M4 15h10M4 20h14',
-    subs: [{ slug: 'confluence', label: 'CONFLUENCE' }],
   },
 ];
 

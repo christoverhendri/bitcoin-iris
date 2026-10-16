@@ -28,7 +28,7 @@ npm run lint
 
 | Path | What |
 |---|---|
-| `src/app/(terminal)/` | one route per page; 8 sections, 14 sub-pages |
+| `src/app/(terminal)/` | one route per page; 7 sections, 18 sub-pages |
 | `src/components/shell/` | rail, topbar, tab strips, status footer |
 | `src/components/primitives/` | Panel, PanelGrid, KpiCard, MockBadge, … |
 | `src/components/charts/` | hand-rolled SVG charts; `lightweight-charts` for price only |

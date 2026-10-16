@@ -103,7 +103,7 @@ dengan **bobot tetap yang dipilih manual** (tidak di-fit ke data):
 
 `overall = 0.34·TECH + 0.20·SENT + 0.20·NEWS + 0.20·MACRO + 0.06·ONCHAIN`
 
-**Contoh (halaman Research, 16 Okt):** TECH 40.1, SENT 54.6, NEWS 46.2, MACRO 50, ONCHAIN 50
+**Contoh (16 Okt, sebelum tab Research dihapus):** TECH 40.1, SENT 54.6, NEWS 46.2, MACRO 50, ONCHAIN 50
 → `0.34×40.1 + 0.2×54.6 + 0.2×46.2 + 0.2×50 + 0.06×50 = 46.8` ✓.
 SENTIMENT dicek: `0.5×63 (F&G) + 0.5×46.2 = 54.6` ✓.
 MACRO ≈ 50 di sini **bukan karena gagal**, tapi karena sinyalnya saling meniadakan: DXY z = +1.80
@@ -416,13 +416,10 @@ Backtest walk-forward: apakah kerucut di 7.2 bisa dipercaya?
 
 ---
 
-## 8. RESEARCH
+## 8. RESEARCH (dihapus)
 
-### 8.1 CONFLUENCE — `/research/confluence`
-
-- **CONFLUENCE SCORE**: angka yang sama dengan kartu Overview (lihat 1.2), plus BULLISH/BEARISH.
-- **LAYER BREAKDOWN**: nilai 5 lapisan. Contoh 16 Okt: MACRO 50.0, ONCHAIN 50.0, SENTIMENT 54.6,
-  TECHNICAL 40.1, NEWS 46.2.
+Tab Research dihapus pada 16 Okt 2026 karena isinya hanya mengulang kartu Confluence di
+Overview (lihat 1.2). Link lama `/research/...` diarahkan ke `/overview`.
 
 ---
 
@@ -433,10 +430,11 @@ Ditemukan saat menelusuri kode dan dicek di dashboard. **Belum diperbaiki.**
 | # | Lokasi | Masalah | Dampak |
 |---|---|---|---|
 | 1 | `components/features/overview/TechReadout.tsx` | **BOLLINGER %B** memakai garis tengah, bukan harga: `(tengah − bawah)/(atas − bawah)` = selalu 0.5 | Selalu tampil **50.0** apa pun harganya |
-| 2 | Same file | **ATR (VOL %)** sebenarnya `(atas − bawah)/tengah` = lebar Bollinger | Label salah; ATR asli tidak dihitung |
-| 3 | `components/features/confluence/ConfluenceBreakdown.tsx` | Catatan menulis "EQUAL-WEIGHT MEAN", padahal bobot 0.34/0.20/0.20/0.20/0.06 | Pembaca salah paham cara hitung |
-| 4 | ONCHAIN confluence | Konstanta 50, belum disambungkan ke data on-chain (padahal On-Chain Flows/Network sudah live) | 6% skor tidak bergerak |
-| 5 | `StatusFooter.tsx` | Warning hydration mismatch ("2s ago" vs "1s ago") di konsol browser | Kosmetik, tidak merusak data |
+| 2 | File yang sama | **ATR (VOL %)** sebenarnya `(atas − bawah)/tengah` = lebar Bollinger | Label salah; ATR asli tidak dihitung |
+| 3 | `signal_rule.json` (model mingguan) | Ambang 0.23/0.70 bukan hasil tuning notebook; di data test `p_up` maksimum 0.699, jadi BULL tidak pernah muncul | Label BULLISH/BEARISH/NEUTRAL belum bisa dipertanggungjawabkan sampai ambang baru dari notebook |
+| 4 | Label berita (kategori, bullish/bearish, impact) | Daftar kata & skor dipilih manual, tanpa data berlabel atau uji akurasi. Pencocokan per potongan huruf: "Hard**war**e" → GEOPOLITICS, "P**red**ict" → bearish, "Central **ban**k" → bearish + REGULATION | Label bisa salah dan bias |
+| 5 | ONCHAIN confluence | Konstanta 50, belum disambungkan ke data on-chain (padahal On-Chain Flows/Network sudah live) | 6% skor tidak bergerak |
+| 6 | `StatusFooter.tsx` | Warning hydration mismatch ("2s ago" vs "1s ago") di konsol browser | Kosmetik, tidak merusak data |
 
 ## 10. Key yang membuka panel MOCK
 

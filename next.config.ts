@@ -16,6 +16,13 @@ const nextConfig: NextConfig = {
         destination: "/forecast/distribution?h=1M",
         permanent: true,
       },
+      {
+        // The Research section was removed: its only page repeated the
+        // Confluence card already on Overview. Old bookmarks land there.
+        source: "/research/:path*",
+        destination: "/overview",
+        permanent: true,
+      },
     ];
   },
 };
