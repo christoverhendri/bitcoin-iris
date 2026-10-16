@@ -28,7 +28,7 @@ export function IntelligenceFeed({ sentiment, news }: IntelligenceFeedProps) {
     <Panel style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 300 }}>
       <PanelHeader
         title="LIVE INTELLIGENCE"
-        note="Sentiment + News · click a headline for detail"
+        note="RSS headline keyword heuristic + Fear & Greed · no ML model"
         right={<MockBadge env={news} />}
       />
 
@@ -70,7 +70,7 @@ export function IntelligenceFeed({ sentiment, news }: IntelligenceFeedProps) {
                   {label}
                 </div>
                 <div style={{ fontFamily: 'var(--mono)', fontWeight: 700, color }}>
-                  {(pct * 100).toFixed(0)}%
+                  {pct.toFixed(0)}%
                 </div>
               </div>
             ))}
