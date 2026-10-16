@@ -3,10 +3,16 @@
  * Coinbase throws or returns nothing, and the source for anything that wants
  * more than Coinbase's 300-candle window (seasonality).
  *
+ * Every candle consumer ends its chain here, so this is also where the last
+ * tier lives: when Kraken itself is unreachable, BTC candles come from
+ * Yahoo's BTC-USD instead. See
+ * `yahooCrypto.ts`.
+ *
  * Docs: https://docs.kraken.com/api/docs/rest-api/get-ohlc-data
  */
 import { fetchJson } from './http';
 import type { Candle } from './coinbase';
+import { getCandles as yahooCandles } from './yahooCrypto';
 
 const BASE = 'https://api.kraken.com/0/public';
 
@@ -25,8 +31,18 @@ interface KrakenOhlcResponse {
   result: Record<string, (string | number)[][]>;
 }
 
-/** Candles oldest-first. Kraken shape: `[time,o,h,l,c,vwap,volume,count]`. */
+/** Candles oldest-first: Kraken, then Yahoo BTC-USD for the BTC pair. */
 export async function getCandles(interval = '1d', pair = 'XBTUSD'): Promise<Candle[]> {
+  try {
+    return await getKrakenCandles(interval, pair);
+  } catch (err) {
+    if (pair !== 'XBTUSD') throw err;
+    return yahooCandles(interval, 'BTC-USD');
+  }
+}
+
+/** Kraken only. Shape: `[time,o,h,l,c,vwap,volume,count]`. */
+export async function getKrakenCandles(interval = '1d', pair = 'XBTUSD'): Promise<Candle[]> {
   const min = INTERVAL_MIN[interval] ?? 1440;
   const j = await fetchJson<KrakenOhlcResponse>(
     `${BASE}/OHLC?pair=${pair}&interval=${min}`,

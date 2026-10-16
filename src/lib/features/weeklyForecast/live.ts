@@ -29,11 +29,49 @@ const WEIGHTS = {
 
 const clamp = (x: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, x));
 
+/**
+ * Dev lokal tanpa Supabase: worker menulis sinyal terakhir ke
+ * `worker/out/clf_signal_latest.json` (baris yang sama persis dengan yang di-upsert ke
+ * clf_signals). Hanya dibaca kalau CLF_LOCAL_SIGNAL_FILE di-set DAN Supabase belum
+ * dikonfigurasi — di produksi Supabase selalu menang.
+ */
+async function readLocalSignal(): Promise<ClfSignalRow | null> {
+  const file = process.env.CLF_LOCAL_SIGNAL_FILE;
+  if (!file) return null;
+  try {
+    const { readFile } = await import('node:fs/promises');
+    const row = JSON.parse(await readFile(file, 'utf8')) as ClfSignalRow;
+    return row && typeof row.as_of === 'string' && typeof row.p_up === 'number' ? row : null;
+  } catch (err) {
+    console.warn('[weeklyForecast:local_signal]', err);
+    return null;
+  }
+}
+
+async function classifierEnvelope(row: ClfSignalRow) {
+  let candles;
+  try {
+    candles = await coinbaseCandles('1d', 60, 'BTC-USD');
+  } catch {
+    candles = await krakenCandles('1d', 'XBTUSD').catch(() => []);
+  }
+  const closes = (candles ?? []).map((c) => c.close);
+  return {
+    data: rowToForecast(row, closes),
+    asOf: row.created_at,
+    synthetic: row.is_synthetic,
+  };
+}
+
 export async function fetchWeeklyForecast({ symbol = 'BTC' }: WeeklyForecastArgs) {
   void symbol;
 
   // 1. Fallback Tier 1: Baca sinyal model klasifikasi terlatih dari Supabase jika ada (D5)
   const db = getSupabase();
+  if (!db) {
+    const local = await readLocalSignal();
+    if (local) return classifierEnvelope(local);
+  }
   if (db) {
     try {
       const { data: clfRows, error } = await db
@@ -45,20 +83,7 @@ export async function fetchWeeklyForecast({ symbol = 'BTC' }: WeeklyForecastArgs
       if (error) {
         console.warn('[weeklyForecast:clf_signals]', error.message);
       } else if (clfRows && clfRows.length > 0) {
-        const row = asRow<ClfSignalRow>(clfRows[0]);
-        let candles;
-        try {
-          candles = await coinbaseCandles('1d', 60, 'BTC-USD');
-        } catch {
-          candles = await krakenCandles('1d', 'XBTUSD').catch(() => []);
-        }
-        const closes = (candles ?? []).map((c) => c.close);
-        const data = rowToForecast(row, closes);
-        return {
-          data,
-          asOf: row.created_at,
-          synthetic: row.is_synthetic,
-        };
+        return classifierEnvelope(asRow<ClfSignalRow>(clfRows[0]));
       }
     } catch (err) {
       console.warn('[weeklyForecast:clf_signals_catch]', err);

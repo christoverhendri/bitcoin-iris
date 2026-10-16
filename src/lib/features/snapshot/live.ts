@@ -3,10 +3,16 @@
  * market-structure fields Coinbase does not carry (market cap, dominance, 7d/30d
  * returns). Realised vol is computed from Coinbase daily closes.
  *
+ * When Coinbase is unreachable, 24h stats and dailies come from Yahoo BTC-USD
+ * (Kraken -> Yahoo chain) so the snapshot stays live when exchange APIs are
+ * unreachable.
+ *
  * Returns the same `BtcSnapshot` shape the mock does. Any upstream failure
  * throws; `defineFeature` turns that into a badged placeholder.
  */
 import { getStats, getSpot, getCandles } from '@/lib/sources/coinbase';
+import { getCandles as fallbackCandles } from '@/lib/sources/kraken';
+import { getStats24h as yahooStats } from '@/lib/sources/yahooCrypto';
 import { getMarket, getDominancePct } from '@/lib/sources/coingecko';
 import { realizedVolPct } from '@/lib/quant/series';
 import type { BtcSnapshot, SnapshotArgs } from './types';
@@ -15,9 +21,9 @@ export async function fetchSnapshot(_args: SnapshotArgs) {
   void _args;
 
   const [stats, spot, dailies, market, dominance] = await Promise.all([
-    getStats('BTC-USD'),
+    getStats('BTC-USD').catch(() => yahooStats('BTC-USD')),
     getSpot('BTC-USD').catch(() => null),
-    getCandles('1d', 120, 'BTC-USD').catch(() => []),
+    getCandles('1d', 120, 'BTC-USD').catch(() => fallbackCandles('1d', 'XBTUSD').catch(() => [])),
     getMarket().catch(() => null),
     getDominancePct().catch(() => null),
   ]);

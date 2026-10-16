@@ -54,10 +54,27 @@ def resolve_dir(env_name: str, default_rel: str) -> Path:
 
 CLF_DATA_DIR = resolve_dir("CLF_DATA_DIR", "data/clf")
 CLF_MODEL_DIR = resolve_dir("CLF_MODEL_DIR", "models/clf_7d")
+# CSV training asli (read-only): template kolom + riwayat awal seri ber-state.
+CLF_SEED_DIR = resolve_dir("CLF_SEED_DIR", "data/seed")
+# Riwayat seri yang tidak bisa diambil ulang dari API (usdt_dominance, google trends).
+CLF_STATE_DIR = resolve_dir("CLF_STATE_DIR", "data/state")
+# Salinan sinyal terakhir untuk dashboard lokal tanpa Supabase (CLF_LOCAL_SIGNAL_FILE di Next).
+CLF_SIGNAL_OUT = resolve_dir("CLF_SIGNAL_OUT", "out/clf_signal_latest.json")
+
+# API keys input model
+FRED_API_KEY = get_str("FRED_API_KEY")
+COINGECKO_API_KEY = get_str("COINGECKO_API_KEY")
 
 # Freshness thresholds
 CLF_MAX_DATA_LAG_DAYS = get_int("CLF_MAX_DATA_LAG_DAYS", 3)
 CLF_MAX_NAN = get_int("CLF_MAX_NAN", 0)
 
-# Scheduler cron schedule
+# Jadwal (cron 5-field, UTC)
+# refresh data: setiap hari 00:15 UTC (07:15 WIB), setelah candle harian UTC tutup.
+REFRESH_CRON = get_str("REFRESH_CRON", "15 0 * * *")
+# klasifikasi mingguan: Senin 00:30 UTC (07:30 WIB) — candle Minggu sudah tutup.
 CLF_CRON = get_str("CLF_CRON", "30 0 * * 1")
+# whale ingest: panggil route Next /api/ingest/whale (butuh IRIS_APP_URL + CRON_SECRET).
+WHALE_CRON = get_str("WHALE_CRON", "*/5 * * * *")
+IRIS_APP_URL = get_str("IRIS_APP_URL")
+CRON_SECRET = get_str("CRON_SECRET")

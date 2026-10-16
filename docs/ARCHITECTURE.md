@@ -7,7 +7,8 @@ Python worker  ──service_role──▶  Supabase Postgres  ──anon read�
 (APScheduler)                     RLS: public read                   (Vercel)
 pandas / numpy                    service writes only                App Router, SSR
    │
-   └─ worker exists for one job (`clf_weekly` -> `clf_signals`).
+   └─ worker jobs: `refresh_data` (daily, rebuilds model inputs from APIs),
+      `clf_weekly` (Monday, -> `clf_signals`), `whale_ingest` (5 min trigger).
       `whale_events` continues to be written by the Next.js route handler.
 ```
 
@@ -33,7 +34,7 @@ would guarantee drift between the two paths.
 
 | Process | Reads | Writes | Runs |
 |---|---|---|---|
-| `worker/` | raw data CSVs (`CLF_DATA_DIR`) | `clf_signals` (job `clf_weekly` only) | APScheduler / cron VPS / Task Scheduler |
+| `worker/` | Yahoo, blockchain.com, bitcoin-data.com, alternative.me, FRED, CoinGecko, Google Trends -> `data/clf/*.csv` | `clf_signals` (job `clf_weekly` only) | APScheduler daemon / GitHub Actions / Task Scheduler |
 | Next.js | every data table (anon) | `whale_events` only, via `/api/ingest/whale` | Vercel |
 
 ### The ingestion exception

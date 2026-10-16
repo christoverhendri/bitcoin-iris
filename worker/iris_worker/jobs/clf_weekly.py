@@ -17,8 +17,12 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from iris_clf import ClassifierSignal
 from iris_clf.signal_rule import load_rule, decide
-from iris_worker import config
+from iris_worker import config, status
 from iris_worker.supabase_rest import upsert_clf_signal, SupabaseRestError
+
+
+class StaleDataError(RuntimeError):
+    """Penjaga kesegaran menolak data; CLI keluar dengan kode 2."""
 
 
 def check_freshness(
@@ -157,8 +161,7 @@ def run_clf_weekly(
             + "\nModel tidak pernah melihat NaN saat training dan data basi menghasilkan sinyal yang menyesatkan."
             + "\nDatabase tidak disentuh."
         )
-        print(msg, file=sys.stderr)
-        sys.exit(2)
+        raise StaleDataError(msg)
 
     # 4. Keputusan 3 keadaan
     signal = decide(sig["p_up"], rule)
@@ -170,11 +173,15 @@ def run_clf_weekly(
         print(json.dumps(payload, indent=2))
         return payload
 
-    # 6. Mode normal: Upsert ke Supabase
+    # 6. Mode normal: selalu tulis salinan lokal (dibaca dashboard saat Supabase belum
+    #    dikonfigurasi), lalu upsert ke Supabase kalau kredensialnya ada.
+    write_local(payload)
     if not config.SUPABASE_URL or not config.SUPABASE_SERVICE_ROLE_KEY:
-        raise SupabaseRestError(
-            "SUPABASE_URL atau SUPABASE_SERVICE_ROLE_KEY belum terkonfigurasi di environment."
+        print(
+            f"Supabase belum dikonfigurasi - sinyal hanya ditulis ke {config.CLF_SIGNAL_OUT} "
+            f"(as_of={payload['as_of']}, signal={payload['signal']})"
         )
+        return payload
 
     res = upsert_clf_signal(
         config.SUPABASE_URL,
@@ -182,7 +189,26 @@ def run_clf_weekly(
         payload,
     )
     print(f"Berhasil upsert clf_signals untuk as_of={payload['as_of']} (signal={payload['signal']})")
+    status.report_success("internal_forecast", n=1)
     return res
+
+
+def write_local(payload: Dict[str, Any], out_file: Optional[Path] = None) -> Path:
+    """Tulis sinyal terbaru (JSON) + riwayat (CSV, idempoten per as_of) di samping file JSON."""
+    out = Path(out_file) if out_file else Path(config.CLF_SIGNAL_OUT)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    row = {**payload, "created_at": datetime.now(timezone.utc).isoformat(timespec="seconds")}
+    out.write_text(json.dumps(row, indent=2), encoding="utf-8")
+
+    hist = out.parent / "clf_signals_history.jsonl"
+    lines = []
+    if hist.exists():
+        lines = [ln for ln in hist.read_text(encoding="utf-8").splitlines()
+                 if ln.strip() and json.loads(ln).get("as_of") != row["as_of"]]
+    lines.append(json.dumps(row))
+    hist.write_text("\n".join(sorted(lines, key=lambda ln: json.loads(ln)["as_of"])) + "\n",
+                    encoding="utf-8")
+    return out
 
 
 def main():
@@ -204,12 +230,21 @@ def main():
         default=None,
         help="Pengecualian toleransi jumlah NaN HANYA untuk pengujian/dry-run lokal.",
     )
+    parser.add_argument(
+        "--refresh",
+        action="store_true",
+        help="Tarik ulang data input dari API (job refresh_data) sebelum prediksi.",
+    )
     parser.add_argument("--model-dir", default=None, help="Lokasi folder model clf_7d")
     parser.add_argument("--master", default=None, help="Lokasi btc_master_2.csv")
     parser.add_argument("--category-dir", default=None, help="Lokasi folder data kategori")
     args = parser.parse_args()
 
     try:
+        if args.refresh:
+            from iris_worker.jobs.refresh_data import run_refresh
+
+            run_refresh()
         run_clf_weekly(
             dry_run=args.dry_run,
             override_max_lag=args.override_max_lag,
@@ -218,6 +253,9 @@ def main():
             category_dir=args.category_dir,
             model_dir=args.model_dir,
         )
+    except StaleDataError as e:
+        print(str(e), file=sys.stderr)
+        sys.exit(2)
     except Exception as e:
         print(f"ERROR: {e}", file=sys.stderr)
         sys.exit(1)

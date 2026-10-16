@@ -1,0 +1,68 @@
+# Penjadwal produksi untuk worker Python (alternatif dari daemon APScheduler di
+# laptop/VPS). GitHub bisa menunda cron beberapa menit; job memakai tanggal candle
+# tertutup sebagai kunci data, bukan jam jalan, jadi penundaan tidak masalah.
+#
+# Secrets: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, FRED_API_KEY, COINGECKO_API_KEY (opsional)
+name: model-worker
+
+on:
+  schedule:
+    - cron: "15 0 * * *"   # refresh harian 07:15 WIB
+    - cron: "30 0 * * 1"   # klasifikasi mingguan Senin 07:30 WIB
+  workflow_dispatch:
+    inputs:
+      job:
+        description: "refresh | weekly"
+        default: "weekly"
+
+concurrency:
+  group: model-worker
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: worker
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+      COINGECKO_API_KEY: ${{ secrets.COINGECKO_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: worker/requirements.txt
+      - run: pip install -r requirements.txt
+
+      # Seri yang tidak bisa diambil ulang dari API (snapshot dominasi USDT, Google
+      # Trends yang di-rescale) disimpan di data/state dan dibawa antar-run lewat cache.
+      - uses: actions/cache@v4
+        with:
+          path: worker/data/state
+          key: clf-state-${{ github.run_id }}
+          restore-keys: clf-state-
+
+      - run: python -m pytest -q
+
+      - name: refresh
+        if: github.event.schedule == '15 0 * * *' || inputs.job == 'refresh'
+        run: python -m iris_worker.jobs.refresh_data
+
+      - name: weekly
+        if: github.event.schedule == '30 0 * * 1' || inputs.job == 'weekly'
+        run: python -m iris_worker.jobs.clf_weekly --refresh
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: worker-output-${{ github.run_id }}
+          path: |
+            worker/data/clf/refresh_report.json
+            worker/out/
+          if-no-files-found: ignore

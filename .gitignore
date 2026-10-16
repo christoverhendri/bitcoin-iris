@@ -32,6 +32,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # vercel
 .vercel
@@ -41,7 +42,10 @@ yarn-error.log*
 next-env.d.ts
 
 # worker
-worker/data/
+# data/seed/ = CSV training asli (dilacak). clf/ dan state/ dihasilkan job.
+worker/data/clf/
+worker/data/state/
+worker/out/
 worker/.venv/
 worker/logs/
 worker/.env

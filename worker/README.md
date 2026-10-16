@@ -1,31 +1,67 @@
 # IRIS-Terminal Python Worker
 
-Worker Python 12-factor untuk inferensi model klasifikasi Bitcoin 7 hari (`clf_weekly`).
+Worker 12-factor untuk model klasifikasi arah BTC 7 hari (`clf_7d`, average ensemble
+XGBoost MacroCrossAsset + Universal, aturan dual threshold BEAR < 0.23 / BULL > 0.70).
 
-## Cara Menjalankan
+Model di `models/clf_7d/` identik byte-per-byte dengan export notebook (`results (5).zip`);
+`python check_parity.py --master data/seed/btc_master_2.csv --category-dir data/seed`
+membuktikan kode inference = notebook (selisih maks ~1e-7).
 
-### 1. Eksekusi Mandiri (Cron VPS / Windows Task Scheduler / External Scheduler)
-Job dapat dipanggil langsung tanpa daemon scheduler:
-```bash
-python -m iris_worker.jobs.clf_weekly [--dry-run]
+## Alur
+
+```
+refresh_data (harian)                         clf_weekly (Senin)
+  Yahoo, blockchain.com, bitcoin-data.com,      data/clf/*.csv
+  alternative.me, FRED, CoinGecko,      ──▶     ──▶ predict_latest ──▶ BULL/BEAR/NONE
+  Google Trends  ──▶ data/clf/*.csv                 ──▶ Supabase clf_signals (kalau dikonfigurasi)
+                     data/clf/refresh_report.json   ──▶ out/clf_signal_latest.json (selalu)
 ```
 
-### 2. APScheduler Daemon
-Scheduler bawaan yang berjalan terus di background sesuai jadwal `CLF_CRON` (default: `30 0 * * 1` = Senin 00:30 UTC):
+| Kolom | Sumber | Key |
+|---|---|---|
+| BTC OHLCV + turunan (ema, rsi, macd, bb, atr, vol) | Yahoo BTC-USD | - |
+| gold, S&P 500, Dow, minyak, ETH | Yahoo GC=F, ^GSPC, ^DJI, CL=F, ETH-USD | - |
+| 16 kolom on-chain | blockchain.com charts | - |
+| sopr, mvrv | bitcoin-data.com (gratis: tertunda ~7 hari) | - |
+| fear & greed | alternative.me | - |
+| usdt_dominance | CoinGecko `/global` (snapshot harian, disimpan di `data/state/`) | opsional |
+| google_trends_bitcoin | Google Trends via pytrends, di-rescale ke seri tersimpan | - |
+| CPI, PCE, PPI, NFP, UNRATE, AHE, retail, GDP, FOMC, dollar index, M2 | FRED (release lag diterapkan) | **FRED_API_KEY** |
+
+Pemetaan & rumus dicocokkan ke CSV training: pada periode overlap 2025-06..2026-08
+hampir semua kolom identik persis; selisih kecil hanya di gold/ETH/SOPR/MVRV (revisi provider).
+Sumber yang gagal tidak menghentikan refresh: kolomnya dibekukan di nilai terakhir dan
+tercatat `ok: false` di `refresh_report.json`.
+
+## Jadwal (UTC)
+
+| Job | Env | Default | WIB |
+|---|---|---|---|
+| `refresh_data` | `REFRESH_CRON` | `15 0 * * *` | tiap hari 07:15 |
+| `clf_weekly` | `CLF_CRON` | `30 0 * * 1` | Senin 07:30 |
+| `whale_ingest` | `WHALE_CRON` | `*/5 * * * *` | tiap 5 menit (butuh `IRIS_APP_URL` + `CRON_SECRET`) |
+
+Cron memakai konvensi standar (1 = Senin, 0/7 = Minggu). Saat daemon start, job yang
+terlewat (laptop mati) langsung dikejar.
+
+## Menjalankan
+
 ```bash
-python -m iris_worker.scheduler
-```
-Atau jalankan sekali lalu keluar:
-```bash
-python -m iris_worker.scheduler --once
+cd worker
+python -m venv .venv
+.venv/Scripts/python -m pip install -r requirements.txt   # Windows
+cp env.example .env                                        # isi FRED_API_KEY dll.
+
+python -m iris_worker.scheduler                  # daemon
+python -m iris_worker.scheduler --once all       # refresh + prediksi sekali
+python -m iris_worker.jobs.refresh_data          # refresh saja
+python -m iris_worker.jobs.clf_weekly --dry-run  # prediksi, cetak JSON, tanpa menulis
+python -m pytest -q
 ```
 
-## Konfigurasi Environment (12-Factor)
-Lihat `env.example`. Pengaturan diisi via file `worker/.env` atau environment variable sistem:
-- `SUPABASE_URL`
-- `SUPABASE_SERVICE_ROLE_KEY`
-- `CLF_DATA_DIR` (default: `worker/data/clf`)
-- `CLF_MODEL_DIR` (default: `worker/models/clf_7d`)
-- `CLF_MAX_DATA_LAG_DAYS` (default: `3`)
-- `CLF_MAX_NAN` (default: `0`)
-- `CLF_CRON` (default: `30 0 * * 1`)
+Otomatis saat login Windows: `powershell -ExecutionPolicy Bypass -File scripts\install_task.ps1`.
+Produksi: `.github/workflows/model-worker.yml` (GitHub Actions, secrets `SUPABASE_URL`,
+`SUPABASE_SERVICE_ROLE_KEY`, `FRED_API_KEY`).
+
+Dashboard lokal tanpa Supabase: set `CLF_LOCAL_SIGNAL_FILE=worker/out/clf_signal_latest.json`
+di `.env.local` root; panel Weekly membaca file itu.
