@@ -11,7 +11,6 @@ export interface FlowTransfer {
   exchange: string;
   fromLabel: string;
   toLabel: string;
-  impact: number;
 }
 
 export interface ChainFlowsData {

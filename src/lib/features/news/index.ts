@@ -16,5 +16,4 @@ export {
   getNewsSentimentColor,
   newsSentimentWord,
   newsCategoryColor,
-  newsImpactColor,
 } from './present';

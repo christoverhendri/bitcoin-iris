@@ -5,7 +5,7 @@ import { Panel, PanelHeader, Tag, MockBadge, SourceFootnote } from '@/components
 import type { Envelope } from '@/lib/envelope';
 import type { SentimentData } from '@/lib/features/sentiment';
 import type { NewsArticle } from '@/lib/features/news';
-import { newsSentimentWord, newsCategoryColor, newsImpactColor } from '@/lib/features/news';
+import { newsSentimentWord, newsCategoryColor } from '@/lib/features/news';
 
 export interface IntelligenceFeedProps {
   sentiment: Envelope<SentimentData>;
@@ -21,14 +21,11 @@ export function IntelligenceFeed({ sentiment, news }: IntelligenceFeedProps) {
   const articles = news.data.slice(0, 10);
   const [openIdx, setOpenIdx] = useState<number | null>(null);
 
-  const overall: 'positive' | 'negative' | 'neutral' =
-    s.score > 0.1 ? 'positive' : s.score < -0.1 ? 'negative' : 'neutral';
-
   return (
     <Panel style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 300 }}>
       <PanelHeader
         title="LIVE INTELLIGENCE"
-        note="RSS headline keyword heuristic + Fear & Greed · no ML model"
+        note="RSS headlines · keyword-count labels · no ML model"
         right={<MockBadge env={news} />}
       />
 
@@ -37,25 +34,8 @@ export function IntelligenceFeed({ sentiment, news }: IntelligenceFeedProps) {
         <div style={{ padding: 12, borderBottom: '1px solid var(--line)', background: 'var(--sunk)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
             <span style={{ fontFamily: 'var(--mono)', fontSize: 9, color: 'var(--mut)' }}>
-              SENTIMENT SCORE
+              HEADLINE MIX · LAST {s.headlineCount} HEADLINES
             </span>
-            <span
-              style={{
-                fontFamily: 'var(--mono)',
-                fontSize: 11,
-                fontWeight: 700,
-                color:
-                  overall === 'positive'
-                    ? 'var(--up)'
-                    : overall === 'negative'
-                      ? 'var(--down)'
-                      : 'var(--txt)',
-              }}
-            >
-              {s.score >= 0 ? '+' : ''}
-              {s.score.toFixed(2)}
-            </span>
-            <Tag label={newsSentimentWord(overall)} tone={toneFor(overall)} />
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, fontSize: 11 }}>
             {(
@@ -99,9 +79,6 @@ export function IntelligenceFeed({ sentiment, news }: IntelligenceFeedProps) {
                   key={i}
                   style={{
                     borderBottom: i < articles.length - 1 ? '1px solid var(--line)' : 'none',
-                    borderLeft: `2px solid ${
-                      a.impactTier === 'HIGH' ? newsImpactColor('HIGH') : 'transparent'
-                    }`,
                   }}
                 >
                   <button
@@ -148,10 +125,6 @@ export function IntelligenceFeed({ sentiment, news }: IntelligenceFeedProps) {
                           alignItems: 'center',
                         }}
                       >
-                        <span style={{ color: newsImpactColor(a.impactTier), letterSpacing: '.1em' }}>
-                          {a.impactTier} IMPACT
-                        </span>
-                        <span>·</span>
                         <span style={{ color: newsCategoryColor(a) }}>{a.category}</span>
                         <span>·</span>
                         <span>{a.source}</span>

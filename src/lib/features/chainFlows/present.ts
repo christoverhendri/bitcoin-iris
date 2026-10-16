@@ -1,5 +1,4 @@
 import { fmtAgo, fmtCompact } from '@/lib/format';
-import { impactTier, IMPACT_TIER_COLOR } from '@/lib/features/geopoliticalEvents/present';
 import {
   BIAS_COLOR,
   BIAS_WORD,
@@ -29,7 +28,6 @@ export function getChainFlowsColor(value: number): string {
 
 /** Flattened, display-ready fields for one transfer row on the flow radar. */
 export function toFlowTransferRow(t: FlowTransfer, now?: number) {
-  const tier = impactTier(t.impact);
   return {
     txid: t.txid,
     short: `${t.txid.slice(0, 8)}…`,
@@ -43,8 +41,5 @@ export function toFlowTransferRow(t: FlowTransfer, now?: number) {
     biasColor: BIAS_COLOR[t.bias],
     exchange: t.exchange,
     route: `${t.fromLabel} → ${t.toLabel}`,
-    impact: Math.round(t.impact),
-    tier,
-    tierColor: IMPACT_TIER_COLOR[tier],
   };
 }

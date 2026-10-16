@@ -11,7 +11,7 @@ import {
   type ZoomTransform,
 } from 'd3-zoom';
 import { fmtAgo } from '@/lib/format';
-import { CATEGORY_COLOR, impactRadius } from '@/lib/features/geopoliticalEvents';
+import { CATEGORY_COLOR, MARKER_RADIUS } from '@/lib/features/geopoliticalEvents';
 import type { EventCategory, GeoEvent } from '@/lib/features/geopoliticalEvents';
 import { WORLD_FEATURES, makeProjection, spherePath } from '@/lib/geo/projection';
 
@@ -270,7 +270,7 @@ export function WorldMap({
           {/* then singles */}
           {singles.map(({ event, x, y }) => {
             const color = CATEGORY_COLOR[event.category];
-            const r = impactRadius(event.impact) * root * 1.1;
+            const r = MARKER_RADIUS * root * 1.1;
             return (
               <circle
                 key={event.id}
@@ -299,7 +299,7 @@ export function WorldMap({
             <circle
               cx={selectedSingle.x}
               cy={selectedSingle.y}
-              r={impactRadius(selectedSingle.event.impact) * root * 1.1 + 4 * root}
+              r={MARKER_RADIUS * root * 1.1 + 4 * root}
               fill="none"
               stroke={CATEGORY_COLOR[selectedSingle.event.category]}
               strokeWidth={1}

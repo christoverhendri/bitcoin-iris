@@ -11,13 +11,6 @@ export const getGeopoliticalEvents = defineFeature<GeoEventsArgs, GeoEvent[]>({
 });
 
 export type { GeoEvent, GeoEventsArgs, EventCategory } from './types';
-export {
-  CATEGORY_COLOR,
-  impactRadius,
-  toEventRow,
-  impactTier,
-  sentimentWord,
-  IMPACT_TIER_COLOR,
-} from './present';
-export type { ImpactTier, SentimentWord } from './present';
+export { CATEGORY_COLOR, MARKER_RADIUS, toEventRow, sentimentWord } from './present';
+export type { SentimentWord } from './present';
 export { EVENT_CATEGORIES } from '@/lib/geo/classify';

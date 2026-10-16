@@ -2,7 +2,8 @@ export interface SentimentData {
   positivePct: number;
   negativePct: number;
   neutralPct: number;
-  score: number;
+  /** Headlines the percentages are taken over. */
+  headlineCount: number;
 }
 
 export interface SentimentArgs {

@@ -1,14 +1,15 @@
 /**
- * Live social/market sentiment — headline tone across merged public RSS feeds
- * (keyword heuristic, see `sources/lexicon.ts`), blended with the alternative.me
- * Fear & Greed reading. No Twitter/X involved; the panel footnote says "rss".
+ * Live headline mix — how many of the latest RSS headlines the keyword lexicon
+ * (`sources/lexicon.ts`) tags positive, negative or neutral. A count, nothing
+ * more. No Twitter/X involved; the panel footnote says "rss".
+ *
+ * There is no blended "sentiment score": the one that used to sit here weighted
+ * this tally 0.6 against Fear & Greed 0.4, with nothing behind either weight,
+ * and was removed on 2026-10-16. Fear & Greed is shown on its own.
  */
 import { getCryptoNews } from '@/lib/sources/rss';
 import { scoreHeadline } from '@/lib/sources/lexicon';
-import { getFearGreed } from '@/lib/sources/alternativeme';
 import type { SentimentData, SentimentArgs } from './types';
-
-const clamp = (x: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, x));
 
 export async function fetchSentiment({ days = 7 }: SentimentArgs) {
   void days;
@@ -27,20 +28,11 @@ export async function fetchSentiment({ days = 7 }: SentimentArgs) {
   }
   const total = items.length;
 
-  const newsScore = clamp((pos - neg) / total, -1, 1);
-
-  const fng = await getFearGreed(1).catch(() => null);
-  const fngVal = fng && fng.length ? fng[0].value : null;
-  const score =
-    fngVal === null
-      ? newsScore
-      : clamp(0.6 * newsScore + 0.4 * ((fngVal - 50) / 50), -1, 1);
-
   const data: SentimentData = {
     positivePct: (pos / total) * 100,
     negativePct: (neg / total) * 100,
     neutralPct: (neu / total) * 100,
-    score,
+    headlineCount: total,
   };
 
   return {

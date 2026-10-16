@@ -97,7 +97,7 @@ dengan **bobot tetap yang dipilih manual** (tidak di-fit ke data):
 |---|---|---|
 | TECHNICAL | 0.34 | Rata-rata 4 sub-skor dari candle harian (300 hari): RSI(14) apa adanya; MACD hist `50 + clamp((macd−signal)/harga × 2000) × 50`; jarak EMA21−EMA50 (gap 5% = mentok); jarak harga ke tengah Bollinger(20) (5% = mentok) |
 | SENTIMENT | 0.20 | `0.5 × Fear&Greed + 0.5 × NEWS` |
-| NEWS | 0.20 | 20 judul berita RSS dinilai kata kunci: `50 + (positif − negatif)/total × 50` |
+| NEWS | 0.20 | Judul RSS (hingga 20 per feed × 8 feed) dinilai kata kunci: `50 + (positif − negatif)/total × 50` |
 | MACRO | 0.20 | Dari Yahoo: DXY (z-score 1 tahun, dibalik — dolar kuat = negatif), VIX (15→+1, 20→+0.5, 25→0, 35→−0.5, 45→−1), S&P 500 30 hari (+10% = mentok). Rata-rata sinyal → skala 0–100 |
 | ONCHAIN | 0.06 | **Selalu 50** (belum disambungkan). Bobotnya sengaja kecil |
 
@@ -134,19 +134,17 @@ Warna: ≥ 60 hijau, 40–60 netral, < 40 merah.
 
 ### 1.6 LIVE INTELLIGENCE
 
-- **SENTIMENT SCORE** (contoh +0.04, NEUTRAL): dari 40 judul berita RSS.
-  `news = (positif − negatif)/total`, lalu `skor = 0.6 × news + 0.4 × (F&G − 50)/50`, dibatasi −1..+1.
-  > 0.1 = bullish, < −0.1 = bearish.
-- **BULLISH / NEUTRAL / BEARISH %**: porsi judul per label.
+- **HEADLINE MIX** (BULLISH / NEUTRAL / BEARISH %): dari judul terbaru di 8 feed (hingga 40 per
+  feed; 16 Okt: 183 judul, angkanya tampil di panel), berapa
+  persen yang ditandai positif/netral/negatif oleh kamus kata. Murni hitungan.
+  (Dulu ada "Sentiment Score" = `0.6 × berita + 0.4 × F&G`; bobotnya karangan, **dihapus 16 Okt**.)
 - **Penilaian judul** = kamus kata (`src/lib/sources/lexicon.ts`): setiap kata "naik" (surge,
   rally, inflow, approval, …) +1, setiap kata "turun" (crash, hack, outflow, ban, …) −1.
   **Bukan model NLP.**
-- **Daftar berita**: 15 judul terbaru dari 8 feed (CoinTelegraph, Decrypt, NewsBTC, CoinDesk,
-  The Block, Bitcoin Magazine, Blockworks, BeInCrypto). Diurutkan berdasarkan **impact**:
-  - kategori dari kata kunci → skor dasar (SECURITY/MONETARY 70, REGULATION/ETF/GEOPOLITICS 60,
-    LEGAL/ADOPTION 50, MARKET 40)
-  - ditambah bonus kebaruan 0–20 (makin baru makin besar dalam jendela 7 hari)
-  - impact > 65 = HIGH, 40–65 = MEDIUM, < 40 = LOW
+- **Daftar berita**: 10 judul terbaru dari 8 feed (hingga 15 per feed diambil; CoinTelegraph, Decrypt, NewsBTC, CoinDesk,
+  The Block, Bitcoin Magazine, Blockworks, BeInCrypto), **diurutkan dari yang terbaru**. Tiap judul
+  diberi kategori kata kunci (lihat 5.2) dan label bull/bear dari kamus kata.
+  (Dulu ada label HIGH/MEDIUM/LOW IMPACT dari skor yang angkanya dipilih manual — **dihapus 16 Okt**.)
 
 ### 1.7 BTC SNAPSHOT
 
@@ -306,11 +304,12 @@ Sumber: tabel **bitbo.io** (di-scrape, bentuk tabel divalidasi). Data settle T+1
 | Sel | Asal |
 |---|---|
 | FEAR & GREED | alternative.me (lihat 1.4) |
-| SOCIAL SCORE | Skor sentiment 1.6; > 0.1 NET BULLISH, < −0.1 NET BEARISH, sisanya BALANCED |
-| SENTIMENT MIX | Porsi judul positif/netral/negatif |
+| SENTIMENT MIX | Porsi judul positif/netral/negatif (hitungan kamus kata), sama dengan HEADLINE MIX di 1.6; jumlah judulnya tampil di sel |
 | NEWS TONE | Hitungan judul +/− dari daftar berita |
 | WHALE FLOW 24H | Dari tabel `whale_events` (Whale Alert, transfer ≥ $500K): net USD masuk/keluar exchange 24 jam. **MOCK** sampai `WHALE_ALERT_API_KEY` + ingest berjalan |
-| WORLD EVENTS | Jumlah event di peta + berapa dalam 24 jam |
+| WORLD EVENTS | Jumlah event di peta + berapa yang terbit dalam 24 jam |
+
+(Sel SOCIAL SCORE dihapus 16 Okt — lihat 1.6.)
 
 ### 5.2 GLOBAL EVENT MAP
 
@@ -318,15 +317,46 @@ Sumber: tabel **bitbo.io** (di-scrape, bentuk tabel divalidasi). Data settle T+1
   UN), dan siaran pers lembaga (**SEC, Federal Reserve, CFTC, ECB**), plus transfer flow on-chain.
 - Tiap judul: kategori (kata kunci), sentimen (kamus), lokasi (gazetteer nama negara/kota; siaran
   pers lembaga dipin ke kantornya kalau tidak menyebut lokasi). Judul tanpa lokasi dibuang.
-- **Impact** = skor kategori + bonus kebaruan (0–20) + bonus **diberitakan banyak sumber**
-  (+5 per sumber tambahan, maks +15). Kalender makro tetap (FOMC, CPI, dll.) selalu tampil
-  sebagai penanda impact rendah.
+- Judul yang sama dari beberapa media dihitung satu event. Diurutkan dari yang terbaru; halaman Sentiment memuat 150 event terbaru.
+- Semua marker berukuran sama. (Dulu ukuran marker = skor "impact" karangan, dan ada penanda
+  statis "FOMC / CPI / ECB" yang ditempeli tanggal hari ini walaupun tidak ada kejadian — keduanya
+  **dihapus 16 Okt**.)
 - Filter kategori lewat `?cats=`.
+
+**Aturan kategori** (`src/lib/geo/classify.ts`): judul dicocokkan ke daftar kata dari atas ke
+bawah; kategori pertama yang cocok dipakai, kalau tidak ada yang cocok → MARKET.
+
+| Urutan | Kategori | Kata kunci |
+|---|---|---|
+| 1 | REGULATION | sec, regulation, regulator, mica, ban, license, framework, compliance, oversight, watchdog, crackdown |
+| 2 | ETF_FUND | etf, blackrock, grayscale, fidelity, ishares, inflow, outflow, aum, bitwise, ark invest |
+| 3 | SECURITY | hack, exploit, breach, stolen, drain, phishing, rug pull, private key, compromised |
+| 4 | MONETARY | fed, federal reserve, rate cut/hike, fomc, cpi, inflation, ecb, boj, pce, powell |
+| 5 | GEOPOLITICS | sanction, war, election, conflict, tariff, invasion, ceasefire, military, missile, coup, summit |
+| 6 | ADOPTION | legal tender, adopts, adoption, accepts bitcoin, integration, rollout, strategic reserve |
+| 7 | LEGAL | lawsuit, court, ruling, settlement, indictment, sentenced, verdict, appeal, charges, trial |
+| – | WHALE_FLOW | bukan dari judul: transfer on-chain ≥ 50 BTC dari 17 alamat exchange (lihat 4.2) |
+
+**Seberapa baru datanya** — tidak real-time, tapi near real-time:
+
+| Aliran | Sumber | Cache di dashboard |
+|---|---|---|
+| Berita kripto | 8 RSS media kripto | 10 menit |
+| Berita dunia | BBC, AP, Al Jazeera, Guardian, France 24, UN News | 15 menit |
+| Siaran pers lembaga | SEC, Federal Reserve, CFTC, ECB | 1 jam |
+| Transfer on-chain | Blockstream Esplora (17 alamat exchange) | saldo 10 menit, transaksi 5 menit (alamat dengan riwayat > 2 MB tidak bisa di-cache, jadi diambil ulang tiap render) |
+| Whale Wire | Supabase `whale_events`, diisi ingest tiap 5 menit | 30 detik |
+
+Ditambah jeda dari media itu sendiri: RSS baru memuat artikel setelah media menerbitkannya.
 
 ### 5.3 WHALE WIRE
 
 Daftar transfer besar dari Supabase `whale_events`, ditulis oleh `/api/ingest/whale` setiap
 5 menit (Whale Alert free tier hanya melihat ~10 menit ke belakang, jadi riwayat harus dikumpulkan).
+Yang ditampilkan: jumlah koin, nilai USD, jenis (inflow/outflow/…), arah bias, rute, chain, waktu.
+(Label "HIGH/MEDIUM/LOW IMPACT" yang diturunkan dari nilai USD dengan ambang karangan **dihapus
+16 Okt**; nilai USD-nya sendiri tetap ditampilkan karena itu fakta. Kolom `impact` di database
+dibuang lewat migration `0004_drop_whale_impact.sql`.)
 
 ---
 
@@ -432,7 +462,7 @@ Ditemukan saat menelusuri kode dan dicek di dashboard. **Belum diperbaiki.**
 | 1 | `components/features/overview/TechReadout.tsx` | **BOLLINGER %B** memakai garis tengah, bukan harga: `(tengah − bawah)/(atas − bawah)` = selalu 0.5 | Selalu tampil **50.0** apa pun harganya |
 | 2 | File yang sama | **ATR (VOL %)** sebenarnya `(atas − bawah)/tengah` = lebar Bollinger | Label salah; ATR asli tidak dihitung |
 | 3 | `signal_rule.json` (model mingguan) | Ambang 0.23/0.70 bukan hasil tuning notebook; di data test `p_up` maksimum 0.699, jadi BULL tidak pernah muncul | Label BULLISH/BEARISH/NEUTRAL belum bisa dipertanggungjawabkan sampai ambang baru dari notebook |
-| 4 | Label berita (kategori, bullish/bearish, impact) | Daftar kata & skor dipilih manual, tanpa data berlabel atau uji akurasi. Pencocokan per potongan huruf: "Hard**war**e" → GEOPOLITICS, "P**red**ict" → bearish, "Central **ban**k" → bearish + REGULATION | Label bisa salah dan bias |
+| 4 | Label berita (kategori, bullish/bearish) | Aturan kata kunci dipertahankan (rule-based), tapi pencocokannya per potongan huruf: "Hard**war**e" dan "Fed's **War**sh" → GEOPOLITICS, "P**red**ict" → bearish, "Central **ban**k" → bearish + REGULATION. Label bull/bear nanti diganti model researcher | Label bisa salah sampai pencocokan diubah ke per kata utuh |
 | 5 | ONCHAIN confluence | Konstanta 50, belum disambungkan ke data on-chain (padahal On-Chain Flows/Network sudah live) | 6% skor tidak bergerak |
 | 6 | `StatusFooter.tsx` | Warning hydration mismatch ("2s ago" vs "1s ago") di konsol browser | Kosmetik, tidak merusak data |
 

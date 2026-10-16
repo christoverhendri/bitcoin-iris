@@ -14,7 +14,6 @@ const event = (over: Partial<WhaleEvent>): WhaleEvent => ({
   toLabel: 'b',
   kind: 'WALLET_TRANSFER',
   bias: 'neutral',
-  impact: 50,
   txUrl: null,
   ...over,
 });

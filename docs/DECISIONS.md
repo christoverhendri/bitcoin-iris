@@ -227,11 +227,25 @@ A keyword lexicon (`src/lib/sources/lexicon.ts`), not an NLP model. It scores he
 and nothing else — no negation handling, no sarcasm, no context. Adequate for a directional
 tilt, wrong on individual headlines with some regularity. Panels label it as heuristic.
 
-### Event impact score
+### Event impact score — removed 2026-10-16
 
-`impact = category base + recency bonus (0-20) + multi-source cluster bonus (0-15)`, clamped
-0-100, tiered `HIGH > 65 ≥ MEDIUM > 40 ≥ LOW`. Category bases: security/monetary 70,
-regulation/ETF/geopolitics 60, legal/adoption 50, market 40. All chosen by hand.
+Was `impact = category base + recency bonus (0-20) + multi-source cluster bonus (0-15)`,
+tiered HIGH/MEDIUM/LOW, with category bases (security/monetary 70, regulation/ETF/geopolitics
+60, legal/adoption 50, market 40) chosen by hand. The same treatment applied to whale and
+exchange-flow transfers (a ramp over USD/BTC size with hand-picked floor and saturation).
+
+Removed because none of those numbers had anything behind them, and a "HIGH IMPACT" tag
+reads as a measured claim about the market. News and events are now ordered by publish
+time; transfers show their BTC/USD amount, which is a fact. The standing macro-calendar
+markers (FOMC, CPI, ...) went with it: they were stamped with today's date every day
+whether or not anything happened. `supabase/migrations/0004_drop_whale_impact.sql` drops the
+database column.
+
+### Blended sentiment score — removed 2026-10-16
+
+Was `0.6 × headline tally + 0.4 × (Fear & Greed − 50)/50`. Both weights were arbitrary.
+The headline percentages (a plain count) and Fear & Greed (an external index) are each
+still shown on their own.
 
 ---
 

@@ -24,7 +24,6 @@
 import { fetchJson } from './http';
 import {
   BIAS_BY_FLOW_KIND,
-  usdImpact,
   type FlowBias,
   type FlowKind,
 } from '@/lib/onchain/classifyFlow';
@@ -90,7 +89,6 @@ export interface WhaleTx {
   toLabel: string;
   kind: FlowKind;
   bias: FlowBias;
-  impact: number;
   txUrl: string | null;
 }
 
@@ -179,7 +177,6 @@ export function normalizeWhaleTx(tx: RawTx): WhaleTx | null {
     toLabel: labelOf(tx.to),
     kind,
     bias: BIAS_BY_FLOW_KIND[kind],
-    impact: usdImpact(amountUsd),
     txUrl: hash ? (EXPLORER[blockchain]?.(hash) ?? null) : null,
   };
 }

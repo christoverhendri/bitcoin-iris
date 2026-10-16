@@ -1,8 +1,4 @@
-import {
-  CATEGORY_COLOR,
-  IMPACT_TIER_COLOR,
-  type ImpactTier,
-} from '@/lib/features/geopoliticalEvents/present';
+import { CATEGORY_COLOR } from '@/lib/features/geopoliticalEvents/present';
 import type { NewsArticle } from './types';
 
 export function toNewsLabel(article: NewsArticle) {
@@ -30,6 +26,3 @@ export function newsCategoryColor(article: NewsArticle): string {
   return CATEGORY_COLOR[article.category] ?? 'var(--mut)';
 }
 
-export function newsImpactColor(tier: ImpactTier): string {
-  return IMPACT_TIER_COLOR[tier];
-}

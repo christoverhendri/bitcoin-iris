@@ -11,7 +11,7 @@ export interface FlowRadarProps {
 /**
  * Chip in the `Tag` idiom, but driven by a raw token string.
  *
- * `Tag` takes a semantic `Tone`; flow kinds and impact tiers already publish
+ * `Tag` takes a semantic `Tone`; flow kinds and biases already publish
  * their own `var(--…)` colours from the classifier and the events module, and
  * re-deriving a Tone from those would put the same mapping in two places.
  */
@@ -80,7 +80,6 @@ export function FlowRadar({ flows }: FlowRadarProps) {
               <th style={th}>BIAS</th>
               <th style={th}>EXCHANGE</th>
               <th style={th}>ROUTE</th>
-              <th style={th}>IMPACT</th>
             </tr>
           </thead>
           <tbody>
@@ -107,9 +106,6 @@ export function FlowRadar({ flows }: FlowRadarProps) {
                   }}
                 >
                   {r.route}
-                </td>
-                <td>
-                  <Chip label={`${r.tier} ${r.impact}`} color={r.tierColor} />
                 </td>
               </tr>
             ))}

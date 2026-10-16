@@ -1,5 +1,3 @@
-import { dateSeed, mulberry32 } from '@/lib/rng';
-import { impactTier } from '@/lib/features/geopoliticalEvents/present';
 import type { EventCategory } from '@/lib/geo/classify';
 import type { NewsArticle, NewsArgs } from './types';
 
@@ -53,16 +51,12 @@ const DUMMY_ARTICLES: {
 ];
 
 export function mockNews({ limit = 5 }: NewsArgs): NewsArticle[] {
-  const rand = mulberry32(dateSeed('news'));
   const out: NewsArticle[] = [];
   for (let i = 0; i < Math.min(limit, DUMMY_ARTICLES.length); i++) {
     const a = DUMMY_ARTICLES[i];
-    const impact = 40 + Math.floor(rand() * 45);
     out.push({
       ...a,
       btcWindow: `${10 + i * 5} hours`,
-      impact,
-      impactTier: impactTier(impact),
       publishedAt: 0,
     });
   }

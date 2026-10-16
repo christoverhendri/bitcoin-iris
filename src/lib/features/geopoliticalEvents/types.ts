@@ -14,7 +14,6 @@ export interface GeoEvent {
   lon: number;
   iso2: string;
   place: string;
-  impact: number; // 0..100
 }
 
 export interface GeoEventsArgs {

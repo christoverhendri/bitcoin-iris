@@ -11,4 +11,4 @@ export const getSentiment = defineFeature<SentimentArgs, SentimentData>({
 });
 
 export type { SentimentData, SentimentArgs };
-export { toSentimentLabels, getSentimentColor } from './present';
+export { toSentimentLabels } from './present';

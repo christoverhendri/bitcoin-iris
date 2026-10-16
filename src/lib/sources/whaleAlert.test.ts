@@ -77,17 +77,7 @@ describe('normalizeWhaleTx', () => {
     expect(normalizeWhaleTx({ ...base, id: undefined })?.id).toBe('abc123');
   });
 
-  it('scores impact on a log curve between $500K and $500M', () => {
-    const at = (usd: number) => normalizeWhaleTx({ ...base, amount_usd: usd })?.impact;
-    expect(at(500_000)).toBe(20);
-    expect(at(500_000_000)).toBe(100);
-    expect(at(5_000_000_000)).toBe(100); // saturates, never exceeds
-    // Monotonic, and a mid-size move is not scored as noise.
-    expect(at(5_000_000)!).toBeGreaterThan(at(500_000)!);
-    expect(at(50_000_000)!).toBeGreaterThan(at(5_000_000)!);
-  });
-
-  it('drops rows that cannot be ordered, scored, or keyed', () => {
+  it('drops rows that cannot be ordered, valued, or keyed', () => {
     expect(normalizeWhaleTx({ ...base, transaction_type: 'mint' })).toBeNull();
     expect(normalizeWhaleTx({ ...base, timestamp: undefined })).toBeNull();
     expect(normalizeWhaleTx({ ...base, amount_usd: 0 })).toBeNull();

@@ -15,32 +15,16 @@ export const CATEGORY_COLOR: Record<EventCategory, string> = {
   WHALE_FLOW: 'var(--purple)',
 };
 
-/** Impact 0..100 -> marker radius 2.5..7 (SVG user units). */
-export function impactRadius(impact: number): number {
-  const clamped = Math.max(0, Math.min(100, impact));
-  return 2.5 + (clamped / 100) * 4.5;
-}
+/**
+ * Map marker radius (SVG user units). One size for every event: marker size
+ * used to encode an "impact" score, which had no basis and was removed.
+ */
+export const MARKER_RADIUS = 4.5;
 
 const SENTIMENT_LABEL: Record<GeoEvent['sentiment'], string> = {
   positive: 'BULL',
   negative: 'BEAR',
   neutral: 'NEUTRAL',
-};
-
-export type ImpactTier = 'HIGH' | 'MEDIUM' | 'LOW';
-
-/** Impact 0..100 -> tier. HIGH > 65, MEDIUM 40..65, LOW < 40. */
-export function impactTier(impact: number): ImpactTier {
-  if (impact > 65) return 'HIGH';
-  if (impact >= 40) return 'MEDIUM';
-  return 'LOW';
-}
-
-/** Tier -> theme token. Terminal palette only, no neon. */
-export const IMPACT_TIER_COLOR: Record<ImpactTier, string> = {
-  HIGH: 'var(--down)',
-  MEDIUM: 'var(--amber)',
-  LOW: 'var(--mut)',
 };
 
 export type SentimentWord = 'BULLISH' | 'BEARISH' | 'NEUTRAL';
@@ -62,6 +46,5 @@ export function toEventRow(e: GeoEvent, now?: number) {
     sentiment: e.sentiment,
     sentimentLabel: SENTIMENT_LABEL[e.sentiment],
     ago: fmtAgo(new Date(e.publishedAt).toISOString(), now),
-    impact: Math.round(e.impact),
   };
 }

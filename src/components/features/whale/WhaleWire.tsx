@@ -179,9 +179,6 @@ export function WhaleWire({ initial, limit = 50 }: WhaleWireProps) {
                   key={e.id}
                   style={{
                     borderBottom: i < events.length - 1 ? '1px solid var(--line)' : 'none',
-                    borderLeft: `2px solid ${
-                      row.tier === 'HIGH' ? row.biasColor : 'transparent'
-                    }`,
                   }}
                 >
                   <button
@@ -234,8 +231,6 @@ export function WhaleWire({ initial, limit = 50 }: WhaleWireProps) {
                         <span style={{ color: row.kindColor, letterSpacing: '.1em' }}>
                           {row.kindLabel}
                         </span>
-                        <span>·</span>
-                        <span style={{ color: row.tierColor }}>{row.tier} IMPACT</span>
                         <span>·</span>
                         <span>{row.chain}</span>
                         <span>·</span>

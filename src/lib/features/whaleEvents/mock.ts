@@ -1,5 +1,5 @@
 import { seeded, between, intBetween, pick, utcDay } from '@/lib/rng';
-import { BIAS_BY_FLOW_KIND, usdImpact, type FlowKind } from '@/lib/onchain/classifyFlow';
+import { BIAS_BY_FLOW_KIND, type FlowKind } from '@/lib/onchain/classifyFlow';
 import type { WhaleEvent, WhaleEventsArgs } from './types';
 
 /**
@@ -72,7 +72,6 @@ export function mockWhaleEvents({ limit = 50 }: WhaleEventsArgs): WhaleEvent[] {
       toLabel,
       kind,
       bias: BIAS_BY_FLOW_KIND[kind],
-      impact: usdImpact(amountUsd),
       // No link: a fabricated hash would 404 on a real explorer.
       txUrl: null,
     });

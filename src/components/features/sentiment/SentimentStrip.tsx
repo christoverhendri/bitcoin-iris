@@ -1,8 +1,8 @@
 import type { CSSProperties, ReactNode } from 'react';
 import { MockBadge } from '@/components/primitives';
 import type { Envelope } from '@/lib/envelope';
-import { fmtCompact, fmtPct, fmtZ } from '@/lib/format';
-import { signTone, toneVar, type Tone } from '@/lib/theme/tokens';
+import { fmtCompact, fmtPct } from '@/lib/format';
+import { toneVar, type Tone } from '@/lib/theme/tokens';
 import type { FearGreedData } from '@/lib/features/fearGreed';
 import { toFearGreedLabel } from '@/lib/features/fearGreed';
 import type { SentimentData } from '@/lib/features/sentiment';
@@ -32,7 +32,6 @@ export function SentimentStrip({ fearGreed, sentiment, news, events, whale }: Se
   const fgLabel = toFearGreedLabel(fg);
 
   const s = sentiment.data;
-  const socialWord = s.score > 0.1 ? 'NET BULLISH' : s.score < -0.1 ? 'NET BEARISH' : 'BALANCED';
   const mixTotal = s.positivePct + s.neutralPct + s.negativePct || 1;
   const posW = (s.positivePct / mixTotal) * 100;
   const neuW = (s.neutralPct / mixTotal) * 100;
@@ -76,13 +75,6 @@ export function SentimentStrip({ fearGreed, sentiment, news, events, whale }: Se
         <div style={deltaLine}>{fmtPct(fg.changePct)} 24h</div>
       </Cell>
 
-      <Cell label="SOCIAL SCORE" env={sentiment}>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-          <span style={{ ...bigValue, color: toneVar(signTone(s.score)) }}>{fmtZ(s.score)}</span>
-          <span style={valueWord}>{socialWord}</span>
-        </div>
-      </Cell>
-
       <Cell label="SENTIMENT MIX" env={sentiment}>
         <div style={{ display: 'flex', height: 6, border: '1px solid var(--line2)' }}>
           <span style={{ width: `${posW}%`, background: 'var(--up)' }} />
@@ -91,6 +83,7 @@ export function SentimentStrip({ fearGreed, sentiment, news, events, whale }: Se
         </div>
         <div style={{ ...deltaLine, marginTop: 4 }}>
           {Math.round(s.positivePct)} / {Math.round(s.neutralPct)} / {Math.round(s.negativePct)}
+          {' '}% of {s.headlineCount} headlines
         </div>
       </Cell>
 

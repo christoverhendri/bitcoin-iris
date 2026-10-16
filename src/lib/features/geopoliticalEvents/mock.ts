@@ -2,7 +2,7 @@
  * Deterministic placeholder events. Seeded from the UTC day so SSR and hydration
  * agree and the set drifts once per day. Same `GeoEvent` shape as the live path.
  */
-import { between, intBetween, seeded, utcDay } from '@/lib/rng';
+import { between, seeded, utcDay } from '@/lib/rng';
 import { classify } from '@/lib/geo/classify';
 import { geocode } from '@/lib/geo/gazetteer';
 import { scoreHeadline } from '@/lib/sources/lexicon';
@@ -36,7 +36,6 @@ export function mockGeopoliticalEvents({ limit = 60 }: GeoEventsArgs): GeoEvent[
     const offsetH = between(r, 1, 10) * (i + 1);
     const publishedAt = dayStart - Math.round(offsetH * 3_600_000);
     const category = classify(title);
-    const impact = intBetween(r, 35, 92);
 
     events.push({
       id: `mock-${i}`,
@@ -49,9 +48,8 @@ export function mockGeopoliticalEvents({ limit = 60 }: GeoEventsArgs): GeoEvent[
       lon: hit.lon,
       iso2: hit.iso2,
       place: hit.name,
-      impact,
     });
   }
 
-  return events.sort((a, b) => b.impact - a.impact || b.publishedAt - a.publishedAt).slice(0, limit);
+  return events.sort((a, b) => b.publishedAt - a.publishedAt).slice(0, limit);
 }

@@ -75,7 +75,6 @@ export function flowsToGeoEvents(transfers: FlowTransfer[]): GeoEvent[] {
       lon: hq.lon,
       iso2: hq.iso2,
       place: `${hq.place} · ${t.exchange}`,
-      impact: t.impact,
     });
   }
   return out;

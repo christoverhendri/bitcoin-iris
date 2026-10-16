@@ -11,7 +11,7 @@ import {
 } from 'react';
 import { geoOrthographic, geoPath, geoGraticule10, geoDistance } from 'd3-geo';
 import { fmtAgo } from '@/lib/format';
-import { CATEGORY_COLOR, impactRadius } from '@/lib/features/geopoliticalEvents';
+import { CATEGORY_COLOR, MARKER_RADIUS } from '@/lib/features/geopoliticalEvents';
 import type { GeoEvent } from '@/lib/features/geopoliticalEvents';
 import { WORLD_FEATURES } from '@/lib/geo/projection';
 import type { WorldMapProps } from './WorldMap';
@@ -351,7 +351,7 @@ export function GlobeMap({
 
         {singles.map(({ event, x, y }) => {
           const color = CATEGORY_COLOR[event.category];
-          const r = impactRadius(event.impact) * 1.15;
+          const r = MARKER_RADIUS * 1.15;
           return (
             <g key={event.id}>
               {/* fat invisible hit target so a moving dot is still clickable */}
@@ -389,7 +389,7 @@ export function GlobeMap({
           <circle
             cx={selectedSingle.x}
             cy={selectedSingle.y}
-            r={impactRadius(selectedSingle.event.impact) * 1.15 + 4}
+            r={MARKER_RADIUS * 1.15 + 4}
             fill="none"
             stroke={CATEGORY_COLOR[selectedSingle.event.category]}
             strokeWidth={1}

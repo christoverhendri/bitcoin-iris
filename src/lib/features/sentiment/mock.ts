@@ -8,6 +8,6 @@ export function mockSentiment({ days = 7 }: SentimentArgs): SentimentData {
     positivePct: 30 + r() * 20,
     negativePct: 20 + r() * 20,
     neutralPct: 50 - (r() * 40),
-    score: (r() - 0.5) * 2,
+    headlineCount: 40,
   };
 }

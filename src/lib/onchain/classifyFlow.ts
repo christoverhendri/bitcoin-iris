@@ -49,8 +49,6 @@ export interface ClassifiedFlow {
   exchange: string;
   fromLabel: string;
   toLabel: string;
-  /** 0-100 attention score. See IMPACT_* below. */
-  impact: number;
 }
 
 export const FLOW_KIND_LABEL: Record<FlowKind, string> = {
@@ -83,50 +81,6 @@ const BIAS_BY_KIND: Record<FlowKind, FlowBias> = {
 
 /** Kind -> bias, shared by every classifier. */
 export const BIAS_BY_FLOW_KIND: Record<FlowKind, FlowBias> = BIAS_BY_KIND;
-
-/**
- * Impact curve.
- *
- * A linear `amount / 2000 * 100` would score a real 50 BTC move (~$5M) at 2,
- * which reads as noise when it is not. So the curve is a floor plus a linear
- * ramp: anything that clears the reporting threshold starts at IMPACT_FLOOR and
- * climbs to 100 at IMPACT_SATURATION BTC.
- *
- *   50 BTC -> 20      500 BTC -> 38      2000 BTC -> 84      2500+ BTC -> 100
- *
- * The floor is what stops the tier chips from marking every mid-size move LOW;
- * the saturation point is roughly where a single transfer stops being one desk's
- * decision and becomes an exchange-level treasury operation.
- */
-const IMPACT_FLOOR = 20;
-const IMPACT_SATURATION_BTC = 2_500;
-
-export function flowImpact(amountBtc: number): number {
-  const ramp = Math.min(1, Math.max(0, amountBtc) / IMPACT_SATURATION_BTC);
-  return Math.min(100, Math.round(IMPACT_FLOOR + ramp * (100 - IMPACT_FLOOR)));
-}
-
-/**
- * The same curve for a multi-chain transfer, scored in USD instead of BTC.
- *
- * A linear ramp cannot work here: the reportable range spans three orders of
- * magnitude ($500K to $500M+), so linear would score every transfer under $50M
- * as noise. The ramp is therefore logarithmic between the floor and saturation:
- *
- *   $500K -> 20      $5M -> 47      $50M -> 73      $500M+ -> 100
- *
- * Below `IMPACT_FLOOR_USD` the score is 0 — a transfer that small is not a whale
- * movement and should not have been fetched in the first place.
- */
-const IMPACT_FLOOR_USD = 500_000;
-const IMPACT_SATURATION_USD = 500_000_000;
-const USD_LOG_SPAN = Math.log(IMPACT_SATURATION_USD / IMPACT_FLOOR_USD);
-
-export function usdImpact(amountUsd: number): number {
-  if (!Number.isFinite(amountUsd) || amountUsd < IMPACT_FLOOR_USD) return 0;
-  const ramp = Math.min(1, Math.log(amountUsd / IMPACT_FLOOR_USD) / USD_LOG_SPAN);
-  return Math.min(100, Math.round(IMPACT_FLOOR + ramp * (100 - IMPACT_FLOOR)));
-}
 
 interface Side {
   /** Registry hits, deduped by address, with the BTC they contributed. */
@@ -250,7 +204,6 @@ export function classifyTx(tx: EsploraTx, minBtc: number): ClassifiedFlow | null
     exchange,
     fromLabel: labelOf(inp, fallbackFrom),
     toLabel: labelOf(outp, fallbackTo),
-    impact: flowImpact(amountBtc),
   };
 }
 

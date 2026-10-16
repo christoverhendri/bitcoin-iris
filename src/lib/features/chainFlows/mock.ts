@@ -1,6 +1,6 @@
 import { seeded, between, intBetween, pick, utcDay } from '@/lib/rng';
 import { EXCHANGE_ADDRESSES, TRACKED_ADDRESS_COUNT, TRACKED_EXCHANGES } from '@/lib/onchain/exchangeRegistry';
-import { flowImpact, BIAS_BY_FLOW_KIND, type FlowKind } from '@/lib/onchain/classifyFlow';
+import { BIAS_BY_FLOW_KIND, type FlowKind } from '@/lib/onchain/classifyFlow';
 import type { ChainFlowsArgs, ChainFlowsData, FlowTransfer } from './types';
 
 /**
@@ -48,7 +48,6 @@ export function mockChainFlows({ symbol = 'BTC' }: ChainFlowsArgs): ChainFlowsDa
       exchange,
       fromLabel: kind === 'EXCHANGE_INFLOW' ? 'External wallet' : `${exchange} wallet`,
       toLabel: kind === 'EXCHANGE_OUTFLOW' ? 'External wallet' : `${exchange} wallet`,
-      impact: flowImpact(amountBtc),
     });
   }
   transfers.sort((a, b) => b.blockTime - a.blockTime);

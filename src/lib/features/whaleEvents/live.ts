@@ -32,13 +32,12 @@ interface WhaleEventRow {
   to_label: string | null;
   kind: string;
   bias: string;
-  impact: number;
   tx_url: string | null;
   is_synthetic: boolean;
 }
 
 const COLUMNS =
-  'id, ts, blockchain, symbol, amount, amount_usd, from_label, to_label, kind, bias, impact, tx_url, is_synthetic';
+  'id, ts, blockchain, symbol, amount, amount_usd, from_label, to_label, kind, bias, tx_url, is_synthetic';
 
 /** Postgres `numeric` arrives as a string through PostgREST. */
 const num = (v: number | string | null): number => {
@@ -75,7 +74,6 @@ export async function fetchWhaleEvents({ limit = 50 }: WhaleEventsArgs) {
     toLabel: r.to_label ?? 'Unknown wallet',
     kind: r.kind as FlowKind,
     bias: r.bias as FlowBias,
-    impact: r.impact,
     txUrl: r.tx_url,
   }));
 

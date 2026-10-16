@@ -9,8 +9,13 @@
  * the gazetteer. Items that resolve to no place are dropped, except from sources
  * that publish from one fixed address, which fall back to `SOURCE_PIN` — without
  * that, institutional headlines would be discarded almost every time, since they
- * rarely name a country. The static macro calendar is merged in as always-present
- * low-impact markers so the map is never empty.
+ * rarely name a country.
+ *
+ * Events are ordered by publish time, newest first. There is no impact score:
+ * the one that used to rank them (category base + recency + multi-source bonus)
+ * was built from hand-picked numbers with nothing behind them, and so were the
+ * standing "FOMC / CPI" calendar markers that were stamped with today's date
+ * whether or not anything happened. Both were removed on 2026-10-16.
  *
  * The RSS parser lives in `sources/rss.ts`. This file used to carry a second copy
  * of it.
@@ -20,28 +25,10 @@ import { INSTITUTION_FEEDS, SOURCE_PIN, WORLD_FEEDS } from '@/lib/sources/worldF
 import { scoreHeadline } from '@/lib/sources/lexicon';
 import { classify } from '@/lib/geo/classify';
 import { geocode } from '@/lib/geo/gazetteer';
-import { MACRO_CALENDAR } from '@/lib/geo/macroCalendar';
 import { hashString, utcDay } from '@/lib/rng';
-import type { EventCategory } from '@/lib/geo/classify';
 import type { GeoEvent, GeoEventsArgs } from './types';
 
 type RawItem = Pick<RssItem, 'title' | 'link' | 'publishedAt' | 'source'>;
-
-const CATEGORY_BASE: Record<EventCategory, number> = {
-  SECURITY: 70,
-  MONETARY: 70,
-  REGULATION: 60,
-  ETF_FUND: 60,
-  GEOPOLITICS: 60,
-  LEGAL: 50,
-  ADOPTION: 50,
-  MARKET: 40,
-  // Unreachable via `classify()` — flow events carry their own impact — but the
-  // map must stay exhaustive.
-  WHALE_FLOW: 55,
-};
-
-const WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 
 function normHeadline(title: string): string {
   return title
@@ -79,15 +66,6 @@ export async function fetchGeopoliticalEvents({ limit = 60 }: GeoEventsArgs) {
   if (world) raw.push(...world.items);
   if (institutions) raw.push(...institutions.items);
 
-  // Cluster count by normalised headline — used for the multi-source impact bonus.
-  const clusterCount = new Map<string, number>();
-  for (const it of raw) {
-    const k = normHeadline(it.title);
-    if (k) clusterCount.set(k, (clusterCount.get(k) ?? 0) + 1);
-  }
-
-  const nowRef = Math.max(startOfUtcDay(), ...raw.map((it) => it.publishedAt || 0));
-
   const byHeadline = new Map<string, GeoEvent>();
 
   for (const it of raw) {
@@ -101,15 +79,7 @@ export async function fetchGeopoliticalEvents({ limit = 60 }: GeoEventsArgs) {
     const category = classify(it.title);
     const sentiment = scoreHeadline(it.title);
 
-    const age = it.publishedAt ? Math.max(0, nowRef - it.publishedAt) : WINDOW_MS;
-    const recencyBonus = Math.max(0, Math.round(20 * (1 - Math.min(1, age / WINDOW_MS))));
-
     const key = normHeadline(it.title);
-    const cluster = clusterCount.get(key) ?? 1;
-    const clusterBonus = Math.min(15, Math.max(0, cluster - 1) * 5);
-
-    const impact = Math.max(0, Math.min(100, CATEGORY_BASE[category] + recencyBonus + clusterBonus));
-
     const id = `ev-${hashString(`${key}|${it.source}`).toString(36)}`;
     const event: GeoEvent = {
       id,
@@ -123,35 +93,14 @@ export async function fetchGeopoliticalEvents({ limit = 60 }: GeoEventsArgs) {
       lon: hit.lon,
       iso2: hit.iso2,
       place: hit.name,
-      impact,
     };
 
-    const existing = byHeadline.get(key);
-    if (!existing || event.impact > existing.impact) byHeadline.set(key, event);
-  }
-
-  // Always-present macro anchors.
-  const dayStart = startOfUtcDay();
-  for (const anchor of MACRO_CALENDAR) {
-    const key = normHeadline(anchor.headline);
-    if (byHeadline.has(key)) continue;
-    byHeadline.set(key, {
-      id: `cal-${hashString(anchor.headline).toString(36)}`,
-      headline: anchor.headline,
-      source: 'MACRO CALENDAR',
-      publishedAt: dayStart,
-      category: anchor.category,
-      sentiment: 'neutral',
-      lat: anchor.lat,
-      lon: anchor.lon,
-      iso2: anchor.iso2,
-      place: anchor.place,
-      impact: 25,
-    });
+    // The same story from several outlets is one event; the first copy seen wins.
+    if (!byHeadline.has(key)) byHeadline.set(key, event);
   }
 
   const data = [...byHeadline.values()]
-    .sort((a, b) => b.impact - a.impact || b.publishedAt - a.publishedAt)
+    .sort((a, b) => b.publishedAt - a.publishedAt)
     .slice(0, limit);
 
   if (data.length === 0) return null;

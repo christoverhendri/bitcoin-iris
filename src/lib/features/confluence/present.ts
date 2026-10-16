@@ -25,5 +25,5 @@ export const LAYER_DESCRIPTIONS: Record<ConfluenceLayer, string> = {
   ONCHAIN: 'On-chain metrics and activity',
   SENTIMENT: 'Social sentiment and market mood',
   TECHNICAL: 'Technical analysis indicators',
-  NEWS: 'News and event impact',
+  NEWS: 'News headline tone (keyword count)',
 };

@@ -85,7 +85,6 @@ async function ingest(request: Request) {
       to_label: t.toLabel,
       kind: t.kind,
       bias: t.bias,
-      impact: t.impact,
       tx_url: t.txUrl,
       is_synthetic: false,
     }));

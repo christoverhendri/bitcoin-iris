@@ -2,12 +2,7 @@
 
 import type { CSSProperties } from 'react';
 import { fmtAgo } from '@/lib/format';
-import {
-  CATEGORY_COLOR,
-  IMPACT_TIER_COLOR,
-  impactTier,
-  sentimentWord,
-} from '@/lib/features/geopoliticalEvents';
+import { CATEGORY_COLOR, sentimentWord } from '@/lib/features/geopoliticalEvents';
 import type { GeoEvent, SentimentWord } from '@/lib/features/geopoliticalEvents';
 import type { DetailPayload } from './WorldMap';
 
@@ -32,19 +27,15 @@ export function EventDetail({ detail, onClose, onPick }: EventDetailProps) {
     let bull = 0;
     let bear = 0;
     let neu = 0;
-    let maxImpact = 0;
     for (const e of evs) {
       if (e.sentiment === 'positive') bull++;
       else if (e.sentiment === 'negative') bear++;
       else neu++;
-      if (e.impact > maxImpact) maxImpact = e.impact;
     }
-    const tier = impactTier(maxImpact);
     return (
       <div style={wrap} className="iris-micro">
         <Header title={`${detail.place} · ${evs.length} EVENTS`} onClose={onClose} />
         <div style={badgeRow}>
-          <Chip label={`MAX ${tier}`} color={IMPACT_TIER_COLOR[tier]} />
           <Chip label={`BULL ${bull}`} color="var(--up)" />
           <Chip label={`BEAR ${bear}`} color="var(--down)" />
           <Chip label={`NEU ${neu}`} color="var(--mut)" />
@@ -75,15 +66,12 @@ export function EventDetail({ detail, onClose, onPick }: EventDetailProps) {
   }
 
   const e = detail.event;
-  const tier = impactTier(e.impact);
   const sent = sentimentWord(e.sentiment);
   return (
     <div style={wrap} className="iris-micro">
       <Header title={e.place} onClose={onClose} />
       <div style={badgeRow}>
-        <Chip label={tier} color={IMPACT_TIER_COLOR[tier]} />
         <Chip label={sent} color={SENT_COLOR[sent]} />
-        <Chip label={`LEVEL ${Math.round(e.impact)}`} color="var(--mut)" />
         <Chip label={e.category.replace('_', ' ')} color={CATEGORY_COLOR[e.category]} />
       </div>
       <div style={dimLine}>

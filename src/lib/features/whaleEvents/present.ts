@@ -1,5 +1,4 @@
 import { fmtAgo, fmtCompact } from '@/lib/format';
-import { impactTier, IMPACT_TIER_COLOR } from '@/lib/features/geopoliticalEvents/present';
 import {
   BIAS_COLOR,
   BIAS_WORD,
@@ -17,7 +16,6 @@ export const fmtAmount = (e: WhaleEvent) => `${fmtCompact(e.amount, '')} ${e.sym
 
 /** Flattened, display-ready fields for one wire row. */
 export function toWhaleEventRow(e: WhaleEvent, now?: number) {
-  const tier = impactTier(e.impact);
   return {
     id: e.id,
     ago: fmtAgo(e.ts, now),
@@ -29,9 +27,6 @@ export function toWhaleEventRow(e: WhaleEvent, now?: number) {
     biasWord: BIAS_WORD[e.bias],
     biasColor: BIAS_COLOR[e.bias],
     route: `${e.fromLabel} → ${e.toLabel}`,
-    impact: Math.round(e.impact),
-    tier,
-    tierColor: IMPACT_TIER_COLOR[tier],
     txUrl: e.txUrl,
   };
 }

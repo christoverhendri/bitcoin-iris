@@ -6,7 +6,7 @@ import type { Tone } from '@/lib/theme/tokens';
 import { CATEGORY_COLOR, toEventRow } from '@/lib/features/geopoliticalEvents';
 import type { EventCategory, GeoEvent } from '@/lib/features/geopoliticalEvents';
 import type { NewsArticle } from '@/lib/features/news';
-import { newsCategoryColor, newsImpactColor, newsSentimentWord } from '@/lib/features/news';
+import { newsCategoryColor, newsSentimentWord } from '@/lib/features/news';
 import type { DetailPayload } from './WorldMap';
 
 const SENTIMENT_TONE: Record<GeoEvent['sentiment'], Tone> = {
@@ -102,9 +102,6 @@ export function EventNewsRail({
                   key={`${a.source}-${i}`}
                   style={{
                     borderBottom: '1px solid var(--line)',
-                    borderLeft: `2px solid ${
-                      a.impactTier === 'HIGH' ? newsImpactColor('HIGH') : 'transparent'
-                    }`,
                   }}
                 >
                   <button
@@ -126,10 +123,6 @@ export function EventNewsRail({
                     <span style={{ flex: 1, minWidth: 0 }}>
                       <span style={{ ...headline2, display: '-webkit-box' }}>{a.title}</span>
                       <span className="iris-micro" style={metaRow}>
-                        <span style={{ color: newsImpactColor(a.impactTier), letterSpacing: '.1em' }}>
-                          {a.impactTier}
-                        </span>
-                        <span>·</span>
                         <span style={{ color: newsCategoryColor(a) }}>{a.category}</span>
                         <span>·</span>
                         <span>{a.source}</span>
