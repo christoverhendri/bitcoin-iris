@@ -15,41 +15,81 @@
  * FRED needs `FRED_API_KEY`. With no key `fred.*` throws on the first call,
  * `defineFeature` catches it, and the panel shows MOCK with the unlock note.
  */
-import { getLatestAndZScore } from '@/lib/sources/fred';
+import { getLatestAndZScore, type FredUnits } from '@/lib/sources/fred';
 import type { MacroMetric, MacroCountryArgs } from './types';
 
+interface SeriesRef {
+  id: string;
+  units: FredUnits;
+  /** Oldest acceptable latest observation, by publication frequency. */
+  maxAgeDays: number;
+}
+
+const MONTHLY = 120;
+const QUARTERLY = 200;
+const DAILY = 30;
+
+/**
+ * `cpi` stays a level (the panel labels it CPI INDEX). `inflation` and `growth`
+ * must be rates: a price index or a real-GDP level is turned into a rate with
+ * FRED's `pc1` (% change from a year ago). Before 2026-10-17 inflation was the raw
+ * index (US core CPI ~339, rendered "338.90%") and EU/JP/GB growth was a GDP
+ * level — so their z-scores measured a trend, not a regime.
+ */
 interface SeriesMap {
-  cpi: string;
-  rate: string;
-  growth: string;
-  /** Inflation series; when equal to `cpi` the panel reads it as "derive from CPI". */
-  inflation: string;
+  cpi: SeriesRef;
+  rate: SeriesRef;
+  growth: SeriesRef;
+  inflation: SeriesRef;
+}
+
+const lvl = (id: string, maxAgeDays = MONTHLY): SeriesRef => ({ id, units: 'lin', maxAgeDays });
+const yoy = (id: string, maxAgeDays = MONTHLY): SeriesRef => ({ id, units: 'pc1', maxAgeDays });
+
+/**
+ * FRED keeps discontinued series online with their last value, and a stale value
+ * renders exactly like a current one. Measured 2026-10-17: Japan's CPI
+ * (JPNCPIALLMINMEI) ended 2021-06, its discount rate 2017-04; the UK's CPI ended
+ * 2025-03 and BOERUKM 2017-01 — all were on screen as "current". A country with
+ * any series older than its frequency allows is refused (-> badged mock), the
+ * same way CN and ID are, instead of being shown.
+ */
+export function staleSeries(
+  results: { ref: SeriesRef; asOf: string }[],
+  now: number,
+): string[] {
+  return results
+    .filter(({ ref, asOf }) => now - Date.parse(`${asOf}T00:00:00Z`) > ref.maxAgeDays * 86_400_000)
+    .map(({ ref, asOf }) => `${ref.id} (last ${asOf})`);
 }
 
 const FRED_SERIES: Record<string, SeriesMap> = {
   US: {
-    cpi: 'CPIAUCSL',
-    rate: 'FEDFUNDS',
-    growth: 'A191RL1Q225SBEA', // real GDP, QoQ annualised %
-    inflation: 'CPILFESL', // core CPI
+    cpi: lvl('CPIAUCSL'),
+    rate: lvl('FEDFUNDS'),
+    growth: lvl('A191RL1Q225SBEA', QUARTERLY), // already a rate: real GDP, QoQ annualised %
+    inflation: yoy('CPILFESL'), // core CPI, % y/y
   },
   EU: {
-    cpi: 'CP0000EZ19M086NEST',
-    rate: 'ECBDFR',
-    growth: 'CLVMNACSCAB1GQEA19',
-    inflation: 'CP0000EZ19M086NEST',
+    cpi: lvl('CP0000EZ19M086NEST'),
+    rate: lvl('ECBDFR', DAILY),
+    growth: yoy('CLVMNACSCAB1GQEA19', QUARTERLY), // real GDP, % y/y
+    inflation: yoy('CP0000EZ19M086NEST'), // HICP, % y/y
   },
   JP: {
-    cpi: 'JPNCPIALLMINMEI',
-    rate: 'INTDSRJPM193N',
-    growth: 'JPNRGDPEXP',
-    inflation: 'JPNCPIALLMINMEI',
+    // No current monthly CPI for Japan on FRED (OECD MEI ended 2021-06), so the
+    // freshness check refuses JP until one is wired.
+    cpi: lvl('JPNCPIALLMINMEI'),
+    rate: lvl('IRSTCI01JPM156N'), // overnight call rate = BoJ operating target
+    growth: yoy('JPNRGDPEXP', QUARTERLY),
+    inflation: yoy('JPNCPIALLMINMEI'),
   },
   GB: {
-    cpi: 'GBRCPIALLMINMEI',
-    rate: 'BOERUKM',
-    growth: 'NGDPRSAXDCGBQ',
-    inflation: 'GBRCPIALLMINMEI',
+    // No current monthly UK CPI on FRED (OECD MEI ended 2025-03) — refused until wired.
+    cpi: lvl('GBRCPIALLMINMEI'),
+    rate: lvl('IRSTCI01GBM156N'), // overnight interbank rate, tracks Bank Rate
+    growth: yoy('NGDPRSAXDCGBQ', QUARTERLY),
+    inflation: yoy('GBRCPIALLMINMEI'),
   },
   // CN, ID: no reliable free FRED series — intentionally absent.
 };
@@ -71,12 +111,27 @@ export async function fetchMacroCountry({ countries = DEFAULT_COUNTRIES }: Macro
   for (const country of mapped) {
     const s = FRED_SERIES[country];
     const [cpi, rate, growth, inflation] = await Promise.all([
-      getLatestAndZScore(s.cpi),
-      getLatestAndZScore(s.rate),
-      getLatestAndZScore(s.growth),
-      getLatestAndZScore(s.inflation),
+      getLatestAndZScore(s.cpi.id, 24, s.cpi.units),
+      getLatestAndZScore(s.rate.id, 24, s.rate.units),
+      getLatestAndZScore(s.growth.id, 24, s.growth.units),
+      getLatestAndZScore(s.inflation.id, 24, s.inflation.units),
     ]);
 
+    const stale = staleSeries(
+      [
+        { ref: s.cpi, asOf: cpi.asOf },
+        { ref: s.rate, asOf: rate.asOf },
+        { ref: s.growth, asOf: growth.asOf },
+        { ref: s.inflation, asOf: inflation.asOf },
+      ],
+      Date.now(),
+    );
+    if (stale.length > 0) {
+      throw new Error(`macro ${country}: stale FRED series ${stale.join(', ')}`);
+    }
+
+    // Every input passed the freshness check above, so the newest observation
+    // date is an honest age for the panel.
     asOfDates.push(cpi.asOf, rate.asOf, growth.asOf, inflation.asOf);
 
     rows.push({

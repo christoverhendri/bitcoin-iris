@@ -20,6 +20,13 @@ function key(): string {
   return k;
 }
 
+/**
+ * FRED's server-side unit transform. `lin` = the series as published (a level for
+ * price indices); `pc1` = percent change from a year ago. An inflation *rate* has
+ * to be `pc1` of a price index — the raw index (~339 for US core CPI) is not one.
+ */
+export type FredUnits = 'lin' | 'pc1';
+
 interface ObsResponse {
   observations: { date: string; value: string }[];
 }
@@ -31,10 +38,11 @@ interface ObsResponse {
 export async function getObservations(
   seriesId: string,
   limit = 24,
+  units: FredUnits = 'lin',
 ): Promise<{ date: string; value: number }[]> {
   const url =
     `${BASE}?series_id=${encodeURIComponent(seriesId)}` +
-    `&api_key=${key()}&file_type=json&sort_order=desc&limit=${limit}`;
+    `&api_key=${key()}&file_type=json&sort_order=desc&limit=${limit}&units=${units}`;
   const j = await fetchJson<ObsResponse>(url, { revalidate: 3600 });
   const rows = (j?.observations ?? [])
     .filter((o) => o.value !== '.' && o.value != null)
@@ -53,8 +61,9 @@ export async function getObservations(
 export async function getLatestAndZScore(
   seriesId: string,
   window = 24,
+  units: FredUnits = 'lin',
 ): Promise<{ latest: number; z: number; asOf: string }> {
-  const obs = await getObservations(seriesId, window);
+  const obs = await getObservations(seriesId, window, units);
   if (obs.length === 0) throw new Error(`fred: no observations for ${seriesId}`);
 
   const values = obs.map((o) => o.value);

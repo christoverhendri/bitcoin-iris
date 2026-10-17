@@ -193,8 +193,16 @@ def google_trends_raw(keyword: str = "bitcoin", timeframe: str = "today 3-m") ->
 
 
 # ----------------------------------------------------------------------------
-# FRED — butuh FRED_API_KEY. Seri di-shift ke tanggal ketersediaan (release lag)
-# supaya tidak ada lookahead; aturan lag dicocokkan dengan CSV training.
+# FRED — butuh FRED_API_KEY. Seri di-shift ke tanggal ketersediaan (release lag).
+# Diverifikasi 2026-10-17 terhadap CSV training (tanggal perubahan nilai 100% cocok
+# untuk semua kolom; selisih nilai 0-0.4% = revisi data FRED):
+#   CPI/PPI/retail +45h, PCE +60h, NFP/UNRATE/AHE +35h, FOMC +0h -> sama dengan training.
+#   GDP: training memakai AWAL kuartal + 30h (GDP Q2 muncul 1 Mei, padahal rilis ~30 Jul
+#        = lookahead ~3 bulan). Di sini AKHIR kuartal + 31h (tanpa lookahead).
+#   M2 & DXY: training memakai tanggal observasi (M2 ~7 minggu, DXY <= 1 minggu sebelum
+#        rilis). Dipertahankan agar riwayat sama dengan training.
+# Untuk baris terbaru (yang diprediksi) aturan mana pun memberi nilai yang sama, karena
+# FRED live hanya berisi angka yang sudah rilis. Lookahead itu ada di data TRAINING.
 # ----------------------------------------------------------------------------
 def _lag_days(days: int):
     return lambda idx: idx + pd.Timedelta(days=days)

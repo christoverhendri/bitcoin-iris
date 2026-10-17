@@ -426,13 +426,24 @@ dibuang lewat migration `0004_drop_whale_impact.sql`.)
 
 | Negara | CPI | Suku bunga | Pertumbuhan | Inflasi inti |
 |---|---|---|---|---|
-| US | CPIAUCSL | FEDFUNDS | Real GDP QoQ annualised | Core CPI |
-| EU | HICP | ECB deposit rate | Real GDP | HICP |
-| JP | CPI | Discount rate BoJ | Real GDP | CPI |
-| GB | CPI | BoE rate | Real GDP | CPI |
+| US | CPIAUCSL (indeks) | FEDFUNDS | Real GDP QoQ annualised (%) | Core CPI, **% y/y** |
+| EU | HICP (indeks) | ECB deposit rate | Real GDP, **% y/y** | HICP, **% y/y** |
+| JP | — | call rate (IRSTCI01JPM156N) | Real GDP, % y/y | — |
+| GB | — | interbank overnight (IRSTCI01GBM156N) | Real GDP, % y/y | — |
 | CN, ID | tidak ada seri gratis yang andal → **sengaja MOCK** | | | |
 
 Tiap metrik juga punya **z-score**: `(nilai terakhir − rata-rata 24 observasi)/std dev`.
+
+**Perbaikan 17 Okt (setelah FRED key aktif):**
+- *Inflasi* dulu menampilkan **level indeks** core CPI (~339) sebagai "338.90%". Sekarang
+  diminta ke FRED sebagai perubahan % dari tahun lalu (`units=pc1`): US **2.57%**. Pertumbuhan
+  EU/JP/GB juga dulu level GDP riil; sekarang % y/y. z-score level indeks hampir selalu positif
+  (indeks terus naik), jadi kuadran regime lama tidak bermakna.
+- **JP dan GB = MOCK.** Seri yang dipakai sudah lama mati di FRED tapi tetap tampil seolah
+  terbaru: CPI Jepang terakhir Jun 2021, discount rate Jepang Apr 2017, CPI Inggris Mar 2025,
+  BOERUKM Jan 2017. Suku bunga sudah diganti ke seri yang aktual, tapi FRED tidak punya CPI
+  bulanan JP/GB yang masih diperbarui. Ada **penjaga kesegaran**: negara yang punya seri lebih
+  tua dari frekuensinya (bulanan > 120 hari, kuartalan > 200, harian > 30) otomatis jadi MOCK.
 
 ### 6.2 MARKETS — `/macro/markets`
 
@@ -454,6 +465,9 @@ Sumber: **Yahoo** (tanpa key) — DXY, S&P 500, VIX, emas, US 10Y.
 | **Pertumbuhan turun (z < 0)** | DEFLATION | STAGFLATION |
 
 Skor komposit = `(z pertumbuhan − z inflasi)/2` (positif = kondisi pro-risiko).
+
+Contoh 17 Okt, US: z pertumbuhan −0.33, z inflasi (core CPI % y/y) −0.93 → **DEFLATION**
+(sebelum perbaikan satuan tertulis STAGFLATION karena memakai level indeks).
 
 ---
 
@@ -523,12 +537,13 @@ Ditemukan saat menelusuri kode dan dicek di dashboard. **Belum diperbaiki.**
 | 4 | Label berita (kategori, bullish/bearish) | Aturan kata kunci dipertahankan (rule-based), tapi pencocokannya per potongan huruf: "Hard**war**e" dan "Fed's **War**sh" → GEOPOLITICS, "P**red**ict" → bearish, "Central **ban**k" → bearish + REGULATION. Label bull/bear nanti diganti model researcher | Label bisa salah sampai pencocokan diubah ke per kata utuh |
 | 5 | ONCHAIN confluence | Konstanta 50, belum disambungkan ke data on-chain (padahal On-Chain Flows/Network sudah live) | 6% skor tidak bergerak |
 | 6 | `StatusFooter.tsx` | Warning hydration mismatch ("2s ago" vs "1s ago") di konsol browser | Kosmetik, tidak merusak data |
+| 7 | Data training notebook (FRED) | **Lookahead**: GDP ditempatkan di awal kuartal + 30 hari (GDP Q2 sudah ada 1 Mei, rilis ~30 Jul), M2 di tanggal observasi (~7 minggu sebelum rilis). Diverifikasi 17 Okt dari tanggal perubahan nilai di `btc_master_2.csv` | Model dilatih dengan GDP/M2 satu periode lebih baru dari yang tersedia saat itu → metrik test bisa sedikit terlalu optimis; live tidak bisa meniru. Perbaiki di notebook dengan lag rilis |
 
 ## 10. Key yang membuka panel MOCK
 
 | Key | Membuka |
 |---|---|
-| `FRED_API_KEY` | Macro Data, Macro Regime, + 12 kolom makro model mingguan |
+| `FRED_API_KEY` ✅ aktif 17 Okt | Macro Data & Regime (US, EU), + 12 kolom makro model mingguan |
 | `WHALE_ALERT_API_KEY` + `CRON_SECRET` + Supabase | Whale Flow 24H, Whale Wire |
 | `COINGECKO_API_KEY` (opsional) | Batas request CoinGecko lebih longgar |
 | `SANTIMENT_API_KEY` (di `worker/.env`) | Social Sentiment (Overview + Sentiment); data tertunda 30 hari di akun gratis |
