@@ -6,6 +6,7 @@ import { getOhlcv } from '@/lib/features/ohlcv';
 import { getIndicators } from '@/lib/features/indicators';
 import { getSentiment } from '@/lib/features/sentiment';
 import { getNews } from '@/lib/features/news';
+import { getSocialSentiment } from '@/lib/features/socialSentiment';
 import { TIMEFRAME_SPEC, resolveTimeframe } from '@/lib/nav';
 import { PanelGrid } from '@/components/primitives';
 import { SignalCards } from '@/components/features/overview/SignalCards';
@@ -25,7 +26,7 @@ export default async function OverviewPage({
   const tf = resolveTimeframe((await searchParams).tf);
   const { interval, limit } = TIMEFRAME_SPEC[tf];
 
-  const [weeklyForecast, fearGreed, confluence, snapshot, ohlcv, indicators, sentiment, newsData] =
+  const [weeklyForecast, fearGreed, confluence, snapshot, ohlcv, indicators, sentiment, newsData, social] =
     await Promise.all([
       getWeeklyForecast({ symbol: 'BTC-USD' }),
       getFearGreed({ limit: 2 }),
@@ -35,6 +36,7 @@ export default async function OverviewPage({
       getIndicators({ symbol: 'BTC-USD', interval, limit }),
       getSentiment({ days: 7 }),
       getNews({ limit: 10 }),
+      getSocialSentiment({ days: 30 }),
     ]);
 
   return (
@@ -47,12 +49,8 @@ export default async function OverviewPage({
         minWidth: 0,
       }}
     >
-      {/* Market regime strip */}
-      <SignalCards
-        weeklyForecast={weeklyForecast}
-        fearGreed={fearGreed}
-        confluence={confluence}
-      />
+      {/* Headline strip: weekly forecast · confluence · social sentiment */}
+      <SignalCards weeklyForecast={weeklyForecast} confluence={confluence} social={social} />
 
       {/* Fear & Greed band */}
       <FearGreedBand fearGreed={fearGreed} />

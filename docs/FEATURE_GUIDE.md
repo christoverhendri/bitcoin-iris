@@ -63,7 +63,17 @@ pakai Kraken; kalau Kraken juga gagal, pakai Yahoo. Sumber yang dipakai tidak me
 
 Ringkasan satu layar: sinyal, bukti, dan prakiraan.
 
-### 1.1 MARKET REGIME — contoh: **NEUTRAL**
+### 1.1 WEEKLY FORECAST — contoh: **→ NO SIGNAL**
+
+Dulu dua kartu (MARKET REGIME dan WEEKLY OUTLOOK) yang membaca output model yang sama dan
+menampilkan label yang sama. Sejak 17 Okt digabung jadi **satu kartu**:
+
+| Baris | Contoh | Asal |
+|---|---|---|
+| Label | → NO SIGNAL | aturan ambang di bawah (NONE ditampilkan "NO SIGNAL", sama dengan halaman Forecast) |
+| Detail | Model P(UP) 24.0% · for the close of 2026-10-22 | `p_up` model; tanggal target = `DATA AS OF` + 7 hari (close harian UTC) |
+| Likely range | $77,936 – $86,362 | pita volatilitas ±1σ (lihat 1.3) |
+| Catatan rentang | held ~70% of weeks since 2018 (63–76% by year) | backtest `worker/scripts/backtest_vol_band.py` |
 
 **Asal label:** model klasifikasi mingguan (XGBoost, notebook kamu) yang dijalankan worker
 Python setiap **Senin 07:30 WIB**, lalu disimpan di Supabase `clf_signals` (atau
@@ -77,12 +87,13 @@ Python setiap **Senin 07:30 WIB**, lalu disimpan di Supabase `clf_signals` (atau
 4. Aturan dual threshold (dipilih di validation):
    - `p_up > 0.70` → **BULL** → ditampilkan **BULLISH**
    - `p_up < 0.23` → **BEAR** → ditampilkan **BEARISH**
-   - di antaranya → **NONE** → ditampilkan **NEUTRAL** ("no signal")
+   - di antaranya → **NONE** → ditampilkan **NO SIGNAL**
+   - ⚠️ ambang 0.23/0.70 belum hasil tuning (lihat masalah #3); akan diganti dari notebook
 
 **Contoh 16 Okt:** Universal 13.6%, MacroCrossAsset 34.4% → `p_up = (13.6 + 34.4)/2 = 24.0%`.
-24.0% berada di antara 23% dan 70% → **NEUTRAL**.
+24.0% berada di antara 23% dan 70% → **NO SIGNAL**.
 
-**Baris detail** "Model P(UP, 7D), uncalibrated: 24.0%" = `p_up` mentah. *Uncalibrated* artinya
+**Baris detail** "Model P(UP) 24.0%" = `p_up` mentah. *Uncalibrated* artinya
 24% **bukan** peluang sungguhan 24% — angka ini hanya bermakna relatif terhadap ambang.
 
 > Kalau worker belum pernah jalan, label ini jatuh ke **aturan heuristik** (RSI, MACD, EMA21 vs
@@ -113,12 +124,19 @@ rata-rata ≈ −0.007 → `50 + (−0.007 × 50) ≈ 49.6–50`.
 **Bull index / Bear index** = `overall` dan `100 − overall`. Hanya cerminan, **bukan peluang**.
 Warna: ≥ 60 hijau, 40–60 netral, < 40 merah.
 
-### 1.3 WEEKLY OUTLOOK — contoh: **→ NEUTRAL**
+### 1.3 Rentang harga di kartu WEEKLY FORECAST
 
-- Label & panah sama dengan Market Regime (dari model mingguan).
-- **Rentang harga** "$77,936 – $86,362" = **pita volatilitas 1σ, bukan target harga**:
-  `σ = harga_terakhir × vol_realisasi_30h × √(7/365)`, rentang = harga ± σ.
-  Tidak ada kemiringan arah — model tidak memprediksi besarnya gerakan.
+- **Pita volatilitas ±1σ, bukan target harga**: `σ = harga_terakhir × vol_realisasi_30h × √(7/365)`,
+  rentang = harga ± σ. Tidak ada kemiringan arah — model tidak memprediksi besarnya gerakan.
+- **Bukti**: dengan rumus yang sama persis, close 7 hari kemudian berada di dalam rentang pada
+  **70.2%** hari sejak Maret 2018 (3.142 hari; per tahun 63.1–75.6%). Ulangi kapan saja:
+  `cd worker && .venv/Scripts/python scripts/backtest_vol_band.py`.
+- Di mode heuristik (worker belum jalan) rentangnya ikut digeser skor, jadi angka 70% **tidak**
+  berlaku dan tidak ditampilkan.
+
+### 1.3b SOCIAL SENTIMENT (kartu ketiga)
+
+Donut kecil + persentase positif/netral/negatif hari terbaru dari Santiment. Detail di 5.2.
 
 ### 1.4 FEAR & GREED — contoh: **63 GREED, +18.9% 24h**
 
@@ -311,6 +329,27 @@ Sumber: tabel **bitbo.io** (di-scrape, bentuk tabel divalidasi). Data settle T+1
 
 (Sel SOCIAL SCORE dihapus 16 Okt — lihat 1.6.)
 
+### 5.1b SOCIAL SENTIMENT · BTC (Santiment)
+
+**Isi:** donut proporsi postingan positif / netral / negatif tentang BTC untuk hari terbaru,
+selisih "+X pts more positive than negative", dan kolom diverging 30 hari (positif ke atas,
+negatif ke bawah, netral melintang di garis tengah; skala tetap 100% per sisi). Arahkan kursor
+ke tiap kolom/irisan untuk angka lengkapnya.
+
+**Sumber & rumus:** metrik Santiment `sentiment_{positive,neutral,negative}_ratio_total_1d`.
+Definisi Santiment: jumlah postingan berlabel positif / netral / negatif ÷ jumlah ketiganya,
+per hari, dari **Twitter, Reddit, Telegram, dan 4chan**. Labelnya dari classifier milik
+Santiment (bukan dari kita). Ketiganya berjumlah 1; hari yang tidak berjumlah 1 ditolak worker
+dan dicatat di `rejected_dates`.
+
+**Jadwal:** job worker `social_sentiment` tiap hari 07:20 WIB (`SOCIAL_CRON`), 1 request per
+hari (kuota gratis 1000/bulan). Output: Supabase `social_sentiment_daily` (migration 0005) atau
+`worker/out/social_sentiment.json` saat lokal (`SOCIAL_SENTIMENT_LOCAL_FILE`).
+
+**Batasan penting:** akun gratis Santiment **menyembunyikan 30 hari terakhir**. Jadi panel ini
+menunjukkan sentimen ±30 hari yang lalu — tertulis di panel ("DATA AS OF … · 30 DAYS BEHIND").
+Untuk data hari ini perlu paket berbayar Santiment.
+
 ### 5.2 GLOBAL EVENT MAP
 
 - Menggabungkan 3 aliran: berita kripto RSS, berita dunia (BBC, AP, Al Jazeera, Guardian, France24,
@@ -473,4 +512,5 @@ Ditemukan saat menelusuri kode dan dicek di dashboard. **Belum diperbaiki.**
 | `FRED_API_KEY` | Macro Data, Macro Regime, + 12 kolom makro model mingguan |
 | `WHALE_ALERT_API_KEY` + `CRON_SECRET` + Supabase | Whale Flow 24H, Whale Wire |
 | `COINGECKO_API_KEY` (opsional) | Batas request CoinGecko lebih longgar |
+| `SANTIMENT_API_KEY` (di `worker/.env`) | Social Sentiment (Overview + Sentiment); data tertunda 30 hari di akun gratis |
 | Supabase (`NEXT_PUBLIC_SUPABASE_URL`, `…_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_ROLE_KEY`) | Menyimpan sinyal model & whale events di database, bukan file lokal |

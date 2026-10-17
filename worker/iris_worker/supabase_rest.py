@@ -4,7 +4,7 @@ iris_worker.supabase_rest
 Upsert ke PostgREST Supabase menggunakan library requests.
 Bekerja dengan service role key melewati RLS.
 """
-from typing import Any, Dict
+from typing import Any, Dict, List
 import requests
 
 
@@ -54,3 +54,31 @@ def upsert_clf_signal(
         return data
     except Exception:
         return payload
+
+
+def upsert_rows(
+    supabase_url: str,
+    service_role_key: str,
+    table: str,
+    rows: List[Dict[str, Any]],
+    on_conflict: str,
+) -> int:
+    """Upsert banyak baris ke `table` (idempoten pada `on_conflict`). Return jumlah baris."""
+    if not supabase_url or not service_role_key:
+        raise SupabaseRestError("SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY belum di-set.")
+    if not rows:
+        return 0
+    endpoint = f"{supabase_url.rstrip('/')}/rest/v1/{table}?on_conflict={on_conflict}"
+    headers = {
+        "apikey": service_role_key,
+        "Authorization": f"Bearer {service_role_key}",
+        "Content-Type": "application/json",
+        "Prefer": "resolution=merge-duplicates,return=minimal",
+    }
+    try:
+        response = requests.post(endpoint, headers=headers, json=rows, timeout=30)
+    except requests.RequestException as e:
+        raise SupabaseRestError(f"Koneksi jaringan ke Supabase gagal: {e}") from e
+    if not response.ok:
+        raise SupabaseRestError(f"Gagal upsert ke {table} [{response.status_code}]: {response.text}")
+    return len(rows)

@@ -70,6 +70,7 @@ values
   ('internal_forecast', 'Forecast pipeline', 'forecast', false, true, null),
   ('internal_distribution', 'Price distribution engine', 'forecast', false, true, null),
   ('alternative_me', 'Fear & Greed (alternative.me)', 'sentiment', false, true, null),
+  ('santiment', 'Santiment (social sentiment)', 'sentiment', true, true, 'Register at app.santiment.net and set SANTIMENT_API_KEY in worker/.env; the daily social_sentiment job writes social_sentiment_daily. The free plan withholds the latest 30 days.'),
   ('fred', 'FRED', 'macro', true, true, 'Register a free FRED API key and set FRED_API_KEY in worker/.env.'),
   ('internal_macro_regime', 'Macro regime engine', 'macro', false, true, null),
   ('cryptopanic', 'CryptoPanic', 'news', true, true, 'CryptoPanic developer plan is free — set CRYPTOPANIC_TOKEN in worker/.env.'),

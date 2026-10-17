@@ -36,6 +36,7 @@ file. This file explains *why*.
 | Coinbase Exchange (candles) | no | yes | — |
 | yfinance (daily history) | no | yes | — |
 | alternative.me (Fear & Greed) | no | yes | — |
+| Santiment (social sentiment) | yes, instant | free plan: 1000 req/month, latest 30 days withheld | `SANTIMENT_API_KEY` (worker) |
 | CoinGecko (market cap, dominance) | yes, 2 min | demo tier | `COINGECKO_API_KEY` |
 | FRED (macro) | yes, instant | yes | `FRED_API_KEY` |
 | CryptoPanic (news) | yes | dev tier free | `CRYPTOPANIC_TOKEN` |

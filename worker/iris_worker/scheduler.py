@@ -7,17 +7,18 @@ Daemon APScheduler untuk semua job worker (semua jadwal dalam UTC):
 |--------------|---------------|----------------|------------------|-----|
 | refresh_data | REFRESH_CRON  | 15 0 * * *     | tiap hari 07:15  | tarik ulang Yahoo, blockchain.com, bitcoin-data, alternative.me, FRED, CoinGecko, Google Trends -> data/clf |
 | clf_weekly   | CLF_CRON      | 30 0 * * 1     | Senin 07:30      | refresh (kalau belum segar) lalu prediksi -> clf_signals / out/ |
+| social_sentiment | SOCIAL_CRON | 20 0 * * *   | tiap hari 07:20  | proporsi sentimen sosial BTC dari Santiment -> social_sentiment_daily / out/ (hanya kalau SANTIMENT_API_KEY di-set) |
 | whale_ingest | WHALE_CRON    | */5 * * * *    | tiap 5 menit     | POST {IRIS_APP_URL}/api/ingest/whale (hanya kalau IRIS_APP_URL + CRON_SECRET di-set) |
 
 Catch-up saat start (bisa dimatikan dengan --no-catch-up): laptop yang mati pada
 jam jadwal tidak boleh membuat data tertinggal, jadi saat daemon menyala ia
-menjalankan refresh kalau data belum memuat candle kemarin, dan clf_weekly kalau
-belum ada sinyal untuk minggu berjalan.
+menjalankan refresh kalau data belum memuat candle kemarin, clf_weekly kalau
+belum ada sinyal untuk minggu berjalan, dan social_sentiment kalau belum diambil hari ini.
 
 Penggunaan CLI:
     python -m iris_worker.scheduler                   # daemon
     python -m iris_worker.scheduler --once all        # refresh + weekly sekali lalu keluar
-    python -m iris_worker.scheduler --once refresh|weekly|whale
+    python -m iris_worker.scheduler --once refresh|weekly|social|whale
 """
 import argparse
 import json
@@ -34,6 +35,7 @@ from iris_worker.data.build import last_closed_day
 from iris_worker.jobs import whale_ingest
 from iris_worker.jobs.clf_weekly import run_clf_weekly
 from iris_worker.jobs.refresh_data import run_refresh
+from iris_worker.jobs.social_sentiment import run_social_sentiment
 
 
 def parse_cron(cron_expr: str) -> CronTrigger:
@@ -101,6 +103,19 @@ def weekly_is_current(now=None) -> bool:
     return a is not None and a >= week_start_sunday(now)
 
 
+def social_fetched_today(now=None) -> bool:
+    """Sudah diambil hari ini (UTC)? Santiment sendiri tertunda, jadi yang dicek tanggal fetch."""
+    p = config.SOCIAL_SENTIMENT_OUT
+    if not p.exists():
+        return False
+    try:
+        fetched = pd.Timestamp(json.loads(p.read_text(encoding="utf-8"))["fetched_utc"])
+    except (ValueError, KeyError):
+        return False
+    now = now if now is not None else pd.Timestamp.now(tz="UTC")
+    return fetched.tz_convert("UTC").normalize() >= now.tz_convert("UTC").normalize()
+
+
 # ----------------------------------------------------------------------------
 # Job
 # ----------------------------------------------------------------------------
@@ -128,6 +143,15 @@ def job_weekly(dry_run: bool = False):
         traceback.print_exc()
 
 
+def job_social():
+    _stamp("social_sentiment mulai")
+    try:
+        run_social_sentiment()
+    except Exception as e:
+        _stamp(f"social_sentiment GAGAL: {e}")
+        traceback.print_exc()
+
+
 def job_whale():
     try:
         whale_ingest.run_whale_ingest()
@@ -142,11 +166,14 @@ def catch_up(dry_run: bool = False):
     if not weekly_is_current():
         _stamp(f"catch-up: sinyal terakhir {last_signal_as_of()} < minggu {week_start_sunday().date()} -> clf_weekly")
         job_weekly(dry_run=dry_run)
+    if config.SANTIMENT_API_KEY and not social_fetched_today():
+        _stamp("catch-up: sentimen sosial belum diambil hari ini -> social_sentiment")
+        job_social()
 
 
 def main():
     parser = argparse.ArgumentParser(description="IRIS Worker Scheduler")
-    parser.add_argument("--once", choices=["refresh", "weekly", "whale", "all"],
+    parser.add_argument("--once", choices=["refresh", "weekly", "social", "whale", "all"],
                         help="Jalankan job sekali lalu keluar.")
     parser.add_argument("--dry-run", action="store_true", help="clf_weekly tanpa menulis apa pun.")
     parser.add_argument("--no-catch-up", action="store_true",
@@ -158,6 +185,8 @@ def main():
             run_refresh()
         if args.once in ("weekly", "all"):
             run_clf_weekly(dry_run=args.dry_run)
+        if args.once == "social" or (args.once == "all" and config.SANTIMENT_API_KEY):
+            run_social_sentiment(dry_run=args.dry_run)
         if args.once == "whale":
             whale_ingest.run_whale_ingest()
         return
@@ -170,6 +199,11 @@ def main():
                   name="Refresh data input model")
     sched.add_job(job_weekly, parse_cron(config.CLF_CRON), id="clf_weekly",
                   name="Weekly BTC Classification", kwargs={"dry_run": args.dry_run})
+    if config.SANTIMENT_API_KEY:
+        sched.add_job(job_social, parse_cron(config.SOCIAL_CRON), id="social_sentiment",
+                      name="Santiment social sentiment")
+    else:
+        _stamp("social_sentiment dilewati: SANTIMENT_API_KEY belum di-set")
     if whale_ingest.is_configured():
         sched.add_job(job_whale, parse_cron(config.WHALE_CRON), id="whale_ingest",
                       name="Whale Alert ingest trigger", misfire_grace_time=120)
@@ -181,7 +215,7 @@ def main():
 
     _stamp("Scheduler aktif (UTC):")
     for j in sched.get_jobs():
-        print(f"  - {j.id:13s} {j.trigger}", flush=True)
+        print(f"  - {j.id:16s} {j.trigger}", flush=True)
     try:
         sched.start()
     except (KeyboardInterrupt, SystemExit):

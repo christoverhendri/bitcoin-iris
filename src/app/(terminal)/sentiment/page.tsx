@@ -4,11 +4,13 @@ import { getNews } from '@/lib/features/news';
 import { getGeopoliticalEvents } from '@/lib/features/geopoliticalEvents';
 import { getChainFlows } from '@/lib/features/chainFlows';
 import { getWhaleEvents } from '@/lib/features/whaleEvents';
+import { getSocialSentiment } from '@/lib/features/socialSentiment';
 import { flowsToGeoEvents } from '@/lib/onchain/flowEvents';
 import type { EventCategory } from '@/lib/features/geopoliticalEvents';
 import { SentimentStrip } from '@/components/features/sentiment/SentimentStrip';
 import { GlobalSentimentPanel } from '@/components/features/events/GlobalSentimentPanel';
 import { WhaleWire } from '@/components/features/whale/WhaleWire';
+import { SocialSentimentPanel } from '@/components/features/socialSentiment/SocialSentimentPanel';
 
 export const revalidate = 30;
 
@@ -24,13 +26,14 @@ export default async function GlobalSentimentPage({
   searchParams: Promise<{ cats?: string }>;
 }) {
   const { cats } = await searchParams;
-  const [fearGreed, sentiment, news, newsEvents, flows, whale] = await Promise.all([
+  const [fearGreed, sentiment, news, newsEvents, flows, whale, social] = await Promise.all([
     getFearGreed({ limit: 1 }),
     getSentiment({ days: 7 }),
     getNews({ limit: 40 }),
     getGeopoliticalEvents({ limit: 150 }),
     getChainFlows({ symbol: 'BTC' }),
     getWhaleEvents({ limit: WHALE_LIMIT }),
+    getSocialSentiment({ days: 30 }),
   ]);
 
   // The two features stay independent readers; they are joined here, at the
@@ -56,6 +59,7 @@ export default async function GlobalSentimentPage({
         events={events}
         whale={whale}
       />
+      <SocialSentimentPanel social={social} />
       <GlobalSentimentPanel events={events} news={news} activeCats={activeCats} />
       <WhaleWire initial={whale} limit={WHALE_LIMIT} />
     </div>

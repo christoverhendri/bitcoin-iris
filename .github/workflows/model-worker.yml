@@ -2,17 +2,18 @@
 # laptop/VPS). GitHub bisa menunda cron beberapa menit; job memakai tanggal candle
 # tertutup sebagai kunci data, bukan jam jalan, jadi penundaan tidak masalah.
 #
-# Secrets: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, FRED_API_KEY, COINGECKO_API_KEY (opsional)
+# Secrets: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, FRED_API_KEY, SANTIMENT_API_KEY,
+# COINGECKO_API_KEY (opsional)
 name: model-worker
 
 on:
   schedule:
-    - cron: "15 0 * * *"   # refresh harian 07:15 WIB
+    - cron: "15 0 * * *"   # refresh harian + sentimen sosial 07:15 WIB
     - cron: "30 0 * * 1"   # klasifikasi mingguan Senin 07:30 WIB
   workflow_dispatch:
     inputs:
       job:
-        description: "refresh | weekly"
+        description: "refresh | weekly | social"
         default: "weekly"
 
 concurrency:
@@ -31,6 +32,7 @@ jobs:
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
       FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
       COINGECKO_API_KEY: ${{ secrets.COINGECKO_API_KEY }}
+      SANTIMENT_API_KEY: ${{ secrets.SANTIMENT_API_KEY }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -53,6 +55,10 @@ jobs:
       - name: refresh
         if: github.event.schedule == '15 0 * * *' || inputs.job == 'refresh'
         run: python -m iris_worker.jobs.refresh_data
+
+      - name: social sentiment (Santiment)
+        if: env.SANTIMENT_API_KEY != '' && (github.event.schedule == '15 0 * * *' || inputs.job == 'social')
+        run: python -m iris_worker.jobs.social_sentiment
 
       - name: weekly
         if: github.event.schedule == '30 0 * * 1' || inputs.job == 'weekly'

@@ -26,6 +26,24 @@ export function toWeeklyForecastLabels(f: WeeklyForecastData) {
   };
 }
 
+/** The model's horizon: it predicts the close 7 days after `dataAsOf`. */
+export const FORECAST_HORIZON_DAYS = 7;
+
+/** `dataAsOf` (YYYY-MM-DD, last closed UTC candle) + horizon -> the close being forecast. */
+export function forecastTargetDate(dataAsOf: string, days = FORECAST_HORIZON_DAYS): string {
+  const t = Date.parse(`${dataAsOf}T00:00:00Z`);
+  if (!Number.isFinite(t)) return '';
+  return new Date(t + days * 86_400_000).toISOString().slice(0, 10);
+}
+
+/**
+ * How often the ±1σ 7-day volatility band has contained the actual close 7 days
+ * later. Measured by `worker/scripts/backtest_vol_band.py` with the same formula
+ * as the band itself, BTC daily closes 2018-03 → 2026-10: 70.2% overall,
+ * 63-76% by year. Re-run that script to refresh it.
+ */
+export const VOL_BAND_HIT_RATE = { pct: 70, since: 2018, minYearPct: 63, maxYearPct: 76 } as const;
+
 export function getWeeklyForecastColor(label: string): string {
   if (label === 'BULLISH' || label === 'BULL') return 'var(--up)';
   if (label === 'BEARISH' || label === 'BEAR') return 'var(--down)';

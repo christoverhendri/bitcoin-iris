@@ -11,4 +11,10 @@ export const getWeeklyForecast = defineFeature<WeeklyForecastArgs, WeeklyForecas
 });
 
 export type { WeeklyForecastData, WeeklyForecastArgs };
-export { toWeeklyForecastLabels, getWeeklyForecastColor } from './present';
+export {
+  toWeeklyForecastLabels,
+  getWeeklyForecastColor,
+  forecastTargetDate,
+  FORECAST_HORIZON_DAYS,
+  VOL_BAND_HIT_RATE,
+} from './present';

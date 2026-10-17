@@ -1,14 +1,20 @@
 import { PanelStrip, KpiCard, MockBadge, SourceFootnote } from '@/components/primitives';
 import type { Envelope } from '@/lib/envelope';
 import type { WeeklyForecastData } from '@/lib/features/weeklyForecast';
-import type { FearGreedData } from '@/lib/features/fearGreed';
+import {
+  forecastTargetDate,
+  toWeeklyForecastLabels,
+  VOL_BAND_HIT_RATE,
+} from '@/lib/features/weeklyForecast';
 import type { ConfluenceData } from '@/lib/features/confluence';
+import type { SocialSentimentData } from '@/lib/features/socialSentiment';
+import { SocialSentimentCard } from '@/components/features/socialSentiment/SocialSentimentPanel';
 import { type Tone } from '@/lib/theme/tokens';
 
 export interface SignalCardsProps {
   weeklyForecast: Envelope<WeeklyForecastData>;
-  fearGreed: Envelope<FearGreedData>;
   confluence: Envelope<ConfluenceData>;
+  social: Envelope<SocialSentimentData>;
 }
 
 function getDirectionTone(direction: string): Tone {
@@ -17,38 +23,54 @@ function getDirectionTone(direction: string): Tone {
   return 'txt';
 }
 
-export function SignalCards({
-  weeklyForecast,
-  confluence,
-}: SignalCardsProps) {
+const fmt0 = (n: number) => `$${Math.round(n).toLocaleString('en-US')}`;
+
+/**
+ * Overview headline strip.
+ *
+ * Card 1 used to be two cards — MARKET REGIME and WEEKLY OUTLOOK — that read the
+ * same model output and showed the same label. It is one card now: the model's
+ * call, the close it is a call about, and the volatility range with how often
+ * that range has held (`VOL_BAND_HIT_RATE`, backtested).
+ */
+export function SignalCards({ weeklyForecast, confluence, social }: SignalCardsProps) {
   const wf = weeklyForecast.data;
+  const wl = toWeeklyForecastLabels(wf);
   const conf = confluence.data;
-  const forecastDetail =
-    wf.method === 'classifier' && wf.classifier
-      ? `Model P(UP, 7D), uncalibrated: ${(wf.classifier.pUp * 100).toFixed(1)}%`
-      : `${wf.confidence.toFixed(0)}% heuristic strength · not a probability`;
-  const forecastRange =
-    wf.method === 'classifier'
-      ? `1σ realized-volatility band (7D): $${wf.range.min.toFixed(0)} - $${wf.range.max.toFixed(0)}`
-      : `Heuristic 7D range: $${wf.range.min.toFixed(0)} - $${wf.range.max.toFixed(0)}`;
+  const isModel = wf.method === 'classifier' && wf.classifier;
+  const arrow = wf.label === 'BULLISH' ? '↑' : wf.label === 'BEARISH' ? '↓' : '→';
+  const target = isModel ? forecastTargetDate(wf.classifier!.dataAsOf) : '';
+
+  const forecastDetail = isModel
+    ? `Model P(UP) ${wl.pUpPct} · for the close of ${target}`
+    : `${wf.confidence.toFixed(0)}% heuristic strength · not a probability`;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', background: 'var(--line)' }}>
       <PanelStrip>
-        {/* Card 1: Market Regime from Weekly Forecast */}
         <div style={{ background: 'var(--panel)', display: 'flex', flexDirection: 'column' }}>
           <KpiCard
-            label="MARKET REGIME"
-            value={wf.label}
+            label="WEEKLY FORECAST"
+            value={`${arrow} ${wl.label}`}
             tone={getDirectionTone(wf.label)}
             detail={forecastDetail}
-            pct={wf.confidence}
             right={<MockBadge env={weeklyForecast} />}
           />
+          <div
+            className="iris-micro"
+            style={{ padding: '0 14px 10px', fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--mut)' }}
+          >
+            {isModel ? 'Likely range' : 'Heuristic range'}: {fmt0(wf.range.min)} – {fmt0(wf.range.max)}
+            {isModel ? (
+              <div style={{ fontSize: 9, color: 'var(--dim)', marginTop: 2 }}>
+                ±1σ of 30-day volatility · held ~{VOL_BAND_HIT_RATE.pct}% of weeks since{' '}
+                {VOL_BAND_HIT_RATE.since} ({VOL_BAND_HIT_RATE.minYearPct}–{VOL_BAND_HIT_RATE.maxYearPct}% by year)
+              </div>
+            ) : null}
+          </div>
           <SourceFootnote env={weeklyForecast} />
         </div>
 
-        {/* Card 2: Confluence Score */}
         <div style={{ background: 'var(--panel)', display: 'flex', flexDirection: 'column' }}>
           <KpiCard
             label="CONFLUENCE"
@@ -61,18 +83,7 @@ export function SignalCards({
           <SourceFootnote env={confluence} />
         </div>
 
-        {/* Card 3: Weekly Forecast Direction */}
-        <div style={{ background: 'var(--panel)', display: 'flex', flexDirection: 'column' }}>
-          <KpiCard
-            label="WEEKLY OUTLOOK"
-            value={`${wf.label === 'BULLISH' ? '↑' : wf.label === 'BEARISH' ? '↓' : '→'} ${wf.label}`}
-            tone={getDirectionTone(wf.label)}
-            detail={forecastRange}
-            pct={wf.confidence}
-            right={<MockBadge env={weeklyForecast} />}
-          />
-          <SourceFootnote env={weeklyForecast} />
-        </div>
+        <SocialSentimentCard social={social} />
       </PanelStrip>
     </div>
   );

@@ -65,6 +65,12 @@ CLF_SIGNAL_OUT = resolve_dir("CLF_SIGNAL_OUT", "out/clf_signal_latest.json")
 FRED_API_KEY = get_str("FRED_API_KEY")
 COINGECKO_API_KEY = get_str("COINGECKO_API_KEY")
 
+# Sentimen sosial (Santiment). Kosong = job social_sentiment tidak dijadwalkan.
+SANTIMENT_API_KEY = get_str("SANTIMENT_API_KEY")
+SOCIAL_SENTIMENT_OUT = resolve_dir("SOCIAL_SENTIMENT_OUT", "out/social_sentiment.json")
+# Baris yang disimpan per run (riwayat untuk grafik 30 hari).
+SOCIAL_SENTIMENT_DAYS = get_int("SOCIAL_SENTIMENT_DAYS", 30)
+
 # Freshness thresholds
 CLF_MAX_DATA_LAG_DAYS = get_int("CLF_MAX_DATA_LAG_DAYS", 3)
 CLF_MAX_NAN = get_int("CLF_MAX_NAN", 0)
@@ -74,6 +80,8 @@ CLF_MAX_NAN = get_int("CLF_MAX_NAN", 0)
 REFRESH_CRON = get_str("REFRESH_CRON", "15 0 * * *")
 # klasifikasi mingguan: Senin 00:30 UTC (07:30 WIB) — candle Minggu sudah tutup.
 CLF_CRON = get_str("CLF_CRON", "30 0 * * 1")
+# sentimen sosial Santiment: setiap hari 00:20 UTC (07:20 WIB).
+SOCIAL_CRON = get_str("SOCIAL_CRON", "20 0 * * *")
 # whale ingest: panggil route Next /api/ingest/whale (butuh IRIS_APP_URL + CRON_SECRET).
 WHALE_CRON = get_str("WHALE_CRON", "*/5 * * * *")
 IRIS_APP_URL = get_str("IRIS_APP_URL")

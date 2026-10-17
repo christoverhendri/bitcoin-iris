@@ -41,7 +41,17 @@ export function AppShell({ sidebar, children }: { sidebar: ReactNode; children: 
         }}
       >
         {sidebar}
-        <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}>
+        {/* Pinned to column 2: below 1024px the rail is `position: fixed` and leaves the
+            grid, and without this the content would auto-place into the 0px rail column. */}
+        <div
+          style={{
+            gridColumn: 2,
+            display: 'flex',
+            flexDirection: 'column',
+            minWidth: 0,
+            overflow: 'hidden',
+          }}
+        >
           {children}
         </div>
       </div>
