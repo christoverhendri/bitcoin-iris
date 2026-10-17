@@ -254,18 +254,21 @@ Dihitung dari candle sesuai timeframe (minimal 180 candle):
 
 ## 4. ON-CHAIN
 
+> Penjelasan lebih detail per panel + angka contoh + masalah yang ditemukan:
+> [`ONCHAIN_MACRO_GUIDE.md`](ONCHAIN_MACRO_GUIDE.md).
+
 ### 4.1 SUPPLY — `/chain/supply`
 
 | Panel | Asal |
 |---|---|
 | ON-CHAIN ACTIVITY | Hashrate (blockchain.info, EH/s), alamat aktif harian, jumlah transaksi harian (blockchain.info charts), volume 24 jam BTC (Blockchair) |
-| COLD / HOT SUPPLY SPLIT | Saldo **17 alamat exchange yang dilacak** (Binance ×6, Bitfinex ×2, Coinbase ×2, Bitstamp, Bybit, Kraken, OKX, Robinhood) via Blockstream Esplora. `cold% = cold/total`, `hot% = (hot + deposit)/total` |
+| COLD / HOT SUPPLY SPLIT | Saldo **15 alamat exchange yang dilacak** (Binance ×6, Bitfinex ×2, Coinbase ×2, Bitstamp, Bybit, Kraken, OKX, Robinhood) via Blockstream Esplora. `cold% = cold/total`, `hot% = (hot + deposit)/total` |
 
-⚠️ Pembagian cold/hot hanya mewakili **sampel 17 alamat**, bukan seluruh BTC di exchange.
+⚠️ Pembagian cold/hot hanya mewakili **sampel 15 alamat**, bukan seluruh BTC di exchange.
 
 ### 4.2 FLOWS — `/chain/flows`
 
-Semua dari 17 alamat exchange yang sama (Blockstream Esplora):
+Semua dari 15 alamat exchange yang sama (Blockstream Esplora):
 
 - **EXCHANGE RESERVE**: total saldo alamat yang dilacak + porsi hot/cold/deposit.
 - **FLOW RADAR / FLOW SUMMARY**: transaksi terbaru ≥ **50 BTC** yang menyentuh alamat itu
@@ -393,7 +396,7 @@ bawah; kategori pertama yang cocok dipakai, kalau tidak ada yang cocok → MARKE
 | 5 | GEOPOLITICS | sanction, war, election, conflict, tariff, invasion, ceasefire, military, missile, coup, summit |
 | 6 | ADOPTION | legal tender, adopts, adoption, accepts bitcoin, integration, rollout, strategic reserve |
 | 7 | LEGAL | lawsuit, court, ruling, settlement, indictment, sentenced, verdict, appeal, charges, trial |
-| – | WHALE_FLOW | bukan dari judul: transfer on-chain ≥ 50 BTC dari 17 alamat exchange (lihat 4.2) |
+| – | WHALE_FLOW | bukan dari judul: transfer on-chain ≥ 50 BTC dari 15 alamat exchange (lihat 4.2) |
 
 **Seberapa baru datanya** — tidak real-time, tapi near real-time:
 
@@ -402,7 +405,7 @@ bawah; kategori pertama yang cocok dipakai, kalau tidak ada yang cocok → MARKE
 | Berita kripto | 8 RSS media kripto | 10 menit |
 | Berita dunia | BBC, AP, Al Jazeera, Guardian, France 24, UN News | 15 menit |
 | Siaran pers lembaga | SEC, Federal Reserve, CFTC, ECB | 1 jam |
-| Transfer on-chain | Blockstream Esplora (17 alamat exchange) | saldo 10 menit, transaksi 5 menit (alamat dengan riwayat > 2 MB tidak bisa di-cache, jadi diambil ulang tiap render) |
+| Transfer on-chain | Blockstream Esplora (15 alamat exchange) | saldo 10 menit, transaksi 5 menit (alamat dengan riwayat > 2 MB tidak bisa di-cache, jadi diambil ulang tiap render) |
 | Whale Wire | Supabase `whale_events`, diisi ingest tiap 5 menit | 30 detik |
 
 Ditambah jeda dari media itu sendiri: RSS baru memuat artikel setelah media menerbitkannya.
@@ -419,6 +422,8 @@ dibuang lewat migration `0004_drop_whale_impact.sql`.)
 ---
 
 ## 6. MACRO
+
+> Detail per panel: [`ONCHAIN_MACRO_GUIDE.md`](ONCHAIN_MACRO_GUIDE.md#bagian-2--macro).
 
 ### 6.1 DATA — `/macro/data?country=US`
 
