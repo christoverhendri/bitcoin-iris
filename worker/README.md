@@ -1,11 +1,21 @@
 # IRIS-Terminal Python Worker
 
 Worker 12-factor untuk model klasifikasi arah BTC 7 hari (`clf_7d`, average ensemble
-XGBoost MacroCrossAsset + Universal, aturan dual threshold BEAR < 0.23 / BULL > 0.70).
+XGBoost MacroCrossAsset + Universal). Ambang dari export notebook: `meta.json`
+`avg_threshold` = 0.06 → BULL kalau p_up ≥ 0.06, selain itu BEAR (`iris_clf/signal_rule.py`;
+`signal_rule.json` dua ambang dipakai otomatis kalau suatu hari diekspor).
 
-Model di `models/clf_7d/` identik byte-per-byte dengan export notebook (`results (5).zip`);
+Model di `models/clf_7d/` = export notebook `btc_clf_export.zip` (2026-10-16T19:15 UTC).
 `python check_parity.py --master data/seed/btc_master_2.csv --category-dir data/seed`
-membuktikan kode inference = notebook (selisih maks ~1e-7).
+membuktikan kode inference = notebook (selisih maks ~3e-8).
+
+### Mengganti model dengan export baru
+
+1. Salin `meta.json`, `parity_check.csv`, `xgb_*.json` ke `models/clf_7d/`.
+2. `python check_parity.py ...` (di atas) harus LOLOS.
+3. `python -m iris_worker.track_record` → tulis ulang `track_record.json` (confidence di
+   dashboard = presisi sinyal di set uji). Test `test_installed_model_artifacts_are_consistent`
+   gagal kalau langkah ini terlupa.
 
 ## Alur
 

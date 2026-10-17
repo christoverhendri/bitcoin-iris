@@ -20,8 +20,28 @@ export interface ForecastDriver {
 
 export type ForecastSignal = 'BULL' | 'BEAR' | 'NONE';
 
+/**
+ * How often this same signal was right on the notebook's test set (labelled
+ * weeks only) — the dashboard's "confidence". Computed by the worker from the
+ * model export (`python -m iris_worker.track_record`), never typed by hand.
+ */
+export interface SignalTrackRecord {
+  /** Share of past calls of this signal that were right, 0..1. */
+  precision: number;
+  /** Number of past calls it is measured over. */
+  n: number;
+  /** How often that direction happened anyway, 0..1 — the bar to beat. */
+  baseRate: number;
+  evalFrom: string;
+  evalTo: string;
+}
+
 export interface ClassifierProvenance {
   signal: ForecastSignal;
+  /** 'binary_avg_threshold' (one threshold, BULL/BEAR) or a two-threshold rule. */
+  ruleMethod: string;
+  isBinary: boolean;
+  track: SignalTrackRecord | null;
   pUp: number;
   tBear: number;
   tBull: number;

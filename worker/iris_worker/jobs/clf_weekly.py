@@ -17,12 +17,17 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from iris_clf import ClassifierSignal
 from iris_clf.signal_rule import load_rule, decide
-from iris_worker import config, status
+from iris_worker import config, status, track_record
+from iris_worker.data.build import week_start_sunday
 from iris_worker.supabase_rest import upsert_clf_signal, SupabaseRestError
 
 
 class StaleDataError(RuntimeError):
     """Penjaga kesegaran menolak data; CLI keluar dengan kode 2."""
+
+
+class WeekNotClosedError(RuntimeError):
+    """Candle penutup minggu belum tersedia; sinyal tidak diterbitkan (CLI kode 3)."""
 
 
 def check_freshness(
@@ -66,10 +71,17 @@ def build_payload(
     rule: Dict[str, Any],
     meta: Dict[str, Any],
     signal: str,
+    track: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """
     Membangun payload snake_case lengkap untuk tabel public.clf_signals.
+
+    `track` = models/clf_7d/track_record.json. Dari situ diambil rekam jejak sinyal
+    yang SAMA dengan sinyal saat ini (presisi di set uji) — angka "confidence" yang
+    ditampilkan dashboard. Kosong kalau artefaknya belum dibuat.
     """
+    track = track or {}
+    by_sig = (track.get("by_signal") or {}).get(signal) or {}
     test_metrics = meta.get("test_metrics", {})
     test_f1 = test_metrics.get("f1_macro", 0.0)
 
@@ -91,6 +103,11 @@ def build_payload(
         "per_domain": sig.get("per_domain", {}),
         "n_nan_features": sig.get("n_nan_features", {}),
         "rule_method": str(rule.get("method", "dual_threshold_oof")),
+        "track_precision": by_sig.get("precision"),
+        "track_n": by_sig.get("n"),
+        "track_base_rate": by_sig.get("base_rate"),
+        "track_eval_from": track.get("eval_from"),
+        "track_eval_to": track.get("eval_to"),
         "model_name": str(meta.get("name", "btc_direction_7d_avg_ensemble")),
         "model_created_utc": str(meta.get("created_utc", "")),
         "model_train_end": str(meta.get("train_end", "")),
@@ -108,6 +125,7 @@ def run_clf_weekly(
     master_path: Optional[str] = None,
     category_dir: Optional[str] = None,
     model_dir: Optional[str] = None,
+    require_as_of: Optional[date] = None,
 ) -> Dict[str, Any]:
     """
     Menjalankan alur lengkap clf_weekly:
@@ -121,15 +139,11 @@ def run_clf_weekly(
     m_dir = Path(model_dir) if model_dir else config.CLF_MODEL_DIR
     d_dir = Path(master_path).parent if master_path else config.CLF_DATA_DIR
 
-    # 1. Pastikan model dan signal_rule.json ada
-    rule_file = m_dir / "signal_rule.json"
-    if not rule_file.exists():
-        raise FileNotFoundError(
-            f"FATAL: signal_rule.json tidak ditemukan di {m_dir}. Gagal keras sesuai D3."
-        )
-
+    # 1. Model + aturan. Aturan dari signal_rule.json kalau notebook mengekspornya,
+    #    selain itu ambang biner `avg_threshold` di meta.json (lihat iris_clf.signal_rule).
     clf = ClassifierSignal.from_dir(str(m_dir))
     rule = load_rule(str(m_dir))
+    track = track_record.load(m_dir)
 
     # Tentukan path file data
     m_path = Path(master_path) if master_path else (d_dir / "btc_master_2.csv")
@@ -163,11 +177,18 @@ def run_clf_weekly(
         )
         raise StaleDataError(msg)
 
-    # 4. Keputusan 3 keadaan
+    # 3b. Sinyal mingguan harus memakai candle penutup minggu (Minggu), bukan Sabtu.
+    if require_as_of is not None and date.fromisoformat(sig["as_of"]) < require_as_of:
+        raise WeekNotClosedError(
+            f"data terakhir {sig['as_of']} < candle penutup minggu {require_as_of}; "
+            "Yahoo belum memfinalkan candle — sinyal tidak diterbitkan"
+        )
+
+    # 4. Keputusan sinyal
     signal = decide(sig["p_up"], rule)
 
     # 5. Payload
-    payload = build_payload(sig, rule, clf.meta, signal)
+    payload = build_payload(sig, rule, clf.meta, signal, track)
 
     if dry_run:
         print(json.dumps(payload, indent=2))
@@ -235,6 +256,11 @@ def main():
         action="store_true",
         help="Tarik ulang data input dari API (job refresh_data) sebelum prediksi.",
     )
+    parser.add_argument(
+        "--require-week-close",
+        action="store_true",
+        help="Tolak (kode 3) kalau candle Minggu terakhir belum ada di data.",
+    )
     parser.add_argument("--model-dir", default=None, help="Lokasi folder model clf_7d")
     parser.add_argument("--master", default=None, help="Lokasi btc_master_2.csv")
     parser.add_argument("--category-dir", default=None, help="Lokasi folder data kategori")
@@ -252,7 +278,11 @@ def main():
             master_path=args.master,
             category_dir=args.category_dir,
             model_dir=args.model_dir,
+            require_as_of=week_start_sunday().date() if args.require_week_close else None,
         )
+    except WeekNotClosedError as e:
+        print(str(e), file=sys.stderr)
+        sys.exit(3)
     except StaleDataError as e:
         print(str(e), file=sys.stderr)
         sys.exit(2)

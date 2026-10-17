@@ -1,0 +1,30 @@
+{
+  "eval_from": "2025-01-30",
+  "eval_to": "2026-08-09",
+  "n_labeled": 332,
+  "base_rate_up": 0.4789156626506024,
+  "accuracy": 0.5632530120481928,
+  "by_signal": {
+    "BULL": {
+      "n": 266,
+      "precision": 0.5263157894736842,
+      "share": 0.8012048192771084,
+      "base_rate": 0.4789156626506024
+    },
+    "BEAR": {
+      "n": 66,
+      "precision": 0.7121212121212122,
+      "share": 0.19879518072289157,
+      "base_rate": 0.5210843373493976
+    },
+    "NONE": {
+      "n": 0,
+      "share": 0.0
+    }
+  },
+  "model_created_utc": "2026-10-16T19:15:48+00:00",
+  "rule_method": "binary_avg_threshold",
+  "threshold": 0.060000000000000005,
+  "generated_utc": "2026-10-17T00:52:25+00:00",
+  "note": "Labelled test weeks only (|7d return| > 0.5 x weekly vol); quiet weeks have no label."
+}

@@ -24,16 +24,16 @@ import argparse
 import json
 import sys
 import traceback
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 import pandas as pd
 from apscheduler.schedulers.blocking import BlockingScheduler
 from apscheduler.triggers.cron import CronTrigger
 
 from iris_worker import config
-from iris_worker.data.build import last_closed_day
+from iris_worker.data.build import last_closed_day, week_start_sunday
 from iris_worker.jobs import whale_ingest
-from iris_worker.jobs.clf_weekly import run_clf_weekly
+from iris_worker.jobs.clf_weekly import WeekNotClosedError, run_clf_weekly
 from iris_worker.jobs.refresh_data import run_refresh
 from iris_worker.jobs.social_sentiment import run_social_sentiment
 
@@ -92,12 +92,6 @@ def last_signal_as_of():
         return None
 
 
-def week_start_sunday(now=None) -> pd.Timestamp:
-    """Candle Minggu terakhir yang sudah tertutup — as_of yang diharapkan untuk sinyal minggu ini."""
-    d = last_closed_day(now)
-    return d - pd.Timedelta(days=(d.dayofweek + 1) % 7)
-
-
 def weekly_is_current(now=None) -> bool:
     a = last_signal_as_of()
     return a is not None and a >= week_start_sunday(now)
@@ -123,21 +117,44 @@ def _stamp(msg):
     print(f"[{datetime.now(timezone.utc).isoformat(timespec='seconds')}] {msg}", flush=True)
 
 
-def job_refresh():
+# Tepat setelah 00:00 UTC Yahoo sering belum memfinalkan candle kemarin. Job yang
+# datanya belum lengkap dijadwalkan ulang sendiri tiap RETRY_MINUTES, maks. MAX_RETRIES.
+RETRY_MINUTES = 60
+MAX_RETRIES = 12
+_SCHED = None
+
+
+def _retry(fn, job_id: str, attempt: int, **kwargs) -> None:
+    if _SCHED is None or attempt >= MAX_RETRIES:
+        _stamp(f"{job_id}: tidak dicoba ulang lagi (percobaan {attempt + 1}/{MAX_RETRIES + 1})")
+        return
+    when = datetime.now(timezone.utc) + timedelta(minutes=RETRY_MINUTES)
+    _SCHED.add_job(fn, "date", run_date=when, id=f"{job_id}_retry", replace_existing=True,
+                   kwargs={**kwargs, "attempt": attempt + 1})
+    _stamp(f"{job_id}: dicoba ulang {when.isoformat(timespec='minutes')} (percobaan {attempt + 2})")
+
+
+def job_refresh(attempt: int = 0):
     _stamp("refresh_data mulai")
     try:
         run_refresh()
     except Exception as e:
         _stamp(f"refresh_data GAGAL: {e}")
         traceback.print_exc()
+    if not data_is_fresh():
+        _stamp(f"refresh_data: candle {last_closed_day().date()} belum tersedia (as_of={data_as_of()})")
+        _retry(job_refresh, "refresh_data", attempt)
 
 
-def job_weekly(dry_run: bool = False):
+def job_weekly(dry_run: bool = False, attempt: int = 0):
     _stamp("clf_weekly mulai")
     try:
         if not data_is_fresh():
             run_refresh()
-        run_clf_weekly(dry_run=dry_run)
+        run_clf_weekly(dry_run=dry_run, require_as_of=week_start_sunday().date())
+    except WeekNotClosedError as e:
+        _stamp(f"clf_weekly ditunda: {e}")
+        _retry(job_weekly, "clf_weekly", attempt, dry_run=dry_run)
     except Exception as e:
         _stamp(f"clf_weekly GAGAL: {e}")
         traceback.print_exc()
@@ -191,7 +208,8 @@ def main():
             whale_ingest.run_whale_ingest()
         return
 
-    sched = BlockingScheduler(
+    global _SCHED
+    sched = _SCHED = BlockingScheduler(
         timezone="UTC",
         job_defaults={"coalesce": True, "max_instances": 1, "misfire_grace_time": 3600},
     )

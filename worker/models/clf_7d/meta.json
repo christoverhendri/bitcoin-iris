@@ -1,6 +1,6 @@
 {
   "name": "btc_direction_7d_avg_ensemble",
-  "created_utc": "2026-10-15T05:04:50+00:00",
+  "created_utc": "2026-10-16T19:15:48+00:00",
   "horizon_days": 7,
   "label_rule": "up=1 if fwd_logret_7d > 0.5*weekly_vol; down=0 if < -0.5*weekly_vol; else dropped (noise)",
   "combine": "mean of per-domain P(up); BULL if p_avg >= avg_threshold",
@@ -229,11 +229,11 @@
     "fear_greed_value",
     "value_classification"
   ],
-  "avg_threshold": 0.11000000000000001,
+  "avg_threshold": 0.060000000000000005,
   "conviction_gate_margin": {
-    "20": 0.29045496821403505,
-    "35": 0.13406706541776656,
-    "40": 0.0958805227279663
+    "20": 0.34270721912384033,
+    "35": 0.1862558150291443,
+    "40": 0.15196261048316956
   },
   "train_end": "2023-05-29",
   "val_range": [
@@ -242,26 +242,32 @@
   ],
   "test_start": "2025-01-30",
   "data_last_date": "2026-08-21",
-  "val_f1_macro": 0.5897679780948264,
+  "val_f1_macro": 0.6382917038358609,
   "test_metrics": {
-    "accuracy": 0.6054216867469879,
-    "f1_macro": 0.5804481830547061,
-    "balanced_accuracy": 0.6168066310393718,
-    "mcc": 0.2752675058626947,
-    "auc": 0.6078452757479915
+    "accuracy": 0.5632530120481928,
+    "f1_macro": 0.5260644843711544,
+    "balanced_accuracy": 0.5760897226160614,
+    "mcc": 0.19048677283612658,
+    "auc": 0.5938488384774785
   },
   "xgb_best_params": {
     "MacroCrossAsset": {
-      "learning_rate": 0.08,
-      "max_depth": 5,
-      "n_estimators": 400,
-      "reg_lambda": 5.0
+      "colsample_bytree": 0.8,
+      "learning_rate": 0.1,
+      "max_depth": 4,
+      "min_child_weight": 1,
+      "n_estimators": 200,
+      "reg_lambda": 1.0,
+      "subsample": 0.9
     },
     "Universal": {
-      "learning_rate": 0.08,
-      "max_depth": 5,
-      "n_estimators": 200,
-      "reg_lambda": 5.0
+      "colsample_bytree": 0.8,
+      "learning_rate": 0.03,
+      "max_depth": 2,
+      "min_child_weight": 5,
+      "n_estimators": 800,
+      "reg_lambda": 1.0,
+      "subsample": 0.9
     }
   },
   "versions": {

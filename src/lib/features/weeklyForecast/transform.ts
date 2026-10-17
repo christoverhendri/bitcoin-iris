@@ -20,6 +20,11 @@ export interface ClfSignalRow {
   per_domain: Record<string, number>;
   n_nan_features: Record<string, number>;
   rule_method: string;
+  track_precision?: number | null;
+  track_n?: number | null;
+  track_base_rate?: number | null;
+  track_eval_from?: string | null;
+  track_eval_to?: string | null;
   model_name: string;
   model_created_utc: string;
   model_train_end: string;
@@ -46,15 +51,15 @@ export function rowToForecast(
     row.signal === 'BULL' ? 'BULLISH' : row.signal === 'BEAR' ? 'BEARISH' : 'NEUTRAL';
 
   // D8: Perhitungan driver & score
-  // c = (t_bear + t_bull) / 2
-  // h = (t_bull - t_bear) / 2
-  // n = jumlah domain
-  // contribution_d = (p_d - c) / (n * h)
-  // score = Σ contribution_d = (p_avg - c) / h
+  // Dua ambang: c = (t_bear + t_bull) / 2, h = (t_bull - t_bear) / 2,
+  //   contribution_d = (p_d - c) / (n * h), score = (p_avg - c) / h
+  // Biner (satu ambang th): tanpa skala buatan —
+  //   contribution_d = (p_d - th) / n, score = p_avg - th (jarak ke ambang, poin probabilitas)
   const tBear = row.t_bear;
   const tBull = row.t_bull;
-  const c = (tBear + tBull) / 2;
-  const h = (tBull - tBear) / 2;
+  const isBinary = row.rule_method === 'binary_avg_threshold' || tBull === tBear;
+  const c = isBinary ? tBull : (tBear + tBull) / 2;
+  const h = isBinary ? 1 : (tBull - tBear) / 2;
 
   const domainNames = Object.keys(row.per_domain);
   const n = domainNames.length > 0 ? domainNames.length : 1;
@@ -88,8 +93,22 @@ export function rowToForecast(
   const createdTime = new Date(row.created_at).getTime();
   const stale = Number.isFinite(createdTime) ? now - createdTime > STALE_THRESHOLD_MS : false;
 
+  const track =
+    row.track_precision != null && row.track_n != null && row.track_base_rate != null
+      ? {
+          precision: row.track_precision,
+          n: row.track_n,
+          baseRate: row.track_base_rate,
+          evalFrom: row.track_eval_from ?? '',
+          evalTo: row.track_eval_to ?? '',
+        }
+      : null;
+
   const classifier: ClassifierProvenance = {
     signal: row.signal,
+    ruleMethod: row.rule_method,
+    isBinary,
+    track,
     pUp: row.p_up,
     tBear: row.t_bear,
     tBull: row.t_bull,

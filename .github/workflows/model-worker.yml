@@ -10,6 +10,7 @@ on:
   schedule:
     - cron: "15 0 * * *"   # refresh harian + sentimen sosial 07:15 WIB
     - cron: "30 0 * * 1"   # klasifikasi mingguan Senin 07:30 WIB
+    - cron: "30 3 * * 1"   # percobaan kedua 10:30 WIB, kalau candle Minggu belum final jam 07:30
   workflow_dispatch:
     inputs:
       job:
@@ -60,9 +61,11 @@ jobs:
         if: env.SANTIMENT_API_KEY != '' && (github.event.schedule == '15 0 * * *' || inputs.job == 'social')
         run: python -m iris_worker.jobs.social_sentiment
 
+      # --require-week-close: tidak menerbitkan sinyal dari candle Sabtu kalau Yahoo belum
+      # memfinalkan candle Minggu (exit 3). Upsert per as_of membuat percobaan kedua aman.
       - name: weekly
-        if: github.event.schedule == '30 0 * * 1' || inputs.job == 'weekly'
-        run: python -m iris_worker.jobs.clf_weekly --refresh
+        if: github.event.schedule == '30 0 * * 1' || github.event.schedule == '30 3 * * 1' || inputs.job == 'weekly'
+        run: python -m iris_worker.jobs.clf_weekly --refresh --require-week-close
 
       - uses: actions/upload-artifact@v4
         if: always()

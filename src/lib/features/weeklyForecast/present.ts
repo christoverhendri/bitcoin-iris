@@ -18,6 +18,14 @@ export function toWeeklyForecastLabels(f: WeeklyForecastData) {
     pUpPct: f.classifier ? `${(f.classifier.pUp * 100).toFixed(1)}%` : fmtPct(f.confidence, false),
     tBearPct: f.classifier ? `${(f.classifier.tBear * 100).toFixed(0)}%` : '',
     tBullPct: f.classifier ? `${(f.classifier.tBull * 100).toFixed(0)}%` : '',
+    isBinary: f.classifier?.isBinary ?? false,
+    thresholdPct: f.classifier ? `${(f.classifier.tBull * 100).toFixed(1)}%` : '',
+    confidencePct: f.classifier?.track ? `${(f.classifier.track.precision * 100).toFixed(1)}%` : '',
+    baseRatePct: f.classifier?.track ? `${(f.classifier.track.baseRate * 100).toFixed(1)}%` : '',
+    confidenceN: f.classifier?.track?.n ?? 0,
+    confidenceWindow: f.classifier?.track
+      ? `${f.classifier.track.evalFrom} – ${f.classifier.track.evalTo}`
+      : '',
     dataAsOf: f.classifier?.dataAsOf ?? '',
     modelTrainEnd: f.classifier?.modelTrainEnd ?? '',
     f1Summary: f.classifier

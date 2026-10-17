@@ -80,3 +80,52 @@ describe('weeklyForecast / rowToForecast', () => {
     expect(mid).toBeCloseTo(lastClose, 5);
   });
 });
+
+describe('binary threshold rule (notebook avg_threshold) + track record', () => {
+  const BINARY_ROW: ClfSignalRow = {
+    ...FIXTURE_ROW,
+    signal: 'BULL',
+    p_up: 0.2049,
+    t_bear: 0.06,
+    t_bull: 0.06,
+    rule_method: 'binary_avg_threshold',
+    per_domain: { MacroCrossAsset: 0.3519, Universal: 0.0579 },
+    track_precision: 0.5263,
+    track_n: 266,
+    track_base_rate: 0.4789,
+    track_eval_from: '2025-01-30',
+    track_eval_to: '2026-08-09',
+  };
+
+  it('scores as distance to the single threshold, with no invented scaling', () => {
+    const f = rowToForecast(BINARY_ROW, [100, 101, 102]);
+    expect(f.label).toBe('BULLISH');
+    expect(f.classifier?.isBinary).toBe(true);
+    // mean(p_d) - threshold, split evenly across the two domains
+    expect(f.score).toBeCloseTo((0.3519 + 0.0579) / 2 - 0.06, 10);
+    expect(f.drivers[0].contribution).toBeCloseTo((0.3519 - 0.06) / 2, 10);
+    expect(f.drivers[1].contribution).toBeCloseTo((0.0579 - 0.06) / 2, 10);
+  });
+
+  it('carries the track record as confidence, and labels say so', () => {
+    const f = rowToForecast(BINARY_ROW, [100, 101, 102]);
+    expect(f.classifier?.track).toEqual({
+      precision: 0.5263,
+      n: 266,
+      baseRate: 0.4789,
+      evalFrom: '2025-01-30',
+      evalTo: '2026-08-09',
+    });
+    const l = toWeeklyForecastLabels(f);
+    expect(l.confidencePct).toBe('52.6%');
+    expect(l.baseRatePct).toBe('47.9%');
+    expect(l.thresholdPct).toBe('6.0%');
+    expect(l.isNoSignal).toBe(false);
+  });
+
+  it('has no confidence when the row carries no track record', () => {
+    const f = rowToForecast({ ...BINARY_ROW, track_precision: null }, [100, 101, 102]);
+    expect(f.classifier?.track).toBeNull();
+    expect(toWeeklyForecastLabels(f).confidencePct).toBe('');
+  });
+});

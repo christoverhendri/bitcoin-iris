@@ -76,8 +76,12 @@ def run_refresh(data_dir: Optional[Path] = None, now: Optional[pd.Timestamp] = N
     )
     if btc is None:
         raise RuntimeError(f"Sumber wajib Yahoo BTC-USD gagal: {btc_res.error}")
-    as_of = min(build.last_closed_day(now), btc.index.max())
-    btc = btc[btc.index <= as_of]
+    # as_of = candle harian tertutup TERAKHIR YANG SUDAH ADA. Tepat setelah 00:00 UTC
+    # Yahoo sering mengirim candle kemarin dengan close kosong (baris itu dibuang
+    # `yahoo_daily`), jadi "kemarin" tidak boleh diasumsikan ada. Scheduler mencoba
+    # ulang sampai candle kemarin muncul (lihat scheduler.data_is_fresh).
+    btc = btc[btc.index <= build.last_closed_day(now)]
+    as_of = btc.index.max()
 
     results = {"yahoo_btc": btc_res}
     parts: Dict[str, pd.DataFrame] = {}

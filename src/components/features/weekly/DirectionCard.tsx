@@ -123,8 +123,8 @@ export function DirectionCard({ forecast }: DirectionCardProps) {
               marginTop: 2,
             }}
           >
-            {/* NO SIGNAL zone highlight */}
-            {isClassifier ? (
+            {/* NO SIGNAL zone highlight (two-threshold rule only) */}
+            {isClassifier && !labels.isBinary ? (
               <div
                 style={{
                   position: 'absolute',
@@ -150,7 +150,19 @@ export function DirectionCard({ forecast }: DirectionCardProps) {
             />
 
             {/* Threshold markers */}
-            {isClassifier ? (
+            {isClassifier && labels.isBinary ? (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: -2,
+                  bottom: -2,
+                  left: `${tBullPct}%`,
+                  width: 2,
+                  background: 'var(--txt)',
+                }}
+                title={`threshold: ${labels.thresholdPct}`}
+              />
+            ) : isClassifier ? (
               <>
                 <div
                   style={{
@@ -179,7 +191,22 @@ export function DirectionCard({ forecast }: DirectionCardProps) {
           </div>
 
           {/* Legend for threshold markers */}
-          {isClassifier ? (
+          {isClassifier && labels.isBinary ? (
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                fontFamily: 'var(--mono)',
+                fontSize: 8.5,
+                color: 'var(--mut)',
+                marginTop: 2,
+              }}
+            >
+              <span style={{ color: 'var(--down)' }}>BEAR &lt; {labels.thresholdPct}</span>
+              <span style={{ color: 'var(--dim)' }}>ONE THRESHOLD · FROM THE NOTEBOOK</span>
+              <span style={{ color: 'var(--up)' }}>BULL ≥ {labels.thresholdPct}</span>
+            </div>
+          ) : isClassifier ? (
             <div
               style={{
                 display: 'flex',
@@ -196,6 +223,29 @@ export function DirectionCard({ forecast }: DirectionCardProps) {
             </div>
           ) : null}
         </div>
+
+        {/* Confidence = this signal's out-of-sample track record, not the raw score */}
+        {isClassifier && labels.confidencePct ? (
+          <div style={{ background: 'var(--sunk)', border: '1px solid var(--line)', padding: '10px 12px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
+              <span
+                className="iris-micro"
+                style={{ fontFamily: 'var(--mono)', fontSize: 9, letterSpacing: '.14em', color: 'var(--mut)' }}
+              >
+                CONFIDENCE · TRACK RECORD
+              </span>
+              <span style={{ fontFamily: 'var(--mono)', fontSize: 15, fontWeight: 700, color: 'var(--txt)' }}>
+                {labels.confidencePct}
+              </span>
+            </div>
+            <div style={{ fontFamily: 'var(--mono)', fontSize: 9.5, lineHeight: 1.55, color: 'var(--mut)', marginTop: 4 }}>
+              Past {clf?.signal} calls were right {labels.confidencePct} of the time ({labels.confidenceN}{' '}
+              test days, {labels.confidenceWindow}). Without the model, that direction happened{' '}
+              {labels.baseRatePct} of the time. Only days followed by a meaningful 7-day move are
+              counted, and their 7-day windows overlap, so there are fewer independent weeks than days.
+            </div>
+          </div>
+        ) : null}
 
         {/* Range Section (Volatility Band) */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, background: 'var(--line)' }}>

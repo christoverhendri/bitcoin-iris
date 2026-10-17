@@ -13,7 +13,7 @@ import { rowToForecast, type ClfSignalRow } from './transform';
 import type { WeeklyForecastData, WeeklyForecastArgs } from './types';
 
 const CLF_COLUMNS =
-  'as_of, horizon_days, signal, p_up, t_bear, t_bull, threshold_binary, direction_binary, margin, gate_pass, per_domain, n_nan_features, rule_method, model_name, model_created_utc, model_train_end, model_domains, val_f1_macro, test_f1_macro, is_synthetic, created_at';
+  'as_of, horizon_days, signal, p_up, t_bear, t_bull, threshold_binary, direction_binary, margin, gate_pass, per_domain, n_nan_features, rule_method, track_precision, track_n, track_base_rate, track_eval_from, track_eval_to, model_name, model_created_utc, model_train_end, model_domains, val_f1_macro, test_f1_macro, is_synthetic, created_at';
 
 /**
  * Arbitrary internal weights for the rule. They sum to 1.0 and express how much

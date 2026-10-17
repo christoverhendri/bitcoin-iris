@@ -192,6 +192,12 @@ def last_closed_day(now: Optional[pd.Timestamp] = None) -> pd.Timestamp:
     return now.normalize() - pd.Timedelta(days=1)
 
 
+def week_start_sunday(now: Optional[pd.Timestamp] = None) -> pd.Timestamp:
+    """Candle Minggu terakhir yang sudah tertutup — as_of yang diharapkan untuk sinyal minggu ini."""
+    d = last_closed_day(now)
+    return d - pd.Timedelta(days=(d.dayofweek + 1) % 7)
+
+
 def run_fetch(key: str, columns: List[str], fn: Callable[[], pd.DataFrame], log) -> tuple:
     """Jalankan satu fetcher; kembalikan (DataFrame|None, SourceResult)."""
     try:

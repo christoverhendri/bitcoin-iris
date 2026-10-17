@@ -32,6 +32,10 @@ const fmt0 = (n: number) => `$${Math.round(n).toLocaleString('en-US')}`;
  * same model output and showed the same label. It is one card now: the model's
  * call, the close it is a call about, and the volatility range with how often
  * that range has held (`VOL_BAND_HIT_RATE`, backtested).
+ *
+ * "Confidence" is the signal's out-of-sample track record — how often past calls
+ * of the same signal were right on the notebook's test set — never the raw
+ * P(UP), which is uncalibrated (a BULL call can carry P(UP) = 20%).
  */
 export function SignalCards({ weeklyForecast, confluence, social }: SignalCardsProps) {
   const wf = weeklyForecast.data;
@@ -41,9 +45,16 @@ export function SignalCards({ weeklyForecast, confluence, social }: SignalCardsP
   const arrow = wf.label === 'BULLISH' ? '↑' : wf.label === 'BEARISH' ? '↓' : '→';
   const target = isModel ? forecastTargetDate(wf.classifier!.dataAsOf) : '';
 
-  const forecastDetail = isModel
-    ? `Model P(UP) ${wl.pUpPct} · for the close of ${target}`
-    : `${wf.confidence.toFixed(0)}% heuristic strength · not a probability`;
+  const forecastDetail = !isModel
+    ? `${wf.confidence.toFixed(0)}% heuristic strength · not a probability`
+    : wl.confidencePct
+      ? `Confidence ${wl.confidencePct} · past ${wf.classifier!.signal} calls right (n=${wl.confidenceN}, base ${wl.baseRatePct})`
+      : `Model P(UP) ${wl.pUpPct} · no track record yet`;
+  const scoreLine = isModel
+    ? [`Score P(UP) ${wl.pUpPct}`, wl.isBinary ? `vs threshold ${wl.thresholdPct}` : '', `· close of ${target}`]
+        .filter(Boolean)
+        .join(' ')
+    : '';
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', background: 'var(--line)' }}>
@@ -60,6 +71,7 @@ export function SignalCards({ weeklyForecast, confluence, social }: SignalCardsP
             className="iris-micro"
             style={{ padding: '0 14px 10px', fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--mut)' }}
           >
+            {scoreLine ? <div style={{ marginBottom: 4 }}>{scoreLine}</div> : null}
             {isModel ? 'Likely range' : 'Heuristic range'}: {fmt0(wf.range.min)} – {fmt0(wf.range.max)}
             {isModel ? (
               <div style={{ fontSize: 9, color: 'var(--dim)', marginTop: 2 }}>

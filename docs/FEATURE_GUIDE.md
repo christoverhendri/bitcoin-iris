@@ -63,15 +63,16 @@ pakai Kraken; kalau Kraken juga gagal, pakai Yahoo. Sumber yang dipakai tidak me
 
 Ringkasan satu layar: sinyal, bukti, dan prakiraan.
 
-### 1.1 WEEKLY FORECAST — contoh: **→ NO SIGNAL**
+### 1.1 WEEKLY FORECAST — contoh: **↑ BULLISH · Confidence 52.6%**
 
 Dulu dua kartu (MARKET REGIME dan WEEKLY OUTLOOK) yang membaca output model yang sama dan
 menampilkan label yang sama. Sejak 17 Okt digabung jadi **satu kartu**:
 
 | Baris | Contoh | Asal |
 |---|---|---|
-| Label | → NO SIGNAL | aturan ambang di bawah (NONE ditampilkan "NO SIGNAL", sama dengan halaman Forecast) |
-| Detail | Model P(UP) 24.0% · for the close of 2026-10-22 | `p_up` model; tanggal target = `DATA AS OF` + 7 hari (close harian UTC) |
+| Label | ↑ BULLISH | aturan ambang di bawah |
+| Confidence | 52.6% · past BULL calls right (n=266, base 47.9%) | **rekam jejak** sinyal yang sama di data uji notebook (lihat di bawah) |
+| Score | P(UP) 20.5% vs threshold 6.0% · close of 2026-10-22 | `p_up` mentah model; tanggal target = `DATA AS OF` + 7 hari (close harian UTC) |
 | Likely range | $77,936 – $86,362 | pita volatilitas ±1σ (lihat 1.3) |
 | Catatan rentang | held ~70% of weeks since 2018 (63–76% by year) | backtest `worker/scripts/backtest_vol_band.py` |
 
@@ -79,22 +80,40 @@ menampilkan label yang sama. Sejak 17 Okt digabung jadi **satu kartu**:
 Python setiap **Senin 07:30 WIB**, lalu disimpan di Supabase `clf_signals` (atau
 `worker/out/clf_signal_latest.json` saat lokal).
 
-1. Worker membangun ±190 fitur dari candle harian yang **sudah tertutup** (kemarin UTC):
-   - domain **Universal** (teknikal BTC + on-chain + makro + sentimen, 125 kolom)
+1. Worker membangun ±150 fitur dari candle harian **tertutup terakhir yang sudah tersedia**:
+   - domain **Universal** (teknikal BTC + on-chain + makro + sentimen, 127 kolom)
    - domain **MacroCrossAsset** (FRED, DXY, emas, M2, S&P, Dow, minyak, ETH, 24 kolom)
 2. Tiap domain punya model XGBoost sendiri → probabilitas naik per domain.
 3. `p_up` = **rata-rata** kedua probabilitas.
-4. Aturan dual threshold (dipilih di validation):
-   - `p_up > 0.70` → **BULL** → ditampilkan **BULLISH**
-   - `p_up < 0.23` → **BEAR** → ditampilkan **BEARISH**
-   - di antaranya → **NONE** → ditampilkan **NO SIGNAL**
-   - ⚠️ ambang 0.23/0.70 belum hasil tuning (lihat masalah #3); akan diganti dari notebook
+4. **Ambang dari notebook** (export 16 Okt, model `created_utc 2026-10-16T19:15`):
+   `avg_threshold = 0.06`, hasil brute-force di validation. Satu ambang, dua sinyal:
+   - `p_up ≥ 0.06` → **BULL** → ditampilkan **BULLISH**
+   - `p_up < 0.06` → **BEAR** → ditampilkan **BEARISH**
+   Ambang dibaca langsung dari `meta.json` export (`iris_clf/signal_rule.py`); tidak ada angka
+   ambang yang ditulis tangan di repo. Kalau notebook nanti mengekspor `signal_rule.json` dua
+   ambang, file itu otomatis dipakai.
 
-**Contoh 16 Okt:** Universal 13.6%, MacroCrossAsset 34.4% → `p_up = (13.6 + 34.4)/2 = 24.0%`.
-24.0% berada di antara 23% dan 70% → **NO SIGNAL**.
+**Contoh 17 Okt:** Universal 5.8%, MacroCrossAsset 35.2% → `p_up = (5.8 + 35.2)/2 = 20.5%` ≥ 6% → **BULLISH**.
 
-**Baris detail** "Model P(UP) 24.0%" = `p_up` mentah. *Uncalibrated* artinya
-24% **bukan** peluang sungguhan 24% — angka ini hanya bermakna relatif terhadap ambang.
+**Kenapa "confidence" bukan `p_up`?** `p_up` tidak terkalibrasi: model ini bilang BULL dengan
+`p_up` 20.5%, jadi menulis "confidence 20.5%" menyesatkan. Confidence = **seberapa sering sinyal
+yang sama benar di data uji notebook** (`parity_check.csv`, 30 Jan 2025 – 9 Agu 2026), dihitung
+`python -m iris_worker.track_record` → `models/clf_7d/track_record.json`:
+
+| Sinyal | Muncul | Benar | Tanpa model (base rate) |
+|---|---|---|---|
+| BULL | 266 hari (80%) | **52.6%** | 47.9% |
+| BEAR | 66 hari (20%) | **71.2%** | 52.1% |
+| Total | 332 | 56.3% (= akurasi test di `meta.json`) | |
+
+Catatan jujur: hanya hari yang diikuti gerakan 7 hari berarti (> 0.5 × vol mingguan) yang punya
+label; jendela 7 harinya tumpang tindih, jadi jumlah minggu independen lebih kecil dari n. Jarak
+`p_up` ke ambang (`conviction_gate_margin`) **tidak** dipakai sebagai keyakinan karena di data uji
+margin besar tidak lebih akurat (top-20% margin: 50% benar; di bawah gate-40: 58.8%).
+
+**Candle belum final:** tepat setelah 00:00 UTC Yahoo sering mengirim candle kemarin dengan close
+kosong. Worker memakai candle tertutup terakhir yang ada, mencoba ulang tiap jam (maks. 12×), dan
+job mingguan **tidak menerbitkan** sinyal sebelum candle Minggu tersedia.
 
 > Kalau worker belum pernah jalan, label ini jatuh ke **aturan heuristik** (RSI, MACD, EMA21 vs
 > EMA50, Fear & Greed) dan detailnya berbunyi "heuristic strength · not a probability".
@@ -500,7 +519,7 @@ Ditemukan saat menelusuri kode dan dicek di dashboard. **Belum diperbaiki.**
 |---|---|---|---|
 | 1 | `components/features/overview/TechReadout.tsx` | **BOLLINGER %B** memakai garis tengah, bukan harga: `(tengah − bawah)/(atas − bawah)` = selalu 0.5 | Selalu tampil **50.0** apa pun harganya |
 | 2 | File yang sama | **ATR (VOL %)** sebenarnya `(atas − bawah)/tengah` = lebar Bollinger | Label salah; ATR asli tidak dihitung |
-| 3 | `signal_rule.json` (model mingguan) | Ambang 0.23/0.70 bukan hasil tuning notebook; di data test `p_up` maksimum 0.699, jadi BULL tidak pernah muncul | Label BULLISH/BEARISH/NEUTRAL belum bisa dipertanggungjawabkan sampai ambang baru dari notebook |
+| 3 | ~~`signal_rule.json` (model mingguan)~~ | ~~Ambang 0.23/0.70 karangan~~ — **selesai 17 Okt**: dihapus, ambang kini `avg_threshold` 0.06 dari export notebook | — |
 | 4 | Label berita (kategori, bullish/bearish) | Aturan kata kunci dipertahankan (rule-based), tapi pencocokannya per potongan huruf: "Hard**war**e" dan "Fed's **War**sh" → GEOPOLITICS, "P**red**ict" → bearish, "Central **ban**k" → bearish + REGULATION. Label bull/bear nanti diganti model researcher | Label bisa salah sampai pencocokan diubah ke per kata utuh |
 | 5 | ONCHAIN confluence | Konstanta 50, belum disambungkan ke data on-chain (padahal On-Chain Flows/Network sudah live) | 6% skor tidak bergerak |
 | 6 | `StatusFooter.tsx` | Warning hydration mismatch ("2s ago" vs "1s ago") di konsol browser | Kosmetik, tidak merusak data |
