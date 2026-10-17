@@ -195,7 +195,13 @@ def main():
     parser.add_argument("--dry-run", action="store_true", help="clf_weekly tanpa menulis apa pun.")
     parser.add_argument("--no-catch-up", action="store_true",
                         help="Jangan jalankan job yang terlewat saat daemon start.")
+    parser.add_argument("--log-file", default=None,
+                        help="Tulis stdout/stderr ke file ini (untuk pythonw.exe, yang tidak punya console).")
     args = parser.parse_args()
+
+    if args.log_file:
+        log = open(args.log_file, "a", buffering=1, encoding="utf-8")
+        sys.stdout = sys.stderr = log
 
     if args.once:
         if args.once in ("refresh", "all"):
