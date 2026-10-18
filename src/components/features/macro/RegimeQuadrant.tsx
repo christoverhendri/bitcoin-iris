@@ -1,16 +1,14 @@
 import {
   Panel,
-  PanelGrid,
   PanelHeader,
   KpiCard,
-  DivergingBar,
   MockBadge,
   SourceFootnote,
 } from '@/components/primitives';
 import type { Envelope } from '@/lib/envelope';
 import type { MacroMetric } from '@/lib/features/macroCountry';
 import type { Tone } from '@/lib/theme/tokens';
-import { fmtZ } from '@/lib/format';
+import { zWords } from '@/lib/zWords';
 
 export interface RegimeQuadrantProps {
   macro: Envelope<MacroMetric[]>;
@@ -24,20 +22,29 @@ interface Regime {
   blurb: string;
 }
 
+/**
+ * Blurbs are relative on purpose: each axis is "vs its own last 2 years", so
+ * DEFLATION here means growth AND inflation are both below their usual level —
+ * not that prices are falling.
+ */
 function classifyRegime(growthZ: number, inflationZ: number): Regime {
   if (growthZ >= 0 && inflationZ < 0)
-    return { label: 'GOLDILOCKS', tone: 'up', blurb: 'Growth firming, inflation easing' };
+    return { label: 'GOLDILOCKS', tone: 'up', blurb: 'Pertumbuhan di atas biasanya, inflasi di bawah biasanya' };
   if (growthZ >= 0 && inflationZ >= 0)
-    return { label: 'REFLATION', tone: 'amber', blurb: 'Growth and inflation both rising' };
+    return { label: 'REFLATION', tone: 'amber', blurb: 'Pertumbuhan dan inflasi sama-sama di atas biasanya' };
   if (growthZ < 0 && inflationZ >= 0)
-    return { label: 'STAGFLATION', tone: 'down', blurb: 'Growth slowing, inflation sticky' };
-  return { label: 'DEFLATION', tone: 'blue', blurb: 'Growth and inflation both falling' };
+    return { label: 'STAGFLATION', tone: 'down', blurb: 'Pertumbuhan di bawah biasanya, inflasi di atas biasanya' };
+  return {
+    label: 'DEFLATION',
+    tone: 'blue',
+    blurb: 'Pertumbuhan dan inflasi sama-sama di bawah biasanya (bukan berarti harga turun)',
+  };
 }
 
 // SVG frame
 const S = 200;
 const PAD = 22;
-const AXIS_MAX = 3; // ±3σ maps to the plot edges
+const AXIS_MAX = 3; // 3 standard deviations map to the plot edges (not shown as a number)
 
 function coord(z: number, axis: 'x' | 'y'): number {
   const frac = Math.max(-1, Math.min(1, z / AXIS_MAX));
@@ -56,40 +63,42 @@ export function RegimeQuadrant({ macro, country, countryLabel }: RegimeQuadrantP
   const m = macro.data.find((x) => x.country === country) ?? macro.data[0];
   const gz = m.zScores.growth;
   const iz = m.zScores.inflation;
-  const regime = classifyRegime(gz, iz);
-  const composite = (gz - iz) / 2; // pro-growth minus inflation impulse
+  const quadrant = classifyRegime(gz, iz);
+  // Both readings within ±1 of their usual: the quadrant label would claim a
+  // phase the words below contradict ("DEFLATION" next to "sekitar biasanya").
+  const nearNormal = Math.abs(gz) < 1 && Math.abs(iz) < 1;
+  const regime: Regime = nearNormal
+    ? {
+        label: 'NORMAL',
+        tone: 'txt',
+        blurb: `Pertumbuhan dan inflasi sama-sama dekat kebiasaannya; sedikit condong ke ${quadrant.label}`,
+      }
+    : quadrant;
 
   const px = coord(gz, 'x');
   const py = coord(iz, 'y');
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12, minWidth: 0 }}>
-      <PanelGrid columns="repeat(auto-fit, minmax(220px, 1fr))">
-        <div style={{ background: 'var(--panel)', display: 'flex', flexDirection: 'column' }}>
-          <KpiCard
-            label="MACRO REGIME"
-            value={regime.label}
-            tone={regime.tone}
-            detail={regime.blurb}
-            right={<MockBadge env={macro} />}
-          />
-          <SourceFootnote env={macro} />
-        </div>
-        <div style={{ background: 'var(--panel)', display: 'flex', flexDirection: 'column' }}>
-          <KpiCard
-            label="COMPOSITE IMPULSE"
-            value={fmtZ(composite)}
-            tone={composite > 0.25 ? 'up' : composite < -0.25 ? 'down' : 'txt'}
-            detail="(growth z − inflation z) / 2"
-            pct={Math.min(100, Math.abs(composite / AXIS_MAX) * 100)}
-            right={<MockBadge env={macro} />}
-          />
-          <SourceFootnote env={macro} />
-        </div>
-      </PanelGrid>
+      <p style={{ margin: 0, fontSize: 11.5, lineHeight: 1.55, color: 'var(--mut)' }}>
+        Fase ekonomi AS dilihat dari dua hal: pertumbuhan ekonomi dan inflasi inti, masing-masing
+        dibandingkan dengan kebiasaannya selama 2 tahun terakhir. Labelnya menggambarkan arah relatif,
+        bukan kondisi mutlak — mis. &quot;DEFLATION&quot; berarti keduanya lebih rendah dari biasanya,
+        bukan harga sedang turun. Kalau keduanya masih dekat kebiasaannya, labelnya NORMAL.
+      </p>
+      <Panel style={{ display: 'flex', flexDirection: 'column' }}>
+        <KpiCard
+          label="FASE EKONOMI"
+          value={regime.label}
+          tone={regime.tone}
+          detail={regime.blurb}
+          right={<MockBadge env={macro} />}
+        />
+        <SourceFootnote env={macro} />
+      </Panel>
 
       <Panel style={{ display: 'flex', flexDirection: 'column' }}>
-        <PanelHeader title="REGIME QUADRANT" note={`${countryLabel} · GROWTH × INFLATION (z)`} right={<MockBadge env={macro} />} />
+        <PanelHeader title="REGIME QUADRANT" note={`${countryLabel} · PERTUMBUHAN × INFLASI, DIBANDING 2 TAHUN TERAKHIR`} right={<MockBadge env={macro} />} />
         <div style={{ padding: 14, display: 'flex', justifyContent: 'center' }}>
           <svg viewBox={`0 0 ${S} ${S}`} style={{ width: '100%', maxWidth: 340 }} aria-hidden="true">
             {/* plot border */}
@@ -114,7 +123,7 @@ export function RegimeQuadrant({ macro, country, countryLabel }: RegimeQuadrantP
                 x={q.x}
                 y={q.y}
                 textAnchor={q.x < S / 2 ? 'start' : 'end'}
-                fill={q.label === regime.label ? `var(--${regime.tone})` : 'var(--dim)'}
+                fill={q.label === quadrant.label ? `var(--${quadrant.tone})` : 'var(--dim)'}
                 fontSize="7.5"
                 fontFamily="var(--mono)"
                 letterSpacing="1"
@@ -132,39 +141,21 @@ export function RegimeQuadrant({ macro, country, countryLabel }: RegimeQuadrantP
             </text>
 
             {/* current position */}
-            <line x1={S / 2} y1={S / 2} x2={px.toFixed(2)} y2={py.toFixed(2)} stroke={`var(--${regime.tone})`} strokeWidth="1" strokeDasharray="2 2" vectorEffect="non-scaling-stroke" />
-            <circle cx={px.toFixed(2)} cy={py.toFixed(2)} r="4" fill={`var(--${regime.tone})`} />
+            <line x1={S / 2} y1={S / 2} x2={px.toFixed(2)} y2={py.toFixed(2)} stroke={`var(--${quadrant.tone})`} strokeWidth="1" strokeDasharray="2 2" vectorEffect="non-scaling-stroke" />
+            <circle cx={px.toFixed(2)} cy={py.toFixed(2)} r="4" fill={`var(--${quadrant.tone})`} />
           </svg>
         </div>
 
-        {/* z drivers */}
-        <div style={{ padding: '0 12px 12px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {[
-            { label: 'GROWTH Z', z: gz },
-            { label: 'INFLATION Z', z: iz },
-          ].map((x) => (
-            <div key={x.label} style={{ display: 'grid', gridTemplateColumns: '92px 1fr 46px', gap: 10, alignItems: 'center' }}>
-              <span
-                className="iris-micro"
-                style={{ fontFamily: 'var(--mono)', fontSize: 9, color: 'var(--mut)', letterSpacing: '.06em' }}
-              >
-                {x.label}
-              </span>
-              <DivergingBar value={x.z} max={AXIS_MAX} />
-              <span
-                className="iris-micro"
-                style={{
-                  fontFamily: 'var(--mono)',
-                  fontSize: 9.5,
-                  fontWeight: 700,
-                  textAlign: 'right',
-                  color: `var(--${x.z > 0 ? 'up' : x.z < 0 ? 'down' : 'txt'})`,
-                }}
-              >
-                {fmtZ(x.z)}
-              </span>
-            </div>
-          ))}
+        {/* the two readings in words — no z numbers */}
+        <div style={{ padding: '0 12px 12px', display: 'flex', flexDirection: 'column', gap: 6, fontSize: 11.5 }}>
+          <div>
+            <span style={{ color: 'var(--mut)' }}>Pertumbuhan ekonomi: </span>
+            {zWords(gz, '2 tahun terakhir')}
+          </div>
+          <div>
+            <span style={{ color: 'var(--mut)' }}>Inflasi inti: </span>
+            {zWords(iz, '2 tahun terakhir')}
+          </div>
         </div>
         <SourceFootnote env={macro} />
       </Panel>

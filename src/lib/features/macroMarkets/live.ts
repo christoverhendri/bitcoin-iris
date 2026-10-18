@@ -12,7 +12,7 @@
  */
 import { getMacroSeries, YAHOO_LABEL, YAHOO_SYMBOLS, type YahooKey } from '@/lib/sources/yahoo';
 import { getDailyCloses } from '@/lib/sources/coingecko';
-import { correlateDaily, zScore, type DatedPoint } from '@/lib/quant/correlation';
+import { correlateDaily, rollingCorrelation, zScore, type DatedPoint } from '@/lib/quant/correlation';
 import type { MacroMarketsArgs, MacroMarketsData, MarketKind, MarketSeries } from './types';
 
 const KIND: Record<YahooKey, MarketKind> = {
@@ -64,10 +64,10 @@ export async function fetchMacroMarkets({ range = '1y' }: MacroMarketsArgs) {
         ? correlateDaily(points, btcPoints, 30)
         : { r: null, sessions: 0 };
 
-    // 1-day change uses `meta.previousClose`, which is fresher than the last
-    // daily bar during a session.
-    const change1dPct =
-      s.previousClose > 0 ? (s.last / s.previousClose - 1) * 100 : 0;
+    // Newest close vs the previous session. (Yahoo's `chartPreviousClose` is the
+    // close before the chart range — about a year ago at range=1y — and made
+    // "1D" a one-year change until 2026-10-18.)
+    const change1dPct = changePct(s.closes, 1);
 
     series.push({
       key,
@@ -81,6 +81,7 @@ export async function fetchMacroMarkets({ range = '1y' }: MacroMarketsArgs) {
       change30dPct: changePct(s.closes, 30),
       corr30d: corr.r,
       corrSessions: corr.sessions,
+      rollingCorr30d: btcPoints.length > 0 ? rollingCorrelation(points, btcPoints, 30) : [],
       z1y: zScore(s.closes),
       points,
     });
@@ -101,7 +102,8 @@ export async function fetchMacroMarkets({ range = '1y' }: MacroMarketsArgs) {
 
   return {
     data,
-    asOf: new Date(newest > 0 ? newest : Date.now()).toISOString(),
+    // The newest close in the payload; never render time (see defineFeature).
+    asOf: newest > 0 ? new Date(newest).toISOString() : null,
     synthetic: false,
   };
 }

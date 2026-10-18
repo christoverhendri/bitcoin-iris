@@ -1,3 +1,4 @@
+import { LiveOnly } from '@/components/primitives';
 import { getWeeklyForecast } from '@/lib/features/weeklyForecast';
 import { DirectionCard } from '@/components/features/weekly/DirectionCard';
 import { DriverBreakdown } from '@/components/features/weekly/DriverBreakdown';
@@ -17,8 +18,12 @@ export default async function WeeklyForecastPage() {
         minWidth: 0,
       }}
     >
-      <DirectionCard forecast={weeklyForecast} />
-      <DriverBreakdown forecast={weeklyForecast} />
+      <LiveOnly env={weeklyForecast} title="WEEKLY FORECAST">
+        <DirectionCard forecast={weeklyForecast} />
+      </LiveOnly>
+      <LiveOnly env={weeklyForecast} title="DRIVER BREAKDOWN">
+        <DriverBreakdown forecast={weeklyForecast} />
+      </LiveOnly>
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import { defineFeature } from '@/lib/defineFeature';
+import { MAX_AGE_SEC } from '@/lib/maxAge';
 import { fetchPositioning } from './live';
 import { mockPositioning } from './mock';
 import type { PositioningArgs, PositioningData } from './types';
@@ -8,6 +9,7 @@ export const getPositioning = defineFeature<PositioningArgs, PositioningData>({
   source: 'positioning',
   live: fetchPositioning,
   mock: mockPositioning,
+  maxAgeSec: MAX_AGE_SEC.positioning,
 });
 
 export type {

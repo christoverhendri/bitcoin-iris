@@ -4,12 +4,12 @@
  * `stale` turns it off deliberately: a pulsing LIVE dot over a five-minute-old
  * price is a credibility bug, not a cosmetic one.
  */
-export function LiveBadge({ stale = false }: { stale?: boolean }) {
+export function LiveBadge({ stale = false, reason }: { stale?: boolean; reason?: string }) {
   const tone = stale ? 'var(--dim)' : 'var(--up)';
   return (
     <span
       className="iris-micro"
-      title={stale ? 'Data is stale — the ingestion worker is not reporting' : 'Data is fresh'}
+      title={stale ? (reason ?? 'Data is stale — the ingestion worker is not reporting') : 'Data is fresh'}
       style={{
         display: 'inline-flex',
         alignItems: 'center',

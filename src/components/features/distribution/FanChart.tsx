@@ -1,7 +1,8 @@
 import { Panel, PanelHeader, Tag, MockBadge, SourceFootnote } from '@/components/primitives';
+import { ChartHover } from '@/components/charts/ChartHover';
+import { fmtDay } from '@/lib/dates';
 import type { Envelope } from '@/lib/envelope';
 import type { PriceDistributionData } from '@/lib/features/priceDistribution';
-import { DISTRIBUTION_NOTE } from '@/lib/features/priceDistribution';
 import { fmtUsd } from '@/lib/format';
 
 /**
@@ -87,8 +88,26 @@ export function FanChart({ dist }: { dist: Envelope<PriceDistributionData> }) {
     .map((p, i) => `${i === 0 ? 'M' : 'L'}${histX(i).toFixed(1)},${y(p.close).toFixed(1)}`)
     .join(' ');
 
-  const last = d.bands[steps];
   const axisTicks = [0, 0.25, 0.5, 0.75, 1].map((t) => lo + t * span);
+
+  // Hover: actual closes on the left, the simulated range per day on the right.
+  const lastTs = hist[hist.length - 1].ts;
+  const hoverPoints = [
+    ...hist.map((p, i) => ({ x: histX(i), y: y(p.close), lines: [fmtDay(p.ts), `Harga ${fmtUsd(p.close)}`] })),
+    ...d.bands.slice(1).map((r, k) => {
+      const s = k + 1;
+      return {
+        x: coneX(s),
+        y: y(r[3] * d.spot),
+        lines: [
+          `${fmtDay(lastTs + s * 86_400_000)} · simulasi`,
+          `Tengah ${fmtUsd(r[3] * d.spot)}`,
+          `Rendah–Tinggi ${fmtUsd(r[2] * d.spot)} – ${fmtUsd(r[4] * d.spot)}`,
+          `Sangat rendah–sangat tinggi ${fmtUsd(r[0] * d.spot)} – ${fmtUsd(r[6] * d.spot)}`,
+        ],
+      };
+    }),
+  ];
 
   return (
     <Panel>
@@ -97,18 +116,21 @@ export function FanChart({ dist }: { dist: Envelope<PriceDistributionData> }) {
         note={`${d.horizonLabel} ahead · ${d.method.toUpperCase()} · drift removed`}
         right={
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <Tag label="P25–P75" tone="blue" />
-            <Tag label="P5–P95" tone="mut" />
+            <Tag label="GELAP = 50%" tone="blue" />
+            <Tag label="TERANG = 90%" tone="mut" />
             <MockBadge env={dist} />
           </div>
         }
       />
 
       <div style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
-        <svg
-          viewBox={`0 0 ${W} ${H}`}
-          preserveAspectRatio="none"
-          style={{ width: '100%', height: 300, display: 'block', background: 'var(--sunk)' }}
+        <ChartHover
+          viewW={W}
+          viewH={H}
+          points={hoverPoints}
+          height={300}
+          svgStyle={{ background: 'var(--sunk)' }}
+          ariaLabel="Harga BTC aktual dan kisaran simulasi"
         >
           {axisTicks.map((p, i) => (
             <g key={i}>
@@ -181,7 +203,7 @@ export function FanChart({ dist }: { dist: Envelope<PriceDistributionData> }) {
             fill="var(--dim)"
             letterSpacing="0.12em"
           >
-            {hist.length}D ACTUAL
+            {fmtDay(hist[0].ts)} → HARI INI
           </text>
           <text
             x={splitX + 4}
@@ -193,45 +215,9 @@ export function FanChart({ dist }: { dist: Envelope<PriceDistributionData> }) {
           >
             SIMULATED {d.horizonLabel.toUpperCase()}
           </text>
-        </svg>
+        </ChartHover>
 
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(90px, 1fr))',
-            gap: 8,
-          }}
-        >
-          {(
-            [
-              ['P5', last[0], 'var(--down)'],
-              ['P25', last[2], 'var(--mut)'],
-              ['P50', last[3], 'var(--blue)'],
-              ['P75', last[4], 'var(--mut)'],
-              ['P95', last[6], 'var(--up)'],
-            ] as const
-          ).map(([label, mult, color]) => (
-            <div key={label}>
-              <div
-                style={{
-                  fontFamily: 'var(--mono)',
-                  fontSize: 8,
-                  letterSpacing: '.14em',
-                  color: 'var(--mut)',
-                }}
-              >
-                {label}
-              </div>
-              <div style={{ fontFamily: 'var(--mono)', fontWeight: 700, fontSize: 12, color }}>
-                {fmtUsd(mult * d.spot)}
-              </div>
-              <div style={{ fontFamily: 'var(--mono)', fontSize: 8, color: 'var(--dim)' }}>
-                {((mult - 1) * 100 >= 0 ? '+' : '') + ((mult - 1) * 100).toFixed(1)}%
-              </div>
-            </div>
-          ))}
-        </div>
-
+        {/* No per-horizon price tiles: the same five numbers are the highlighted row of the range table below. */}
         <p
           style={{
             margin: 0,
@@ -241,7 +227,9 @@ export function FanChart({ dist }: { dist: Envelope<PriceDistributionData> }) {
             color: 'var(--dim)',
           }}
         >
-          {DISTRIBUTION_NOTE}
+          Separuh simulasi berakhir antara Rendah dan Tinggi; 9 dari 10 antara Sangat rendah dan
+          Sangat tinggi. Ini sebaran kemungkinan, bukan ramalan arah: kecenderungan naik dari sejarah
+          BTC sengaja dihapus, jadi titik tengahnya tetap di sekitar harga sekarang.
         </p>
       </div>
 

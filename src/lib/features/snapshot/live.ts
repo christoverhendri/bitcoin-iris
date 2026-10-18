@@ -54,7 +54,12 @@ export async function fetchSnapshot(_args: SnapshotArgs) {
     realizedVol30dPct: closes.length > 10 ? realizedVolPct(closes, 30) : 0,
   };
 
-  return { data, asOf: new Date().toISOString(), synthetic: false };
+  // The price's own timestamp: Coinbase's trade time, else the newest Yahoo
+  // hourly bar, else the newest daily candle. Never render time.
+  const lastDaily = dailies.length ? new Date(dailies[dailies.length - 1].ts * 1000).toISOString() : null;
+  const asOf = spot?.time ?? stats.asOf ?? lastDaily;
+
+  return { data, asOf, synthetic: false };
 }
 
 function pctFromCloses(closes: number[], daysBack: number): number {

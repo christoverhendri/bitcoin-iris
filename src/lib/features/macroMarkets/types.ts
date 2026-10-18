@@ -23,6 +23,8 @@ export interface MarketSeries {
   corr30d: number | null;
   /** Overlapping sessions the correlation was computed from. */
   corrSessions: number;
+  /** 30-day rolling correlation with BTC, one point per shared trading day, oldest first. */
+  rollingCorr30d: { ts: number; r: number }[];
 
   /**
    * Where the current level sits within this series' own trailing year, in

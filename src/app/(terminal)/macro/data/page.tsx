@@ -1,3 +1,4 @@
+import { LiveOnly } from '@/components/primitives';
 import { getMacroCountry } from '@/lib/features/macroCountry';
 import { COUNTRY_CODES, DEFAULT_COUNTRY, COUNTRIES } from '@/lib/nav';
 import { MacroMetrics } from '@/components/features/macro/MacroMetrics';
@@ -21,7 +22,9 @@ export default async function MacroDataPage({
 
   return (
     <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12, minWidth: 0 }}>
-      <MacroMetrics macro={macro} country={country} countryLabel={label} />
+      <LiveOnly env={macro} title="DATA EKONOMI AS">
+        <MacroMetrics macro={macro} country={country} countryLabel={label} />
+      </LiveOnly>
     </div>
   );
 }

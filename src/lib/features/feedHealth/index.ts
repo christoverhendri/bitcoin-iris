@@ -1,6 +1,7 @@
 import { getAllSourceStatus, type SourceStatusRow } from '@/lib/sourceStatus';
 import { getSupabase } from '@/lib/supabase/server';
-import { ENABLED_SOURCE_COUNT } from '@/lib/sources';
+import { SOURCES } from '@/lib/sources';
+import { staleSources } from '@/lib/freshness';
 import { WIRED_SOURCES } from '@/lib/sources/wired';
 import type { SourceKey } from '@/lib/envelope';
 import type { FeedHealth } from '@/components/shell/StatusFooter';
@@ -34,6 +35,8 @@ import type { FeedHealth } from '@/components/shell/StatusFooter';
 export function computeLiveSources(
   rows: readonly SourceStatusRow[],
   wired: readonly SourceKey[] = WIRED_SOURCES,
+  stale: ReadonlySet<SourceKey> = new Set(),
+  enabled?: ReadonlySet<SourceKey>,
 ): Set<SourceKey> {
   const live = new Set<SourceKey>(wired);
 
@@ -47,8 +50,18 @@ export function computeLiveSources(
       live.delete(r.source_key);
     }
   }
-
+  // A source whose last reading was stale (or failed) is degraded, not live —
+  // its numbers may be a cached response from an upstream that is down.
+  for (const k of stale) live.delete(k);
+  // Only active sources can count: FEEDS n/N must never show n from outside N.
+  if (enabled) for (const k of [...live]) if (!enabled.has(k)) live.delete(k);
   return live;
+}
+
+/** Active sources: the database's flags when it has rows, else the static catalogue. */
+export function enabledSources(rows: readonly SourceStatusRow[]): Set<SourceKey> {
+  if (rows.length > 0) return new Set(rows.filter((r) => r.is_enabled).map((r) => r.source_key));
+  return new Set(SOURCES.filter((s) => s.enabled).map((s) => s.key));
 }
 
 export interface SyncReading {
@@ -92,8 +105,9 @@ export async function getFeedHealth(): Promise<FeedHealth> {
   const statuses = await getAllSourceStatus();
   const rows = [...statuses.values()];
 
-  const enabled = rows.length > 0 ? rows.filter((r) => r.is_enabled).length : ENABLED_SOURCE_COUNT;
-  const liveKeys = computeLiveSources(rows);
+  const enabledKeys = enabledSources(rows);
+  const enabled = enabledKeys.size;
+  const liveKeys = computeLiveSources(rows, WIRED_SOURCES, staleSources(), enabledKeys);
   const sync = computeSync(rows, liveKeys);
 
   const model = await getActiveModel();
@@ -106,6 +120,7 @@ export async function getFeedHealth(): Promise<FeedHealth> {
     modelName: model.name,
     modelVersion: model.version,
     modelIsPlaceholder: model.isPlaceholder,
+    renderedAt: Date.now(),
   };
 }
 

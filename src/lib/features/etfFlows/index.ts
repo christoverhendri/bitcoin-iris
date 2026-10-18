@@ -1,4 +1,5 @@
 import { defineFeature } from '@/lib/defineFeature';
+import { MAX_AGE_SEC } from '@/lib/maxAge';
 import { fetchEtfFlows } from './live';
 import { mockEtfFlows } from './mock';
 import type { EtfFlowsArgs, EtfFlowsData } from './types';
@@ -8,6 +9,7 @@ export const getEtfFlows = defineFeature<EtfFlowsArgs, EtfFlowsData>({
   source: 'etf_flows',
   live: fetchEtfFlows,
   mock: mockEtfFlows,
+  maxAgeSec: MAX_AGE_SEC.etfFlows,
 });
 
 export type { EtfFlowsData, EtfFlowsArgs, EtfFlowSession, EtfFundRow } from './types';

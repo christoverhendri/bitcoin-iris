@@ -100,7 +100,7 @@ export function DirectionCard({ forecast }: DirectionCardProps) {
               style={{ fontFamily: 'var(--mono)', fontSize: 9, letterSpacing: '.14em', color: 'var(--mut)' }}
             >
               {isClassifier
-                ? 'P(UP, 7D) — KELUARAN MODEL, BELUM DIKALIBRASI'
+                ? 'SKOR MODEL P(NAIK 7 HARI) — BELUM DIKALIBRASI'
                 : 'MODEL CONFIDENCE'}
             </span>
             <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -232,54 +232,26 @@ export function DirectionCard({ forecast }: DirectionCardProps) {
                 className="iris-micro"
                 style={{ fontFamily: 'var(--mono)', fontSize: 9, letterSpacing: '.14em', color: 'var(--mut)' }}
               >
-                CONFIDENCE · TRACK RECORD
+                PELUANG SINYAL INI BENAR (TRACK RECORD)
               </span>
               <span style={{ fontFamily: 'var(--mono)', fontSize: 15, fontWeight: 700, color: 'var(--txt)' }}>
                 {labels.confidencePct}
               </span>
             </div>
             <div style={{ fontFamily: 'var(--mono)', fontSize: 9.5, lineHeight: 1.55, color: 'var(--mut)', marginTop: 4 }}>
-              Past {clf?.signal} calls were right {labels.confidencePct} of the time ({labels.confidenceN}{' '}
-              test days, {labels.confidenceWindow}). Without the model, that direction happened{' '}
-              {labels.baseRatePct} of the time. Only days followed by a meaningful 7-day move are
-              counted, and their 7-day windows overlap, so there are fewer independent weeks than days.
+              Setiap kali model memberi sinyal {clf?.signal} di data uji, sinyal itu benar{' '}
+              {labels.confidencePct} kali ({labels.confidenceN} hari uji, {labels.confidenceWindow}). Tanpa
+              model, arah yang sama terjadi {labels.baseRatePct} kali —{' '}
+              {clf?.track && clf.track.precision > clf.track.baseRate
+                ? 'jadi sinyal ini lebih sering benar daripada tebakan dasar.'
+                : 'jadi sinyal ini tidak lebih baik dari tebakan dasar.'}{' '}
+              Skor P(naik) di atas bukan peluang: angka itu hanya dibandingkan dengan
+              ambang untuk menentukan BULL/BEAR.
             </div>
           </div>
         ) : null}
 
-        {/* Range Section (Volatility Band) */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, background: 'var(--line)' }}>
-          <div style={{ background: 'var(--sunk)', padding: '9px 12px' }}>
-            <div
-              className="iris-micro"
-              style={{ fontFamily: 'var(--mono)', fontSize: 9, letterSpacing: '.12em', color: 'var(--mut)' }}
-            >
-              RANGE LOW
-            </div>
-            <div style={{ fontFamily: 'var(--mono)', fontSize: 13, fontWeight: 700, color: 'var(--down)', marginTop: 3 }}>
-              {labels.minRange}
-            </div>
-          </div>
-          <div style={{ background: 'var(--sunk)', padding: '9px 12px' }}>
-            <div
-              className="iris-micro"
-              style={{ fontFamily: 'var(--mono)', fontSize: 9, letterSpacing: '.12em', color: 'var(--mut)' }}
-            >
-              RANGE HIGH
-            </div>
-            <div style={{ fontFamily: 'var(--mono)', fontSize: 13, fontWeight: 700, color: 'var(--up)', marginTop: 3 }}>
-              {labels.maxRange}
-            </div>
-          </div>
-        </div>
-
-        {/* Volatility note */}
-        <div
-          className="iris-micro"
-          style={{ fontFamily: 'var(--mono)', fontSize: 8.5, color: 'var(--dim)', lineHeight: 1.3 }}
-        >
-          VOLATILITY BAND — realized vol 30d, 7d horizon. Bukan prediksi arah/besaran.
-        </div>
+        {/* Range shown once, in FORWARD RETURN RANGE below (curation 2026-10-18). */}
 
         {/* Provenance note for classifier mode */}
         {isClassifier && clf ? (

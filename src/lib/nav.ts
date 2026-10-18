@@ -10,7 +10,6 @@
 
 export type SectionKey =
   | 'overview'
-  | 'market'
   | 'quant'
   | 'forecast'
   | 'chain'
@@ -48,45 +47,29 @@ export const SECTIONS: Section[] = [
     subs: [{ slug: null, label: 'SUMMARY' }],
   },
   {
-    key: 'market',
-    label: 'Market',
-    title: 'MARKET',
-    blurb: 'BTC/USD price action',
-    group: 'Market',
-    icon: 'M3 17l5-6 4 3 5-8 4 5',
-    subs: [
-      { slug: 'price', label: 'PRICE' },
-      { slug: 'technicals', label: 'TECHNICALS' },
-    ],
-  },
-  {
     key: 'quant',
     label: 'Quantitative',
     title: 'QUANTITATIVE',
-    blurb: 'Volatility · seasonality',
+    blurb: 'Seasonality',
     group: 'Market',
     icon: 'M4 20V8M10 20V4M16 20v-9M22 20v-5',
-    subs: [
-      { slug: 'volatility', label: 'VOLATILITY' },
-      { slug: 'seasonality', label: 'SEASONALITY' },
-    ],
+    // VOLATILITY removed in the 2026-10-18 curation; /quant/volatility redirects here.
+    subs: [{ slug: 'seasonality', label: 'SEASONALITY' }],
   },
   {
     key: 'chain',
     label: 'On-Chain',
     title: 'ON-CHAIN',
-    blurb: 'Supply · flows · derivatives · ETF',
+    blurb: 'ETF · long/short · exchange wallets',
     group: 'Evidence',
     icon: 'M7 7h10v10H7zM3 12h4M17 12h4M12 3v4M12 17v4',
-    // Append only. Middleware validates the `iris_sub` cookie against this list,
-    // so adding is safe; reordering would move the default landing tab.
+    // Curation 2026-10-18. New slugs on purpose: earlier builds sent permanent
+    // (browser-cached) redirects from /chain/positioning and /chain/flows, so
+    // reusing those paths could loop in a browser that saw them.
     subs: [
-      { slug: 'supply', label: 'SUPPLY' },
-      { slug: 'network', label: 'NETWORK' },
-      { slug: 'flows', label: 'FLOWS' },
-      { slug: 'derivatives', label: 'DERIVATIVES' },
-      { slug: 'positioning', label: 'POSITIONING' },
       { slug: 'etf', label: 'ETF FLOWS' },
+      { slug: 'long-short', label: 'LONG / SHORT' },
+      { slug: 'wallets', label: 'WALLET & TRANSFER' },
     ],
   },
   {
@@ -102,10 +85,10 @@ export const SECTIONS: Section[] = [
     key: 'macro',
     label: 'Macro',
     title: 'MACRO',
-    blurb: 'Country data · regime · global markets',
+    blurb: 'US data · regime · global markets',
     group: 'Evidence',
     icon: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM3 12h18M12 3c3 3.6 3 14.4 0 18',
-    scope: 'country',
+    // US only since the 2026-10-18 curation, so no country tab row.
     subs: [
       { slug: 'data', label: 'ECONOMIC DATA' },
       { slug: 'regime', label: 'MACRO REGIME' },
@@ -117,7 +100,7 @@ export const SECTIONS: Section[] = [
     key: 'forecast',
     label: 'Forecast',
     title: 'FORECAST',
-    blurb: 'Distribution · calibration · direction',
+    blurb: 'Weekly forecast · distribution',
     group: 'Model',
     icon: 'M3 12h4l3-8 4 16 3-8h4',
     // Ordered deliberately: `subs[0]` is where a first-time visitor lands, and
@@ -130,9 +113,10 @@ export const SECTIONS: Section[] = [
     // to do by construction. Renaming the slug would break old bookmarks for no
     // gain. The MONTHLY tab was removed — see docs/DECISIONS.md §4.
     subs: [
+      // Curation 2026-10-18: the weekly model leads the section; CALIBRATION was
+      // removed (redirects to distribution).
+      { slug: 'weekly', label: 'WEEKLY FORECAST' },
       { slug: 'distribution', label: 'DISTRIBUTION' },
-      { slug: 'calibration', label: 'CALIBRATION' },
-      { slug: 'weekly', label: 'DIRECTION' },
     ],
   },
 ];
@@ -160,14 +144,7 @@ export const subHref = (s: Section, sub: SubTab) =>
 /** Fallback when no sub is remembered for a section. */
 export const defaultSubHref = (s: Section) => subHref(s, s.subs[0]);
 
-export const COUNTRIES = [
-  { code: 'US', label: 'United States', display: 'UNITED STATES' },
-  { code: 'CN', label: 'China', display: 'CHINA' },
-  { code: 'EU', label: 'Euro Zone', display: 'EURO ZONE' },
-  { code: 'JP', label: 'Japan', display: 'JAPAN' },
-  { code: 'GB', label: 'United Kingdom', display: 'UNITED KINGDOM' },
-  { code: 'ID', label: 'Indonesia', display: 'INDONESIA' },
-] as const;
+export const COUNTRIES = [{ code: 'US', label: 'United States', display: 'UNITED STATES' }] as const;
 
 export type CountryCode = (typeof COUNTRIES)[number]['code'];
 export const COUNTRY_CODES = COUNTRIES.map((c) => c.code) as readonly CountryCode[];

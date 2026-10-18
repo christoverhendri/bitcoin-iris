@@ -1,4 +1,4 @@
-import { PanelStrip, KpiCard, MockBadge, SourceFootnote } from '@/components/primitives';
+import { PanelStrip, KpiCard, MockBadge, SourceFootnote, LiveOnly } from '@/components/primitives';
 import type { Envelope } from '@/lib/envelope';
 import type { WeeklyForecastData } from '@/lib/features/weeklyForecast';
 import {
@@ -59,6 +59,7 @@ export function SignalCards({ weeklyForecast, confluence, social }: SignalCardsP
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', background: 'var(--line)' }}>
       <PanelStrip>
+        <LiveOnly env={weeklyForecast} title="WEEKLY FORECAST">
         <div style={{ background: 'var(--panel)', display: 'flex', flexDirection: 'column' }}>
           <KpiCard
             label="WEEKLY FORECAST"
@@ -83,6 +84,9 @@ export function SignalCards({ weeklyForecast, confluence, social }: SignalCardsP
           <SourceFootnote env={weeklyForecast} />
         </div>
 
+        </LiveOnly>
+
+        <LiveOnly env={confluence} title="CONFLUENCE">
         <div style={{ background: 'var(--panel)', display: 'flex', flexDirection: 'column' }}>
           <KpiCard
             label="CONFLUENCE"
@@ -94,8 +98,11 @@ export function SignalCards({ weeklyForecast, confluence, social }: SignalCardsP
           />
           <SourceFootnote env={confluence} />
         </div>
+        </LiveOnly>
 
-        <SocialSentimentCard social={social} />
+        <LiveOnly env={social} title="SOCIAL SENTIMENT">
+          <SocialSentimentCard social={social} />
+        </LiveOnly>
       </PanelStrip>
     </div>
   );

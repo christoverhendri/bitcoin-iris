@@ -60,7 +60,6 @@ export function FlowMatrix({ etf }: { etf: Envelope<EtfFlowsData> }) {
                 {f}
               </th>
             ))}
-            <th style={{ textAlign: 'right' }}>NET</th>
           </tr>
         </thead>
         <tbody>
@@ -83,21 +82,7 @@ export function FlowMatrix({ etf }: { etf: Envelope<EtfFlowsData> }) {
                   </td>
                 );
               })}
-              <td
-                style={{
-                  textAlign: 'right',
-                  fontWeight: 700,
-                  whiteSpace: 'nowrap',
-                  color:
-                    s.totalUsdM > 0
-                      ? 'var(--up)'
-                      : s.totalUsdM < 0
-                        ? 'var(--down)'
-                        : 'var(--mut)',
-                }}
-              >
-                {s.totalUsdM.toFixed(1)}
-              </td>
+              {/* No NET column: each session's net is the bar in ETF NET FLOW. */}
             </tr>
           ))}
         </tbody>

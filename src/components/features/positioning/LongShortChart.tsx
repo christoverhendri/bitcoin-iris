@@ -1,4 +1,6 @@
 import { Panel, PanelHeader, Tag, MockBadge, SourceFootnote } from '@/components/primitives';
+import { ChartHover } from '@/components/charts/ChartHover';
+import { fmtHour } from '@/lib/dates';
 import type { Envelope } from '@/lib/envelope';
 import type { PositioningData } from '@/lib/features/positioning';
 import { CROWDING_NOTE, SINGLE_VENUE_NOTE } from '@/lib/features/positioning';
@@ -61,6 +63,23 @@ export function LongShortChart({ positioning }: { positioning: Envelope<Position
 
   const yOne = H - PAD_Y - ((1 - lo) / span) * (H - PAD_Y * 2);
 
+  // Hover: one point per hour, read from the retail series (both share Binance's
+  // hourly timestamps); the top-trader value is matched by timestamp.
+  const n = d.retail.length;
+  const topByTs = new Map(d.topTrader.map((p) => [p.ts, p.ratio]));
+  const hoverPoints = d.retail.map((p, i) => {
+    const top = topByTs.get(p.ts);
+    return {
+      x: PAD_X + (n === 1 ? 0 : (i / (n - 1)) * (W - PAD_X * 2)),
+      y: H - PAD_Y - ((p.ratio - lo) / span) * (H - PAD_Y * 2),
+      lines: [
+        fmtHour(p.ts),
+        `Retail ${p.ratio.toFixed(3)}`,
+        top === undefined ? 'Top trader —' : `Top trader ${top.toFixed(3)}`,
+      ],
+    };
+  });
+
   return (
     <Panel style={{ flex: 1, minWidth: 0 }}>
       <PanelHeader
@@ -76,10 +95,13 @@ export function LongShortChart({ positioning }: { positioning: Envelope<Position
       />
 
       <div style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
-        <svg
-          viewBox={`0 0 ${W} ${H}`}
-          preserveAspectRatio="none"
-          style={{ width: '100%', height: 200, display: 'block', background: 'var(--sunk)' }}
+        <ChartHover
+          viewW={W}
+          viewH={H}
+          points={hoverPoints}
+          height={200}
+          svgStyle={{ background: 'var(--sunk)' }}
+          ariaLabel="Rasio long/short retail dan top trader, per jam"
         >
           {/* balanced reference */}
           <line
@@ -107,7 +129,7 @@ export function LongShortChart({ positioning }: { positioning: Envelope<Position
             strokeLinecap="butt"
             vectorEffect="non-scaling-stroke"
           />
-        </svg>
+        </ChartHover>
 
         <div
           style={{
@@ -119,9 +141,9 @@ export function LongShortChart({ positioning }: { positioning: Envelope<Position
             color: 'var(--dim)',
           }}
         >
-          <span>{lo.toFixed(2)}</span>
-          <span>1.00 = BALANCED</span>
-          <span>{hi.toFixed(2)}</span>
+          <span>{n > 0 ? fmtHour(d.retail[0].ts) : ''}</span>
+          <span>garis = 1.00 (seimbang) · skala {lo.toFixed(2)}–{hi.toFixed(2)}</span>
+          <span>{n > 0 ? fmtHour(d.retail[n - 1].ts) : ''}</span>
         </div>
 
         <p

@@ -10,6 +10,8 @@ import {
 } from '@/components/shell';
 import { getFeedHealth, isStale } from '@/lib/features/feedHealth';
 import { getBtcSnapshot } from '@/lib/features/snapshot';
+import { AutoRefresh } from '@/components/shell/AutoRefresh';
+import { explainStale } from '@/lib/envelope';
 
 /** The topbar ticker must not look stale under a pulsing LIVE dot. */
 export const revalidate = 30;
@@ -20,14 +22,27 @@ export default async function TerminalLayout({ children }: { children: ReactNode
     getBtcSnapshot({ symbol: 'BTC-USD' }),
   ]);
 
+  const workerStale = isStale(health.lastSyncAt);
+  const staleReason = snapshot.isMock
+    ? 'Price is a placeholder — the price source is unreachable.'
+    : snapshot.isStale
+      ? explainStale(snapshot)
+      : workerStale
+        ? 'The ingestion worker is not reporting.'
+        : undefined;
+
   return (
     <AppShell sidebar={<Sidebar health={health} />}>
+      {/* Every page re-renders from the server every 30s while the tab is visible. */}
+      <AutoRefresh intervalSec={30} />
       <Topbar
         ticker={{
           symbol: 'BTC/USD',
-          price: snapshot.data.last,
-          changePct: snapshot.data.change24hPct,
-          stale: snapshot.isMock || isStale(health.lastSyncAt),
+          // A mocked snapshot shows no price at all rather than a placeholder one.
+          price: snapshot.isMock ? null : snapshot.data.last,
+          changePct: snapshot.isMock ? null : snapshot.data.change24hPct,
+          stale: snapshot.isMock || snapshot.isStale || workerStale,
+          staleReason,
         }}
       />
       {/* nuqs reads the query string, so these must sit behind a Suspense

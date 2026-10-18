@@ -1,4 +1,5 @@
 import { defineFeature } from '@/lib/defineFeature';
+import { MAX_AGE_SEC } from '@/lib/maxAge';
 import { fetchSeasonality } from './live';
 import { mockSeasonality } from './mock';
 import type { SeasonalityCell, SeasonalityArgs } from './types';
@@ -8,7 +9,9 @@ export const getSeasonality = defineFeature<SeasonalityArgs, SeasonalityCell[]>(
   source: 'internal_quant',
   live: fetchSeasonality,
   mock: mockSeasonality,
+  maxAgeSec: MAX_AGE_SEC.dailyCandles,
 });
 
 export type { SeasonalityCell, SeasonalityArgs };
 export { toSeasonalityLabel, getSeasonalityColor } from './present';
+export { monthlyBullOdds } from './stats';

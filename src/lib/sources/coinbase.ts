@@ -25,6 +25,8 @@ export interface CoinbaseStats {
   last: number;
   volume: number;
   volume30day: number;
+  /** When the source says these stats are from (ISO). Coinbase /stats carries none. */
+  asOf?: string | null;
 }
 
 /** 24h rolling stats for a product. Powers the snapshot's 24h fields. */
@@ -42,12 +44,23 @@ export async function getStats(product = 'BTC-USD'): Promise<CoinbaseStats> {
   };
 }
 
-/** Spot bid/ask/last. Cheapest call; used for the freshest last price. */
-export async function getSpot(product = 'BTC-USD'): Promise<{ price: number; volume: number }> {
+/**
+ * Spot bid/ask/last. Cheapest call; used for the freshest last price. `time` is
+ * Coinbase's own trade timestamp — the honest age of the price, which survives a
+ * cached response (render time would not).
+ */
+export async function getSpot(
+  product = 'BTC-USD',
+): Promise<{ price: number; volume: number; time: string | null }> {
   const j = await fetchJson<Record<string, string>>(`${BASE}/products/${product}/ticker`, {
     revalidate: 30,
   });
-  return { price: Number(j.price), volume: Number(j.volume) };
+  const t = Date.parse(j.time ?? '');
+  return {
+    price: Number(j.price),
+    volume: Number(j.volume),
+    time: Number.isFinite(t) ? new Date(t).toISOString() : null,
+  };
 }
 
 const GRANULARITY: Record<string, number> = {

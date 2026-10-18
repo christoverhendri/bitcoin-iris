@@ -146,7 +146,8 @@ export async function fetchPositioning({ hours = 48 }: PositioningArgs) {
 
   return {
     data,
-    asOf: new Date(newest > 0 ? newest : Date.now()).toISOString(),
+    // The newest point in the payload; no point means no age to trust (never render time).
+    asOf: newest > 0 ? new Date(newest).toISOString() : null,
     synthetic: false,
   };
 }

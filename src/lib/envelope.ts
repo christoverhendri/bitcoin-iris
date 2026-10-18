@@ -53,6 +53,15 @@ export interface Envelope<T> {
   sourceKey: SourceKey;
   /** Copied from `data_source_status.unlock_note`; shown in the MOCK tooltip. */
   unlockNote: string | null;
+  /**
+   * Real data that is older than the feature allows (`maxAgeSec`), or whose
+   * timestamp is unknown. Distinct from `isMock`: the numbers are genuine, just
+   * not current. This is what an upstream outage looks like behind Next's fetch
+   * cache, which keeps serving the last good response when revalidation fails.
+   */
+  isStale: boolean;
+  /** Seconds between `asOf` and render. `null` when mocked or unknown. */
+  ageSec: number | null;
 }
 
 export const live = <T>(data: T, sourceKey: SourceKey, asOf: string | null): Envelope<T> => ({
@@ -63,6 +72,8 @@ export const live = <T>(data: T, sourceKey: SourceKey, asOf: string | null): Env
   asOf,
   sourceKey,
   unlockNote: null,
+  isStale: false,
+  ageSec: null,
 });
 
 export const mocked = <T>(
@@ -78,7 +89,42 @@ export const mocked = <T>(
   asOf: null,
   sourceKey,
   unlockNote,
+  isStale: false,
+  ageSec: null,
 });
+
+/** Age of a timestamp in whole seconds, or `null` when it does not parse. */
+export function ageSeconds(asOf: string | null, now: number): number | null {
+  if (!asOf) return null;
+  const t = Date.parse(asOf);
+  if (!Number.isFinite(t)) return null;
+  return Math.max(0, Math.round((now - t) / 1000));
+}
+
+/** Stale when older than the limit (the limit itself is still fresh), or of unknown age. */
+export function isStaleAge(ageSec: number | null, maxAgeSec: number | undefined): boolean {
+  if (ageSec === null) return true;
+  if (maxAgeSec === undefined) return false;
+  return ageSec > maxAgeSec;
+}
+
+/** `32h`, `3d`, `12m` — the compact age shown on the STALE badge. */
+export function fmtAgeShort(ageSec: number | null): string {
+  if (ageSec === null) return '?';
+  if (ageSec < 3600) return `${Math.max(1, Math.round(ageSec / 60))}m`;
+  if (ageSec < 2 * 86_400) return `${Math.round(ageSec / 3600)}h`;
+  return `${Math.round(ageSec / 86_400)}d`;
+}
+
+/** Tooltip for the STALE badge. */
+export function explainStale<T>(env: Envelope<T>): string {
+  if (!env.isStale) return '';
+  const age = env.ageSec === null ? 'of unknown age' : `${fmtAgeShort(env.ageSec)} old`;
+  return (
+    `Real data, but ${age} — older than this panel allows. The source is probably ` +
+    'unreachable and the last good response is being served from cache.'
+  );
+}
 
 const REASON_TEXT: Record<MockReason, string> = {
   no_rows: 'No data in the database yet — the ingestion job has not run.',

@@ -17,10 +17,8 @@ import {
  * Telegram and 4chan its classifier labels positive / neutral / negative.
  *
  * Two marks, two jobs:
- *   - a donut for the newest day — part-to-whole at a glance, three slices;
- *   - a diverging column per day for the trend — neutral straddles the centre
- *     line, positive stacks up, negative stacks down, on a fixed 0-100% scale per
- *     side so a quiet month cannot be stretched to look dramatic.
+ *   - a donut for the newest day — part-to-whole at a glance, three slices.
+ *     (The 30-day diverging bar chart was removed in the 2026-10-18 curation.)
  *
  * Every slice and column carries a text label or a tooltip; colour is never the
  * only way to tell positive from negative.
@@ -67,54 +65,6 @@ function Legend({ day, dense }: { day: SocialSentimentDay; dense?: boolean }) {
   );
 }
 
-const W = 600;
-const H = 140;
-const PAD = 8;
-
-function History({ history }: { history: SocialSentimentDay[] }) {
-  const n = history.length;
-  const mid = H / 2;
-  const half = mid - PAD;
-  const slot = (W - PAD * 2) / n;
-  const barW = Math.max(2, slot - 2); // 2px surface gap between columns
-  return (
-    <svg
-      viewBox={`0 0 ${W} ${H}`}
-      preserveAspectRatio="none"
-      style={{ width: '100%', height: 140, display: 'block', background: 'var(--sunk)' }}
-      role="img"
-      aria-label={`Daily positive, neutral and negative share, ${history[0].date} to ${history[n - 1].date}`}
-    >
-      {[0.5, 1].map((f) => (
-        <g key={f}>
-          <line x1={PAD} x2={W - PAD} y1={mid - f * half} y2={mid - f * half} stroke="var(--line)" vectorEffect="non-scaling-stroke" />
-          <line x1={PAD} x2={W - PAD} y1={mid + f * half} y2={mid + f * half} stroke="var(--line)" vectorEffect="non-scaling-stroke" />
-        </g>
-      ))}
-      {history.map((d, i) => {
-        const x = PAD + i * slot + (slot - barW) / 2;
-        const neuH = (d.neutral / 2) * half;
-        const posH = d.positive * half;
-        const negH = d.negative * half;
-        return (
-          <g key={d.date}>
-            <rect x={x} y={mid - neuH - posH} width={barW} height={posH} fill={BUCKET_COLOR.positive} />
-            <rect x={x} y={mid - neuH} width={barW} height={neuH * 2} fill={BUCKET_COLOR.neutral} />
-            <rect x={x} y={mid + neuH} width={barW} height={negH} fill={BUCKET_COLOR.negative} />
-            {/* Hit target: the full column height, wider than the marks. */}
-            <rect x={PAD + i * slot} y={0} width={slot} height={H} fill="transparent">
-              <title>
-                {`${d.date} · positive ${fmtShare(d.positive)} · neutral ${fmtShare(d.neutral)} · negative ${fmtShare(d.negative)}`}
-              </title>
-            </rect>
-          </g>
-        );
-      })}
-      <line x1={PAD} x2={W - PAD} y1={mid} y2={mid} stroke="var(--line2)" vectorEffect="non-scaling-stroke" />
-    </svg>
-  );
-}
-
 function lagNote(d: SocialSentimentData) {
   return `DATA AS OF ${d.latest.date} · ${d.lagDays} DAYS BEHIND`;
 }
@@ -139,18 +89,6 @@ export function SocialSentimentPanel({ social }: { social: Envelope<SocialSentim
               {tilt >= 0 ? '+' : ''}
               {tilt.toFixed(1)} pts more {tilt >= 0 ? 'positive than negative' : 'negative than positive'}
             </div>
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <div style={{ ...mono, fontSize: 9, letterSpacing: '.12em', color: 'var(--mut)' }}>
-            LAST {d.history.length} DAYS · POSITIVE UP · NEGATIVE DOWN · NEUTRAL ACROSS THE LINE
-          </div>
-          <History history={d.history} />
-          <div style={{ ...mono, fontSize: 8, color: 'var(--dim)', display: 'flex', justifyContent: 'space-between' }}>
-            <span>{d.history[0].date}</span>
-            <span>100% per side at the outer line</span>
-            <span>{d.latest.date}</span>
           </div>
         </div>
 

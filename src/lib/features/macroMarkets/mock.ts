@@ -63,6 +63,11 @@ export function mockMacroMarkets(_args: MacroMarketsArgs): MacroMarketsData {
       // for everything and teach the reader nothing about the panel's shape.
       corr30d: Math.max(-1, Math.min(1, p.corr + (rand() - 0.5) * 0.2)),
       corrSessions: 30,
+      // Placeholder history: the fixed correlation with a slow deterministic wobble.
+      rollingCorr30d: points.slice(30).map((pt, j) => ({
+        ts: pt.ts,
+        r: Math.max(-1, Math.min(1, p.corr + Math.sin(j / 9) * 0.25)),
+      })),
       z1y: zScore(closes),
       points,
     };

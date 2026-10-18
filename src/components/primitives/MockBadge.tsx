@@ -1,13 +1,16 @@
-import { type Envelope, explainMock } from '@/lib/envelope';
+import { type Envelope, explainMock, explainStale, fmtAgeShort } from '@/lib/envelope';
 import { fmtAgo } from '@/lib/format';
 
 /**
  * Renders only when the envelope carries synthetic data. This is the visible
  * half of the mock contract — if a panel shows placeholder numbers, this badge
  * is on it, because both come from the same `isMock` flag.
+ *
+ * Real but out-of-date data renders the STALE badge instead (same slot, so every
+ * panel that already shows MockBadge gets it for free).
  */
 export function MockBadge<T>({ env }: { env: Envelope<T> }) {
-  if (!env.isMock) return null;
+  if (!env.isMock) return env.isStale ? <StaleBadge ageSec={env.ageSec} title={explainStale(env)} /> : null;
   return (
     <span
       className="iris-micro"
@@ -24,6 +27,32 @@ export function MockBadge<T>({ env }: { env: Envelope<T> }) {
       }}
     >
       MOCK
+    </span>
+  );
+}
+
+/**
+ * `STALE · 32h` — the data is genuine but older than the panel allows. Red rather
+ * than MOCK's amber: a stale number that looks current is the more dangerous of
+ * the two. Also used directly by panels that track a sub-part's age (e.g. DVOL).
+ */
+export function StaleBadge({ ageSec, title }: { ageSec: number | null; title?: string }) {
+  return (
+    <span
+      className="iris-micro"
+      title={title ?? 'Real data, but older than this panel allows.'}
+      style={{
+        fontFamily: 'var(--mono)',
+        fontSize: 8.5,
+        letterSpacing: '.14em',
+        color: 'var(--down)',
+        border: '1px solid var(--down)',
+        padding: '2px 6px',
+        lineHeight: 1,
+        whiteSpace: 'nowrap',
+      }}
+    >
+      STALE · {fmtAgeShort(ageSec)}
     </span>
   );
 }
@@ -94,6 +123,7 @@ export function SourceFootnote<T>({ env, now }: { env: Envelope<T>; now?: number
       SOURCE: {env.sourceKey.toUpperCase().replace(/_/g, ' ')}
       {' · '}
       {env.isMock ? 'PLACEHOLDER' : fmtAgo(env.asOf, now)}
+      {!env.isMock && env.isStale && <span style={{ color: 'var(--down)' }}> · STALE</span>}
     </div>
   );
 }

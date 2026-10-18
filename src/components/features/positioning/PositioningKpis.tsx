@@ -1,18 +1,11 @@
 import { PanelStrip, StatTile, MockBadge } from '@/components/primitives';
 import type { Envelope } from '@/lib/envelope';
 import type { PositioningData } from '@/lib/features/positioning';
-import {
-  toPositioningLabels,
-  ratioTone,
-  biasTone,
-  divergenceTone,
-  premiumTone,
-} from '@/lib/features/positioning';
+import { toPositioningLabels, ratioTone } from '@/lib/features/positioning';
 
 /**
- * The reading in five tiles. `BIAS` is the only one that is an opinion rather
- * than a measurement, and its detail line says what produced it — a bare label
- * would be an oracle, which is the thing this terminal refuses to be.
+ * The latest reading of each cohort. DIVERGENCE, BIAS · OPINION and COINBASE
+ * PREMIUM were removed in the 2026-10-18 curation.
  */
 export function PositioningKpis({ positioning }: { positioning: Envelope<PositioningData> }) {
   const d = positioning.data;
@@ -36,24 +29,6 @@ export function PositioningKpis({ positioning }: { positioning: Envelope<Positio
         value={l.topTraderRatio}
         tone={d.available.topTrader ? ratioTone(d.topTraderRatio) : 'dim'}
         detail={`${l.topTraderLongPct} long · by position`}
-      />
-      <StatTile
-        label="DIVERGENCE"
-        value={l.divergence}
-        tone={divergenceTone(d.divergence)}
-        detail="top trader − retail"
-      />
-      <StatTile
-        label="COINBASE PREMIUM"
-        value={l.premium}
-        tone={d.available.premium ? premiumTone(d.coinbasePremiumPct) : 'dim'}
-        detail="vs Binance BTCUSDT"
-      />
-      <StatTile
-        label="BIAS · OPINION"
-        value={l.bias}
-        tone={biasTone(d.bias)}
-        detail={d.biasReason}
       />
     </PanelStrip>
   );

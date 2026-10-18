@@ -25,13 +25,23 @@ export interface PerpTicker {
   openInterestBtc: number;
   /** Per-period (8h) funding rate as a decimal fraction, e.g. 0.0001 = 0.01%. */
   fundingRate: number;
+  /** Bybit's response timestamp (ms), or null if absent. */
+  time: number | null;
 }
 
 interface BybitEnvelope<T> {
   retCode?: number;
   retMsg?: string;
   result?: T;
+  /** Server time of the response, ms. */
+  time?: number;
 }
+
+/** A positive epoch-ms number, or null. */
+const msOrNull = (raw: unknown): number | null => {
+  const n = Number(raw);
+  return Number.isFinite(n) && n > 0 ? n : null;
+};
 
 interface BybitTickerRow {
   lastPrice?: string;
@@ -70,6 +80,7 @@ export async function getBybitTicker(): Promise<PerpTicker> {
     indexPrice: num(row.indexPrice, 'bybit indexPrice'),
     openInterestBtc: num(row.openInterest, 'bybit openInterest'),
     fundingRate: num(row.fundingRate, 'bybit fundingRate'),
+    time: msOrNull(j.time),
   };
 }
 
@@ -99,14 +110,14 @@ export async function getBybitOiHistory(limit = 48): Promise<{ ts: number; oi: n
 /* ---------------------------------------------------------------- OKX ---- */
 
 /** Current per-period funding rate for the BTC-USD inverse swap, as a fraction. */
-export async function getOkxFunding(): Promise<number> {
-  const j = await fetchJson<{ data?: { fundingRate?: string }[] }>(
+export async function getOkxFunding(): Promise<{ rate: number; time: number | null }> {
+  const j = await fetchJson<{ data?: { fundingRate?: string; ts?: string }[] }>(
     'https://www.okx.com/api/v5/public/funding-rate?instId=BTC-USD-SWAP',
     { revalidate: 120 },
   );
   const row = j.data?.[0];
   if (!row) throw new Error('derivatives: okx funding returned no rows');
-  return num(row.fundingRate, 'okx fundingRate');
+  return { rate: num(row.fundingRate, 'okx fundingRate'), time: msOrNull(row.ts) };
 }
 
 /* ------------------------------------------------------------ Binance ---- */
@@ -120,17 +131,19 @@ export async function getBinanceFunding(): Promise<{
   fundingRate: number;
   markPrice: number;
   indexPrice: number;
+  time: number | null;
 }> {
   const j = await fetchJson<{
     markPrice?: string;
     indexPrice?: string;
     lastFundingRate?: string;
+    time?: number;
   }>('https://fapi.binance.com/fapi/v1/premiumIndex?symbol=BTCUSDT', { revalidate: 120 });
-
   return {
     fundingRate: num(j.lastFundingRate, 'binance lastFundingRate'),
     markPrice: num(j.markPrice, 'binance markPrice'),
     indexPrice: num(j.indexPrice, 'binance indexPrice'),
+    time: msOrNull(j.time),
   };
 }
 

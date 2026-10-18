@@ -44,10 +44,12 @@ describe('macro freshness guard', () => {
     const { staleSeries } = await import('@/lib/features/macroCountry/live');
     const now = Date.parse('2026-10-17T00:00:00Z');
     const monthly = { id: 'M', units: 'lin' as const, maxAgeDays: 120 };
-    const quarterly = { id: 'Q', units: 'pc1' as const, maxAgeDays: 200 };
+    const quarterly = { id: 'Q', units: 'pc1' as const, maxAgeDays: 270 };
     expect(staleSeries([{ ref: monthly, asOf: '2026-09-01' }], now)).toEqual([]);
     expect(staleSeries([{ ref: quarterly, asOf: '2026-04-01' }], now)).toEqual([]); // Q2, released late July
     expect(staleSeries([{ ref: monthly, asOf: '2021-06-01' }], now)).toEqual(['M (last 2021-06-01)']);
     expect(staleSeries([{ ref: quarterly, asOf: '2025-10-01' }], now)).toEqual(['Q (last 2025-10-01)']);
+    // Q2 stays the newest GDP print until Q3's late-October release.
+    expect(staleSeries([{ ref: quarterly, asOf: '2026-04-01' }], Date.parse('2026-10-30T00:00:00Z'))).toEqual([]);
   });
 });

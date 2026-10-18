@@ -8,7 +8,7 @@ import { getSentiment } from '@/lib/features/sentiment';
 import { getNews } from '@/lib/features/news';
 import { getSocialSentiment } from '@/lib/features/socialSentiment';
 import { TIMEFRAME_SPEC, resolveTimeframe } from '@/lib/nav';
-import { PanelGrid } from '@/components/primitives';
+import { PanelGrid, LiveOnly } from '@/components/primitives';
 import { SignalCards } from '@/components/features/overview/SignalCards';
 import { FearGreedBand } from '@/components/features/overview/FearGreedBand';
 import { BtcSnapshotPanel } from '@/components/features/overview/BtcSnapshot';
@@ -53,7 +53,9 @@ export default async function OverviewPage({
       <SignalCards weeklyForecast={weeklyForecast} confluence={confluence} social={social} />
 
       {/* Fear & Greed band */}
-      <FearGreedBand fearGreed={fearGreed} />
+      <LiveOnly env={fearGreed} title="FEAR & GREED">
+        <FearGreedBand fearGreed={fearGreed} />
+      </LiveOnly>
 
       {/* Left 2/3: chart + intelligence feed · Right 1/3: snapshot + technicals */}
       <PanelGrid
@@ -62,12 +64,20 @@ export default async function OverviewPage({
         style={{ alignItems: 'stretch' }}
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: 1, background: 'var(--line)' }}>
-          <PriceChartLarge ohlcv={ohlcv} timeframe={tf} />
-          <IntelligenceFeed sentiment={sentiment} news={newsData} />
+          <LiveOnly env={ohlcv} title="PRICE CHART">
+            <PriceChartLarge ohlcv={ohlcv} timeframe={tf} />
+          </LiveOnly>
+          <LiveOnly env={[sentiment, newsData]} title="LIVE INTELLIGENCE">
+            <IntelligenceFeed sentiment={sentiment} news={newsData} />
+          </LiveOnly>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 1, background: 'var(--line)' }}>
-          <BtcSnapshotPanel snapshot={snapshot} />
-          <TechReadout indicators={indicators} timeframe={tf} />
+          <LiveOnly env={snapshot} title="BTC SNAPSHOT">
+            <BtcSnapshotPanel snapshot={snapshot} />
+          </LiveOnly>
+          <LiveOnly env={indicators} title="TECHNICALS">
+            <TechReadout indicators={indicators} timeframe={tf} />
+          </LiveOnly>
         </div>
       </PanelGrid>
     </div>

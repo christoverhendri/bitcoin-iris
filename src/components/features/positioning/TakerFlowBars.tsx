@@ -1,4 +1,6 @@
 import { Panel, PanelHeader, MockBadge, SourceFootnote } from '@/components/primitives';
+import { ChartHover } from '@/components/charts/ChartHover';
+import { fmtHour } from '@/lib/dates';
 import type { Envelope } from '@/lib/envelope';
 import type { PositioningData } from '@/lib/features/positioning';
 import { TAKER_NOTE } from '@/lib/features/positioning';
@@ -54,6 +56,12 @@ export function TakerFlowBars({ positioning }: { positioning: Envelope<Positioni
     { buy: 0, sell: 0 },
   );
   const windowNet = window.buy - window.sell;
+  // Binance reports taker volume in BTC; it used to render with a "$".
+  const btc = (v: number) => `${fmtCompact(v, '')} BTC`;
+  const hoverPoints = rows.map((r, i) => ({
+    x: PAD_X + i * slot + slot / 2,
+    lines: [fmtHour(r.ts), `Beli ${btc(r.buyVol)}`, `Jual ${btc(r.sellVol)}`, `Net ${r.netVol >= 0 ? '+' : '−'}${btc(Math.abs(r.netVol))}`],
+  }));
 
   return (
     <Panel style={{ flex: 1, minWidth: 0 }}>
@@ -64,11 +72,13 @@ export function TakerFlowBars({ positioning }: { positioning: Envelope<Positioni
       />
 
       <div style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
-        <svg
-          viewBox={`0 0 ${W} ${H}`}
-          preserveAspectRatio="none"
-          style={{ width: '100%', height: 160, display: 'block', background: 'var(--sunk)' }}
-          shapeRendering="crispEdges"
+        <ChartHover
+          viewW={W}
+          viewH={H}
+          points={hoverPoints}
+          height={160}
+          svgStyle={{ background: 'var(--sunk)', shapeRendering: 'crispEdges' }}
+          ariaLabel="Taker flow per jam: volume beli dikurangi jual"
         >
           {rows.map((r, i) => {
             const x = PAD_X + i * slot + (slot - barW) / 2;
@@ -94,7 +104,11 @@ export function TakerFlowBars({ positioning }: { positioning: Envelope<Positioni
             strokeWidth={1}
             vectorEffect="non-scaling-stroke"
           />
-        </svg>
+        </ChartHover>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--mono)', fontSize: 8, color: 'var(--dim)' }}>
+          <span>{fmtHour(rows[0].ts)}</span>
+          <span>{fmtHour(rows[n - 1].ts)}</span>
+        </div>
 
         <div
           style={{
@@ -107,13 +121,9 @@ export function TakerFlowBars({ positioning }: { positioning: Envelope<Positioni
         >
           {(
             [
-              ['BUY VOL', fmtCompact(window.buy), 'var(--up)'],
-              ['SELL VOL', fmtCompact(window.sell), 'var(--down)'],
-              [
-                'NET',
-                fmtCompact(Math.abs(windowNet)),
-                windowNet >= 0 ? 'var(--up)' : 'var(--down)',
-              ],
+              ['BUY VOL', btc(window.buy), 'var(--up)'],
+              ['SELL VOL', btc(window.sell), 'var(--down)'],
+              ['NET', `${windowNet >= 0 ? '+' : '−'}${btc(Math.abs(windowNet))}`, windowNet >= 0 ? 'var(--up)' : 'var(--down)'],
             ] as const
           ).map(([label, value, color]) => (
             <div key={label}>

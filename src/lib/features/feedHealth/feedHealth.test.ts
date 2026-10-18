@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { computeLiveSources, computeSync, isStale } from './index';
+import { computeLiveSources, computeSync, enabledSources, isStale } from './index';
 import type { SourceStatusRow } from '@/lib/sourceStatus';
 import type { SourceKey } from '@/lib/envelope';
 
@@ -63,6 +63,35 @@ describe('computeLiveSources', () => {
     );
     expect(live.has('rss')).toBe(true); // still wired
     expect(live.has('arkham')).toBe(false); // never was
+  });
+
+  it('drops a source whose last reading was stale', () => {
+    // The spec's regression: derivatives blocked upstream, cached numbers on
+    // screen, and the sidebar still counting it as a live feed.
+    const live = computeLiveSources([], WIRED, new Set<SourceKey>(['derivatives']));
+    expect(live.has('derivatives')).toBe(false);
+    expect(live.size).toBe(2);
+  });
+
+  it('never counts a source outside the enabled set', () => {
+    const live = computeLiveSources([], WIRED, new Set(), new Set<SourceKey>(['coinbase', 'rss']));
+    expect([...live].sort()).toEqual(['coinbase', 'rss']);
+  });
+});
+
+describe('enabledSources', () => {
+  it('reads the database flags once the table has rows', () => {
+    const keys = enabledSources([
+      row({ source_key: 'coinbase' }),
+      row({ source_key: 'positioning', is_enabled: false }),
+    ]);
+    expect([...keys]).toEqual(['coinbase']);
+  });
+
+  it('falls back to the static catalogue when the table is empty', () => {
+    const keys = enabledSources([]);
+    expect(keys.size).toBeGreaterThan(0);
+    expect(keys.has('coinbase')).toBe(true);
   });
 });
 

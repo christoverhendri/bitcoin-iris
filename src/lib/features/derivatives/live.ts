@@ -18,6 +18,9 @@ import {
 } from '@/lib/sources/derivatives';
 import type { DerivativesArgs, DerivativesData, FundingPoint } from './types';
 
+import { isStaleAge } from '@/lib/envelope';
+import { MAX_AGE_SEC } from '@/lib/maxAge';
+
 /** `Promise.allSettled` result -> value or null, so the assembly reads flat. */
 const ok = <T>(r: PromiseSettledResult<T>): T | null =>
   r.status === 'fulfilled' ? r.value : null;
@@ -45,7 +48,7 @@ export async function fetchDerivatives(_args: DerivativesArgs) {
 
   const fundingBySource: FundingPoint[] = [];
   if (ticker) fundingBySource.push({ source: 'BYBIT', rate: ticker.fundingRate });
-  if (okx !== null) fundingBySource.push({ source: 'OKX', rate: okx });
+  if (okx !== null) fundingBySource.push({ source: 'OKX', rate: okx.rate });
   if (binance) fundingBySource.push({ source: 'BINANCE', rate: binance.fundingRate });
 
   // No perp ticker and no funding anywhere: nothing real is left to render.
@@ -61,6 +64,12 @@ export async function fetchDerivatives(_args: DerivativesArgs) {
       : 0;
 
   const dvol = dvolHistory.length ? dvolHistory[dvolHistory.length - 1].close : 0;
+  // DVOL has its own limit (hourly index, 3h). Computed here, server-side, so the
+  // panel can badge it without reading the clock during render.
+  const dvolAgeSec = dvolHistory.length
+    ? Math.max(0, Math.round((Date.now() - dvolHistory[dvolHistory.length - 1].ts) / 1000))
+    : null;
+  const dvolStale = isStaleAge(dvolAgeSec, MAX_AGE_SEC.dvol);
   const dvolChange7dPct =
     dvolHistory.length >= 2 && dvolHistory[0].close > 0
       ? ((dvol - dvolHistory[0].close) / dvolHistory[0].close) * 100
@@ -86,11 +95,22 @@ export async function fetchDerivatives(_args: DerivativesArgs) {
     dvol,
     dvolChange7dPct,
     dvolHistory,
+    dvolAgeSec,
+    dvolStale,
     spot: spotPrice || options?.underlying || 0,
     putCallRatio: options?.putCallRatio ?? 0,
     totalOptionOi: options?.totalOi ?? 0,
     maxPainStrike: options?.maxPainStrike ?? 0,
   };
 
-  return { data, asOf: new Date().toISOString(), synthetic: false };
+  // Age of the panel = its OLDEST core reading (perp ticker, each funding venue,
+  // spot). Basis compares perp with spot, so if either side is old the whole
+  // reading is; a cached response from a blocked venue must not look current.
+  const spotMs = spot?.time ? Date.parse(spot.time) : null;
+  const coreTimes = [ticker?.time, okx?.time, binance?.time, spotMs].filter(
+    (t): t is number => typeof t === 'number' && Number.isFinite(t),
+  );
+  const asOf = coreTimes.length > 0 ? new Date(Math.min(...coreTimes)).toISOString() : null;
+
+  return { data, asOf, synthetic: false };
 }

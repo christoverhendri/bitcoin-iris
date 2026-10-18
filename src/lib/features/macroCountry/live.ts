@@ -6,11 +6,8 @@
  * fetch all four in parallel via `fred.getLatestAndZScore`, which also hands
  * back a trailing-window z-score.
  *
- * Coverage is honest, not padded:
- *   - US is the only fully-domestic mapping.
- *   - EU / JP / GB use the closest international series FRED publishes.
- *   - CN / ID have no reliable free series — they are skipped, and if one of
- *     them is the ONLY country asked for, this returns `null` (→ mock).
+ * US only (curation 2026-10-18: the other countries were removed from the
+ * dashboard). An unmapped country returns `null` (→ mock).
  *
  * FRED needs `FRED_API_KEY`. With no key `fred.*` throws on the first call,
  * `defineFeature` catches it, and the panel shows MOCK with the unlock note.
@@ -26,8 +23,17 @@ interface SeriesRef {
 }
 
 const MONTHLY = 120;
-const QUARTERLY = 200;
-const DAILY = 30;
+/**
+ * Quarterly observations are dated at the quarter's START, so the newest print
+ * can be ~6 months + the release lag old before the next one lands. 200 days
+ * expired on 2026-10-18 (Q2 = 2026-04-01, Q3 due end of October) and sent the
+ * page to MOCK; 270 = 183 + ~60 days lag + slack.
+ */
+const QUARTERLY = 270;
+
+/** Observations in two years per frequency, so every z-score is "vs the last 2 years". */
+const Z_WINDOW_MONTHLY = 24;
+const Z_WINDOW_QUARTERLY = 8;
 
 /**
  * `cpi` stays a level (the panel labels it CPI INDEX). `inflation` and `growth`
@@ -70,31 +76,11 @@ const FRED_SERIES: Record<string, SeriesMap> = {
     growth: lvl('A191RL1Q225SBEA', QUARTERLY), // already a rate: real GDP, QoQ annualised %
     inflation: yoy('CPILFESL'), // core CPI, % y/y
   },
-  EU: {
-    cpi: lvl('CP0000EZ19M086NEST'),
-    rate: lvl('ECBDFR', DAILY),
-    growth: yoy('CLVMNACSCAB1GQEA19', QUARTERLY), // real GDP, % y/y
-    inflation: yoy('CP0000EZ19M086NEST'), // HICP, % y/y
-  },
-  JP: {
-    // No current monthly CPI for Japan on FRED (OECD MEI ended 2021-06), so the
-    // freshness check refuses JP until one is wired.
-    cpi: lvl('JPNCPIALLMINMEI'),
-    rate: lvl('IRSTCI01JPM156N'), // overnight call rate = BoJ operating target
-    growth: yoy('JPNRGDPEXP', QUARTERLY),
-    inflation: yoy('JPNCPIALLMINMEI'),
-  },
-  GB: {
-    // No current monthly UK CPI on FRED (OECD MEI ended 2025-03) — refused until wired.
-    cpi: lvl('GBRCPIALLMINMEI'),
-    rate: lvl('IRSTCI01GBM156N'), // overnight interbank rate, tracks Bank Rate
-    growth: yoy('NGDPRSAXDCGBQ', QUARTERLY),
-    inflation: yoy('GBRCPIALLMINMEI'),
-  },
-  // CN, ID: no reliable free FRED series — intentionally absent.
 };
 
-const DEFAULT_COUNTRIES = ['US', 'CN', 'EU', 'JP', 'GB', 'ID'];
+const DEFAULT_COUNTRIES = ['US'];
+
+const zWindow = (ref: SeriesRef) => (ref.maxAgeDays === QUARTERLY ? Z_WINDOW_QUARTERLY : Z_WINDOW_MONTHLY);
 
 export async function fetchMacroCountry({ countries = DEFAULT_COUNTRIES }: MacroCountryArgs) {
   const mapped = countries.filter((c) => FRED_SERIES[c]);
@@ -111,10 +97,10 @@ export async function fetchMacroCountry({ countries = DEFAULT_COUNTRIES }: Macro
   for (const country of mapped) {
     const s = FRED_SERIES[country];
     const [cpi, rate, growth, inflation] = await Promise.all([
-      getLatestAndZScore(s.cpi.id, 24, s.cpi.units),
-      getLatestAndZScore(s.rate.id, 24, s.rate.units),
-      getLatestAndZScore(s.growth.id, 24, s.growth.units),
-      getLatestAndZScore(s.inflation.id, 24, s.inflation.units),
+      getLatestAndZScore(s.cpi.id, zWindow(s.cpi), s.cpi.units),
+      getLatestAndZScore(s.rate.id, zWindow(s.rate), s.rate.units),
+      getLatestAndZScore(s.growth.id, zWindow(s.growth), s.growth.units),
+      getLatestAndZScore(s.inflation.id, zWindow(s.inflation), s.inflation.units),
     ]);
 
     const stale = staleSeries(
@@ -151,7 +137,7 @@ export async function fetchMacroCountry({ countries = DEFAULT_COUNTRIES }: Macro
 
   if (rows.length === 0) return null;
 
-  const asOf = asOfDates.sort().at(-1) ?? new Date().toISOString();
+  const asOf = asOfDates.sort().at(-1) ?? null;
 
   return { data: rows, asOf, synthetic: false };
 }

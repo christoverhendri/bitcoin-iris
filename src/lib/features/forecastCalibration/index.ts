@@ -1,4 +1,5 @@
 import { defineFeature } from '@/lib/defineFeature';
+import { MAX_AGE_SEC } from '@/lib/maxAge';
 import { fetchForecastCalibration } from './live';
 import { mockForecastCalibration } from './mock';
 import type { CalibrationArgs, CalibrationData } from './types';
@@ -8,6 +9,7 @@ export const getForecastCalibration = defineFeature<CalibrationArgs, Calibration
   source: 'internal_distribution',
   live: fetchForecastCalibration,
   mock: mockForecastCalibration,
+  maxAgeSec: MAX_AGE_SEC.calibration,
 });
 
 export type {

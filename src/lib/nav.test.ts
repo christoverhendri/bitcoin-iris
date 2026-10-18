@@ -54,19 +54,33 @@ describe('SECTIONS', () => {
 describe('forecast section', () => {
   const forecast = SECTIONS.find((s) => s.key === 'forecast')!;
 
-  it('lands a first-time visitor on the distribution page', () => {
-    expect(defaultSubHref(forecast)).toBe('/forecast/distribution');
+  it('lands a first-time visitor on the weekly forecast', () => {
+    expect(defaultSubHref(forecast)).toBe('/forecast/weekly');
   });
 
-  it('no longer offers the removed monthly tab', () => {
-    expect(forecast.subs.map((s) => s.slug)).not.toContain('monthly');
+  it('no longer offers the removed monthly or calibration tabs', () => {
+    const slugs = forecast.subs.map((s) => s.slug);
+    expect(slugs).not.toContain('monthly');
+    expect(slugs).not.toContain('calibration');
   });
 
-  it('keeps the weekly slug behind the DIRECTION label', () => {
-    // The route stays `/forecast/weekly` so old bookmarks and `iris_sub`
-    // cookies survive; only what the tab reads changed.
-    const direction = forecast.subs.find((s) => s.label === 'DIRECTION');
-    expect(direction?.slug).toBe('weekly');
+  it('keeps the weekly slug behind the WEEKLY FORECAST label', () => {
+    // The route stays `/forecast/weekly` so old bookmarks and `iris_sub` cookies survive.
+    const weekly = forecast.subs.find((s) => s.label === 'WEEKLY FORECAST');
+    expect(weekly?.slug).toBe('weekly');
+  });
+});
+
+describe('curated sections (2026-10-18)', () => {
+  it('drops the Market section and Volatility', () => {
+    expect(SECTIONS.map((s) => s.key)).not.toContain('market');
+    const quant = SECTIONS.find((s) => s.key === 'quant')!;
+    expect(quant.subs.map((s) => s.slug)).toEqual(['seasonality']);
+  });
+
+  it('splits On-Chain into ETF, long/short and wallets', () => {
+    const chain = SECTIONS.find((s) => s.key === 'chain')!;
+    expect(chain.subs.map((s) => s.slug)).toEqual(['etf', 'long-short', 'wallets']);
   });
 });
 

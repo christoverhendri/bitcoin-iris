@@ -1,25 +1,28 @@
+import { LiveOnly } from '@/components/primitives';
 import { getPriceDistribution } from '@/lib/features/priceDistribution';
 import { HORIZON_SPEC, resolveHorizon } from '@/lib/nav';
-import { PanelGrid } from '@/components/primitives';
 import { FanChart } from '@/components/features/distribution/FanChart';
-import { TerminalDistribution } from '@/components/features/distribution/TerminalDistribution';
 import { HorizonTermStructure } from '@/components/features/distribution/HorizonTermStructure';
-import { ProbabilityTable } from '@/components/features/distribution/ProbabilityTable';
-import { ModelStatePanel } from '@/components/features/distribution/ModelStatePanel';
+import { WeeklyMiniCard } from '@/components/features/weekly/WeeklyMiniCard';
+import { getWeeklyForecast } from '@/lib/features/weeklyForecast';
 
 /** The simulation is the expensive part; daily closes only move once a day. */
 export const revalidate = 900;
 
+/**
+ * Curation 2026-10-18: OUTCOME DENSITY, PROBABILITY ABOVE and MODEL STATE were
+ * removed; the fan chart and the per-horizon range table remain.
+ */
 export default async function DistributionPage({
   searchParams,
 }: {
   searchParams: Promise<{ h?: string }>;
 }) {
   const horizon = resolveHorizon((await searchParams).h);
-  const dist = await getPriceDistribution({
-    horizonDays: HORIZON_SPEC[horizon].days,
-    nPaths: 4000,
-  });
+  const [dist, weekly] = await Promise.all([
+    getPriceDistribution({ horizonDays: HORIZON_SPEC[horizon].days, nPaths: 4000 }),
+    getWeeklyForecast({ symbol: 'BTC-USD' }),
+  ]);
 
   return (
     <div
@@ -31,17 +34,20 @@ export default async function DistributionPage({
         minWidth: 0,
       }}
     >
-      <PanelGrid className="ov-split" columns="minmax(0, 2.4fr) minmax(0, 1fr)">
+      <LiveOnly env={weekly} title="PRAKIRAAN MINGGUAN">
+        <WeeklyMiniCard forecast={weekly} />
+      </LiveOnly>
+      <p style={{ margin: 0, fontSize: 11.5, lineHeight: 1.55, color: 'var(--mut)' }}>
+        Ini bukan ramalan naik atau turun. Model mensimulasikan 4.000 kemungkinan jalur harga dari
+        pola gerak BTC selama ini, lalu menunjukkan di kisaran mana harga paling mungkin berakhir.
+        Makin jauh jangka waktunya, makin lebar kisarannya.
+      </p>
+      <LiveOnly env={dist} title="PRICE DISTRIBUTION">
         <FanChart dist={dist} />
-        <TerminalDistribution dist={dist} />
-      </PanelGrid>
-
-      <HorizonTermStructure dist={dist} />
-
-      <PanelGrid className="ov-split" columns="minmax(0, 1fr) minmax(0, 1fr)">
-        <ProbabilityTable dist={dist} />
-        <ModelStatePanel dist={dist} />
-      </PanelGrid>
+      </LiveOnly>
+      <LiveOnly env={dist} title="KISARAN HARGA">
+        <HorizonTermStructure dist={dist} />
+      </LiveOnly>
     </div>
   );
 }

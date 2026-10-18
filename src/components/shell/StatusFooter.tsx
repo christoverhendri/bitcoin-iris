@@ -16,6 +16,11 @@ export interface FeedHealth {
   modelName: string;
   modelVersion: string;
   modelIsPlaceholder: boolean;
+  /**
+   * Server time the footer was computed at (epoch ms). Ages are formatted
+   * against it on both server and client, so hydration sees the same text.
+   */
+  renderedAt: number;
 }
 
 /**
@@ -62,12 +67,12 @@ export function StatusFooter({ health, now }: { health: FeedHealth; now?: number
           style={{ color: 'var(--mut)' }}
           title={
             health.syncFromDirectFetch
-              ? 'Direct-fetch sources report no success timestamp. Their responses are at most one revalidate window old, so the current time stands in.'
+              ? 'No ingestion job reports for the live feeds yet: they are fetched directly on render. There is no sync time to show — each panel footer shows its own data age, and a STALE badge when that age is too old.'
               : 'Newest success reported by an ingestion job.'
           }
         >
-          {fmtAgo(health.lastSyncAt, now)}
-          {health.syncFromDirectFetch ? '*' : ''}
+          {/* Never the render time dressed up as an age (spec §8: no "0s ago" from render time). */}
+          {health.syncFromDirectFetch ? 'DIRECT*' : fmtAgo(health.lastSyncAt, now ?? health.renderedAt)}
         </span>
       </div>
     </div>

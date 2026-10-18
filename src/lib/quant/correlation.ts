@@ -130,3 +130,26 @@ export function correlateDaily(
   if (n < window) return { r: null, sessions: n };
   return { r: pearson(ra.slice(-window), rb.slice(-window)), sessions: n };
 }
+
+/**
+ * Rolling correlation of daily returns, one point per day, oldest first. Each
+ * point is the Pearson r of the `window` returns ending on that date (matched
+ * by UTC day, as `correlateDaily`). Days where either side was flat are skipped
+ * rather than drawn as 0.
+ */
+export function rollingCorrelation(
+  a: DatedPoint[],
+  b: DatedPoint[],
+  window = 30,
+): { ts: number; r: number }[] {
+  const aligned = alignByDate(a, b);
+  const ra = returns(aligned.a);
+  const rb = returns(aligned.b);
+  const out: { ts: number; r: number }[] = [];
+  // Return j runs from dates[j] to dates[j + 1].
+  for (let end = window; end <= ra.length; end += 1) {
+    const r = pearson(ra.slice(end - window, end), rb.slice(end - window, end));
+    if (r !== null) out.push({ ts: Date.parse(`${aligned.dates[end]}T00:00:00Z`), r });
+  }
+  return out;
+}

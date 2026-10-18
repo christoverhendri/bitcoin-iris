@@ -1,19 +1,8 @@
-import {
-  Panel,
-  PanelGrid,
-  PanelHeader,
-  PanelStrip,
-  StatTile,
-  DivergingBar,
-  DataTable,
-  MockBadge,
-  SourceFootnote,
-} from '@/components/primitives';
+import { Panel, PanelHeader, DataTable, MockBadge, SourceFootnote } from '@/components/primitives';
 import type { Envelope } from '@/lib/envelope';
 import type { MacroMetric } from '@/lib/features/macroCountry';
 import { toMacroCountryLabels } from '@/lib/features/macroCountry/present';
-import type { Tone } from '@/lib/theme/tokens';
-import { fmtZ } from '@/lib/format';
+import { zWords } from '@/lib/zWords';
 
 export interface MacroMetricsProps {
   macro: Envelope<MacroMetric[]>;
@@ -21,107 +10,55 @@ export interface MacroMetricsProps {
   countryLabel: string;
 }
 
-function zTone(z: number): Tone {
-  if (z > 1) return 'up';
-  if (z < -1) return 'down';
-  return 'txt';
-}
+const WINDOW = 'vs 2 tahun terakhir';
 
+/**
+ * Four US FRED series, each placed against its own last two years in words
+ * (curation 2026-10-18: no z / sigma numbers on screen, no ±3σ bars). No
+ * colour: "above usual" is a position, not good or bad news.
+ */
 export function MacroMetrics({ macro, country, countryLabel }: MacroMetricsProps) {
   const m = macro.data.find((x) => x.country === country) ?? macro.data[0];
   const L = toMacroCountryLabels(m);
 
-  const metrics: { key: string; label: string; value: string; z: number }[] = [
-    { key: 'cpi', label: 'CPI INDEX', value: L.cpi, z: m.zScores.cpi },
-    { key: 'rate', label: 'POLICY RATE', value: L.rate, z: m.zScores.rate },
-    { key: 'growth', label: 'GDP GROWTH', value: L.growth, z: m.zScores.growth },
-    { key: 'inflation', label: 'INFLATION', value: L.inflation, z: m.zScores.inflation },
+  const metrics: { key: string; label: string; what: string; value: string; z: number }[] = [
+    { key: 'cpi', label: 'CPI INDEX', what: 'Indeks harga konsumen — level, bukan persen; karena terus naik, hampir selalu "di atas"', value: L.cpi, z: m.zScores.cpi },
+    { key: 'rate', label: 'POLICY RATE', what: 'Suku bunga The Fed (rata-rata bulanan)', value: L.rate, z: m.zScores.rate },
+    { key: 'growth', label: 'GDP GROWTH', what: 'Pertumbuhan ekonomi riil (per kuartal, disetahunkan)', value: L.growth, z: m.zScores.growth },
+    { key: 'inflation', label: 'INFLATION', what: 'Inflasi inti per tahun (tanpa makanan & energi)', value: L.inflation, z: m.zScores.inflation },
   ];
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 12, minWidth: 0 }}>
-      <Panel style={{ display: 'flex', flexDirection: 'column' }}>
-        <PanelHeader title="MACRO METRICS" note={countryLabel} right={<MockBadge env={macro} />} />
-        <PanelStrip min={180} style={{ borderBottom: '1px solid var(--line)' }}>
-          {metrics.map((x) => (
-            <StatTile
-              key={x.key}
-              label={x.label}
-              value={x.value}
-              tone={zTone(x.z)}
-              detail={`z ${fmtZ(x.z)}`}
-            />
-          ))}
-        </PanelStrip>
+    <Panel style={{ display: 'flex', flexDirection: 'column' }}>
+      <PanelHeader title="DATA EKONOMI AS" note={countryLabel} right={<MockBadge env={macro} />} />
+      <p style={{ margin: 0, padding: '10px 12px', fontSize: 11.5, lineHeight: 1.55, color: 'var(--mut)', borderBottom: '1px solid var(--line)' }}>
+        Empat angka ekonomi utama Amerika Serikat dari FRED (bank sentral AS). Kolom terakhir
+        menunjukkan apakah nilainya sedang di atas, sekitar, atau di bawah kebiasaannya selama 2 tahun
+        terakhir. Inflasi dan suku bunga yang tinggi biasanya membuat aset berisiko seperti BTC
+        lebih tertekan.
+      </p>
 
-        {/* z-score diverging rows */}
-        <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <div
-            className="iris-micro"
-            style={{ fontFamily: 'var(--mono)', fontSize: 9, letterSpacing: '.14em', color: 'var(--mut)' }}
-          >
-            Z-SCORE VS TRAILING NORM (±3σ)
-          </div>
+      <DataTable>
+        <thead>
+          <tr>
+            <th>METRIC</th>
+            <th>ARTINYA</th>
+            <th>NILAI</th>
+            <th>DIBANDING BIASANYA</th>
+          </tr>
+        </thead>
+        <tbody>
           {metrics.map((x) => (
-            <div key={x.key} style={{ display: 'grid', gridTemplateColumns: '92px 1fr 46px', gap: 10, alignItems: 'center' }}>
-              <span
-                className="iris-micro"
-                style={{ fontFamily: 'var(--mono)', fontSize: 9, color: 'var(--mut)', letterSpacing: '.06em' }}
-              >
-                {x.label}
-              </span>
-              <DivergingBar value={x.z} max={3} tone={zTone(x.z)} />
-              <span
-                className="iris-micro"
-                style={{
-                  fontFamily: 'var(--mono)',
-                  fontSize: 9.5,
-                  fontWeight: 700,
-                  textAlign: 'right',
-                  color: `var(--${zTone(x.z)})`,
-                }}
-              >
-                {fmtZ(x.z)}
-              </span>
-            </div>
+            <tr key={x.key}>
+              <td style={{ color: 'var(--mut)', fontFamily: 'var(--mono)', fontSize: 10 }}>{x.label}</td>
+              <td style={{ fontSize: 11, color: 'var(--mut)' }}>{x.what}</td>
+              <td style={{ fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 700 }}>{x.value}</td>
+              <td style={{ fontSize: 11, color: 'var(--txt)' }}>{zWords(x.z, WINDOW)}</td>
+            </tr>
           ))}
-        </div>
-        <SourceFootnote env={macro} />
-      </Panel>
-
-      <PanelGrid>
-        <Panel style={{ display: 'flex', flexDirection: 'column' }}>
-          <PanelHeader title="METRIC DETAIL" note={m.country} right={<MockBadge env={macro} />} />
-          <DataTable>
-            <thead>
-              <tr>
-                <th>METRIC</th>
-                <th>VALUE</th>
-                <th>Z-SCORE</th>
-              </tr>
-            </thead>
-            <tbody>
-              {metrics.map((x) => (
-                <tr key={x.key}>
-                  <td style={{ color: 'var(--mut)', fontFamily: 'var(--mono)', fontSize: 10 }}>{x.label}</td>
-                  <td style={{ fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 700 }}>{x.value}</td>
-                  <td
-                    style={{
-                      fontFamily: 'var(--mono)',
-                      fontSize: 10,
-                      fontWeight: 700,
-                      color: `var(--${zTone(x.z)})`,
-                    }}
-                  >
-                    {fmtZ(x.z)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </DataTable>
-          <SourceFootnote env={macro} />
-        </Panel>
-      </PanelGrid>
-    </div>
+        </tbody>
+      </DataTable>
+      <SourceFootnote env={macro} />
+    </Panel>
   );
 }

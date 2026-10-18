@@ -3,7 +3,6 @@ import type { Envelope } from '@/lib/envelope';
 import type { ChainFlowsData } from '@/lib/features/chainFlows';
 import { toChainFlowsLabels, getChainFlowsColor } from '@/lib/features/chainFlows';
 import { fmtCompact } from '@/lib/format';
-import { TRACKED_SUBSET_NOTE } from '@/lib/onchain/exchangeRegistry';
 
 export interface NetflowChartProps {
   flows: Envelope<ChainFlowsData>;
@@ -22,14 +21,14 @@ export function NetflowChart({ flows }: NetflowChartProps) {
   const rows = [
     { label: 'INFLOW', value: -f.inflow, color: 'var(--down)', display: labels.inflow },
     { label: 'OUTFLOW', value: f.outflow, color: 'var(--up)', display: labels.outflow },
-    { label: 'NET', value: net, color: getChainFlowsColor(net), display: netBtc },
+    // NET is the headline number above; not repeated as a bar.
   ];
 
   return (
     <Panel style={{ display: 'flex', flexDirection: 'column' }}>
       <PanelHeader
         title="EXCHANGE NETFLOW"
-        note={`${TRACKED_SUBSET_NOTE} · SNAPSHOT · NO HISTORY`}
+        note="dari transfer terbaru yang terlihat"
         right={<MockBadge env={flows} />}
       />
       <div style={{ padding: '14px 12px', display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -56,12 +55,12 @@ export function NetflowChart({ flows }: NetflowChartProps) {
           </div>
         </div>
 
-        <svg viewBox="0 0 270 108" style={{ width: '100%', height: 120 }}>
+        <svg viewBox="0 0 270 78" style={{ width: '100%', height: 86 }}>
           <line
             x1={CX}
             x2={CX}
             y1={8}
-            y2={100}
+            y2={70}
             stroke="var(--line2)"
             strokeWidth={1}
             vectorEffect="non-scaling-stroke"

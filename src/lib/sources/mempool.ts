@@ -47,6 +47,17 @@ async function chainStats(): Promise<Record<string, unknown>> {
   return j.data;
 }
 
+/**
+ * Time of the newest block Blockchair has seen (`best_block_time`, UTC) — the age
+ * of everything on the network page. `null` if the field is missing.
+ */
+export async function getNetworkAsOf(): Promise<string | null> {
+  const d = await chainStats();
+  const raw = typeof d.best_block_time === 'string' ? d.best_block_time : '';
+  const t = Date.parse(raw.replace(' ', 'T') + 'Z');
+  return Number.isFinite(t) ? new Date(t).toISOString() : null;
+}
+
 /* ------------------------------------------------------------------ fees -- */
 
 /** Recommended fee rates in sat/vB. */

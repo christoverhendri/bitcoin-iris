@@ -2,7 +2,6 @@ import { Panel, PanelHeader, DataTable, MockBadge, SourceFootnote } from '@/comp
 import type { Envelope } from '@/lib/envelope';
 import type { ChainFlowsData } from '@/lib/features/chainFlows';
 import { toFlowTransferRow } from '@/lib/features/chainFlows';
-import { TRACKED_SUBSET_NOTE } from '@/lib/onchain/exchangeRegistry';
 
 export interface FlowRadarProps {
   flows: Envelope<ChainFlowsData>;
@@ -53,7 +52,7 @@ export function FlowRadar({ flows }: FlowRadarProps) {
     <Panel style={{ display: 'flex', flexDirection: 'column' }}>
       <PanelHeader
         title="FLOW RADAR"
-        note={`${TRACKED_SUBSET_NOTE} · SNAPSHOT · NO HISTORY · ≥50 BTC`}
+        note="transfer ≥ 50 BTC · terbaru di atas"
         right={<MockBadge env={flows} />}
       />
 

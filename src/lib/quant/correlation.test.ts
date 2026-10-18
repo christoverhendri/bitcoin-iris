@@ -142,3 +142,21 @@ describe('correlateDaily', () => {
     expect(out.r!).toBeLessThan(-0.9);
   });
 });
+
+describe('rollingCorrelation', () => {
+  it('emits one point per day once the window is full, matching correlateDaily at the end', async () => {
+    const { rollingCorrelation } = await import('./correlation');
+    const closesA = Array.from({ length: 50 }, (_, i) => 100 + Math.sin(i) * 5 + i);
+    const closesB = Array.from({ length: 50 }, (_, i) => 200 + Math.sin(i + 0.3) * 9 + i * 2);
+    const roll = rollingCorrelation(series(closesA), series(closesB), 30);
+    expect(roll.length).toBe(49 - 30 + 1);
+    expect(roll[roll.length - 1].r).toBeCloseTo(correlateDaily(series(closesA), series(closesB), 30).r!, 10);
+    // dated at the window's last day
+    expect(roll[roll.length - 1].ts).toBe(day(49));
+  });
+
+  it('is empty when the overlap is shorter than the window', async () => {
+    const { rollingCorrelation } = await import('./correlation');
+    expect(rollingCorrelation(series([1, 2, 3]), series([3, 2, 1]), 30)).toEqual([]);
+  });
+});

@@ -1,4 +1,5 @@
 import { defineFeature } from '@/lib/defineFeature';
+import { MAX_AGE_SEC } from '@/lib/maxAge';
 import { fetchMacroMarkets } from './live';
 import { mockMacroMarkets } from './mock';
 import type { MacroMarketsArgs, MacroMarketsData } from './types';
@@ -8,6 +9,7 @@ export const getMacroMarkets = defineFeature<MacroMarketsArgs, MacroMarketsData>
   source: 'yfinance',
   live: fetchMacroMarkets,
   mock: mockMacroMarkets,
+  maxAgeSec: MAX_AGE_SEC.macroMarkets,
 });
 
 export type { MacroMarketsData, MacroMarketsArgs, MarketSeries, MarketKind } from './types';

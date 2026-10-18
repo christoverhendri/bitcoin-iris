@@ -1,4 +1,5 @@
-import { type Envelope, type SourceKey, live, mocked } from '@/lib/envelope';
+import { type Envelope, type SourceKey, ageSeconds, isStaleAge, live, mocked } from '@/lib/envelope';
+import { recordFreshness } from '@/lib/freshness';
 import { getSourceStatus } from '@/lib/sourceStatus';
 import { unlockNoteFor } from '@/lib/sources';
 
@@ -10,13 +11,20 @@ export interface FeatureSpec<A, T> {
    * Reads the real data. Returns `null` when the query found nothing usable —
    * that is a normal state before the ingestion job has run, not an error.
    */
-  live: (args: A) => Promise<{ data: T; asOf: string; synthetic: boolean } | null>;
+  live: (args: A) => Promise<{ data: T; asOf: string | null; synthetic: boolean } | null>;
   /**
    * Produces placeholder data of the *same type*. Must be pure and deterministic
    * for a given `args` (use `@/lib/rng`, never `Math.random` or `Date.now`),
    * or SSR and hydration will disagree.
    */
   mock: (args: A) => T;
+  /**
+   * How old `asOf` may be before the envelope is marked stale (real data, shown
+   * with a STALE badge). Omit for no age limit. `live()` must return the newest
+   * timestamp found IN THE PAYLOAD, never the render time — otherwise a cached
+   * response from a dead upstream reads as fresh forever.
+   */
+  maxAgeSec?: number | ((args: A) => number);
 }
 
 /**
@@ -50,16 +58,25 @@ export function defineFeature<A, T>(spec: FeatureSpec<A, T>) {
 
     try {
       const row = await spec.live(args);
-      if (!row) return mocked(spec.mock(args), spec.source, 'no_rows', unlockNote);
+      if (!row) {
+        recordFreshness(spec.source, spec.key, true);
+        return mocked(spec.mock(args), spec.source, 'no_rows', unlockNote);
+      }
       // Rows the worker wrote in MOCK_MODE are real rows carrying fake numbers.
       // They still get badged — there is only one way for synthetic data to
       // reach a pixel, and it is always labelled.
       if (row.synthetic) {
         return mocked(row.data, spec.source, 'synthetic_rows', unlockNote);
       }
-      return live(row.data, spec.source, row.asOf);
+      const env = live(row.data, spec.source, row.asOf);
+      const maxAge = typeof spec.maxAgeSec === 'function' ? spec.maxAgeSec(args) : spec.maxAgeSec;
+      env.ageSec = ageSeconds(row.asOf, Date.now());
+      env.isStale = isStaleAge(env.ageSec, maxAge);
+      recordFreshness(spec.source, spec.key, env.isStale);
+      return env;
     } catch (err) {
       console.error(`[feature:${spec.key}]`, err);
+      recordFreshness(spec.source, spec.key, true);
       return mocked(spec.mock(args), spec.source, 'query_error', unlockNote);
     }
   };

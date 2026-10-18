@@ -56,6 +56,8 @@ export function mockDerivatives({ symbol = 'BTC' }: DerivativesArgs): Derivative
     dvol,
     dvolChange7dPct,
     dvolHistory,
+    dvolAgeSec: 0,
+    dvolStale: false,
     spot,
     putCallRatio: between(r, 0.6, 1.2),
     totalOptionOi: between(r, 200_000, 400_000),

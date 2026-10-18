@@ -3,6 +3,9 @@ import type { Envelope } from '@/lib/envelope';
 import type { OhlcvCandle } from '@/lib/features/ohlcv';
 import type { SupportResistanceLevels } from '@/lib/features/levels';
 import { toOhlcvLabel } from '@/lib/features/ohlcv/present';
+import { ChartHover } from '@/components/charts/ChartHover';
+import { fmtDateTime, fmtDay } from '@/lib/dates';
+import { fmtUsd } from '@/lib/format';
 
 export interface PriceChartLargeProps {
   ohlcv: Envelope<OhlcvCandle[]>;
@@ -41,6 +44,16 @@ export function PriceChartLarge({ ohlcv, levels, timeframe }: PriceChartLargePro
 
   const ohl = latest ? toOhlcvLabel(latest) : null;
 
+  // OHLCV `ts` is epoch ms; seconds are accepted too (anything below 1e12).
+  const toMs = (ts: number) => (ts < 1e12 ? ts * 1000 : ts);
+  const intraday = n > 1 && toMs(candles[1].ts) - toMs(candles[0].ts) < 86_400_000;
+  const when = (ts: number) => (intraday ? fmtDateTime(toMs(ts)) : fmtDay(toMs(ts)));
+  const hoverPoints = candles.map((c, i) => ({
+    x: PAD + (i + 0.5) * cw,
+    y: y(c.close),
+    lines: [when(c.ts), `Close ${fmtUsd(c.close)}`, `High ${fmtUsd(c.high)} · Low ${fmtUsd(c.low)}`, `Open ${fmtUsd(c.open)}`],
+  }));
+
   return (
     <Panel style={{ display: 'flex', flexDirection: 'column' }}>
       <PanelHeader
@@ -49,11 +62,13 @@ export function PriceChartLarge({ ohlcv, levels, timeframe }: PriceChartLargePro
         right={<MockBadge env={ohlcv} />}
       />
       <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        <svg
-          viewBox={`0 0 ${W} ${H}`}
-          preserveAspectRatio="none"
-          style={{ width: '100%', height: '260px', display: 'block', background: 'var(--sunk)' }}
-          shapeRendering="crispEdges"
+        <ChartHover
+          viewW={W}
+          viewH={H}
+          points={hoverPoints}
+          height={260}
+          svgStyle={{ background: 'var(--sunk)', shapeRendering: 'crispEdges' }}
+          ariaLabel="Grafik candle BTC/USD"
         >
           {[0, 0.25, 0.5, 0.75, 1].map((t) => (
             <line
@@ -109,7 +124,14 @@ export function PriceChartLarge({ ohlcv, levels, timeframe }: PriceChartLargePro
               vectorEffect="non-scaling-stroke"
             />
           ))}
-        </svg>
+        </ChartHover>
+        {n > 1 ? (
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--mono)', fontSize: 8.5, color: 'var(--dim)', marginTop: -6 }}>
+            <span>{when(candles[0].ts)}</span>
+            <span>arahkan kursor untuk tanggal & harga</span>
+            <span>{when(candles[n - 1].ts)}</span>
+          </div>
+        ) : null}
 
         {ohl ? (
           <PanelStrip min={120}>

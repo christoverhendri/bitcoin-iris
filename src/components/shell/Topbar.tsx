@@ -13,6 +13,8 @@ export interface TickerState {
   price: number | null;
   changePct: number | null;
   stale: boolean;
+  /** Why `stale` is set — shown as the badge tooltip. */
+  staleReason?: string;
 }
 
 export function Topbar({ ticker }: { ticker: TickerState }) {
@@ -96,7 +98,7 @@ export function Topbar({ ticker }: { ticker: TickerState }) {
         >
           {fmtPct(ticker.changePct)}
         </span>
-        <LiveBadge stale={ticker.stale} />
+        <LiveBadge stale={ticker.stale} reason={ticker.staleReason} />
         <Clock />
       </div>
     </header>

@@ -1,7 +1,7 @@
 import { seeded } from '@/lib/rng';
 import type { MacroMetric, MacroCountryArgs } from './types';
 
-const COUNTRIES = ['US', 'CN', 'EU', 'JP', 'GB', 'ID'];
+const COUNTRIES = ['US'];
 
 export function mockMacroCountry({ countries = COUNTRIES }: MacroCountryArgs): MacroMetric[] {
   const r = seeded('macro_country');

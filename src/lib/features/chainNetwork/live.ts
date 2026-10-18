@@ -17,6 +17,7 @@ import {
   getMempoolState,
   getMiningPools,
   getRecommendedFees,
+  getNetworkAsOf,
 } from '@/lib/sources/mempool';
 import { getChainStats } from '@/lib/sources/blockchair';
 import type { ChainNetworkArgs, ChainNetworkData } from './types';
@@ -24,13 +25,14 @@ import type { ChainNetworkArgs, ChainNetworkData } from './types';
 export async function fetchChainNetwork(_args: ChainNetworkArgs) {
   void _args;
 
-  const [fees, mempool, difficulty, hashrate, pools, stats] = await Promise.allSettled([
+  const [fees, mempool, difficulty, hashrate, pools, stats, netAsOf] = await Promise.allSettled([
     getRecommendedFees(),
     getMempoolState(),
     getDifficultyAdjustment(),
     getHashrateSeries(),
     getMiningPools(),
     getChainStats(),
+    getNetworkAsOf(),
   ]);
 
   const core = [fees, mempool, difficulty, hashrate, pools];
@@ -71,8 +73,8 @@ export async function fetchChainNetwork(_args: ChainNetworkArgs) {
     avgFeeUsd24h: stats.status === 'fulfilled' ? stats.value.avgFeeUsd24h : null,
   };
 
-  // The mempool reads are the freshest thing here (120s window), so they set the
-  // panel's age. Claiming the hourly hashrate series' timestamp would make the
-  // footnote look staler than the numbers on screen actually are.
-  return { data, asOf: new Date().toISOString(), synthetic: false };
+  // The newest block Blockchair has seen dates the fees and mempool on screen.
+  // Render time would read fresh forever behind a cached response.
+  const asOf = netAsOf.status === 'fulfilled' ? netAsOf.value : null;
+  return { data, asOf, synthetic: false };
 }

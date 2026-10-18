@@ -1,3 +1,4 @@
+import { LiveOnly } from '@/components/primitives';
 import { getSeasonality } from '@/lib/features/seasonality';
 import { SeasonalityHeatmap } from '@/components/features/seasonality/SeasonalityHeatmap';
 
@@ -16,7 +17,9 @@ export default async function SeasonalityPage() {
         minWidth: 0,
       }}
     >
-      <SeasonalityHeatmap seasonality={seasonality} />
+      <LiveOnly env={seasonality} title="MONTHLY RETURN HEATMAP">
+        <SeasonalityHeatmap seasonality={seasonality} />
+      </LiveOnly>
     </div>
   );
 }

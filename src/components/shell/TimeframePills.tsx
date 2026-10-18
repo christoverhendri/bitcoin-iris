@@ -47,7 +47,7 @@ export function TimeframePills() {
   });
 
   const showHorizon = section?.key === 'forecast' && HORIZON_SUBS.has(sub ?? '');
-  const showTimeframe = section && ['overview', 'market'].includes(section.key);
+  const showTimeframe = section && ['overview'].includes(section.key);
 
   if (!showHorizon && !showTimeframe) return null;
 

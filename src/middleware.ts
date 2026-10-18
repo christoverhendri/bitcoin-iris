@@ -47,5 +47,5 @@ function readRemembered(req: NextRequest): Partial<Record<SectionKey, string>> {
 }
 
 export const config = {
-  matcher: ['/market', '/quant', '/forecast', '/chain', '/macro'],
+  matcher: ['/quant', '/forecast', '/chain', '/macro'],
 };

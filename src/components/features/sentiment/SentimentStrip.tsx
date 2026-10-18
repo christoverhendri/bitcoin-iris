@@ -1,15 +1,13 @@
 import type { CSSProperties, ReactNode } from 'react';
 import { MockBadge } from '@/components/primitives';
 import type { Envelope } from '@/lib/envelope';
-import { fmtCompact, fmtPct } from '@/lib/format';
+import { fmtPct } from '@/lib/format';
 import { toneVar, type Tone } from '@/lib/theme/tokens';
 import type { FearGreedData } from '@/lib/features/fearGreed';
 import { toFearGreedLabel } from '@/lib/features/fearGreed';
 import type { SentimentData } from '@/lib/features/sentiment';
 import type { NewsArticle } from '@/lib/features/news';
 import type { GeoEvent } from '@/lib/features/geopoliticalEvents';
-import type { WhaleEvent } from '@/lib/features/whaleEvents';
-import { summarizeWhaleFlow, netflowColor, netflowWord } from '@/lib/features/whaleEvents';
 
 const DAY_MS = 86_400_000;
 
@@ -18,7 +16,6 @@ export interface SentimentStripProps {
   sentiment: Envelope<SentimentData>;
   news: Envelope<NewsArticle[]>;
   events: Envelope<GeoEvent[]>;
-  whale: Envelope<WhaleEvent[]>;
 }
 
 /**
@@ -27,7 +24,7 @@ export interface SentimentStripProps {
  * are hairline-separated (the 1px grid gap is the border) and wrap on narrow
  * screens; on desktop it stays a single row.
  */
-export function SentimentStrip({ fearGreed, sentiment, news, events, whale }: SentimentStripProps) {
+export function SentimentStrip({ fearGreed, sentiment, news, events }: SentimentStripProps) {
   const fg = fearGreed.data;
   const fgLabel = toFearGreedLabel(fg);
 
@@ -55,7 +52,6 @@ export function SentimentStrip({ fearGreed, sentiment, news, events, whale }: Se
 
   // Windowed from the newest event rather than the wall clock, for the same
   // reason as `refTs` above.
-  const flow = summarizeWhaleFlow(whale.data);
 
   return (
     <div
@@ -97,19 +93,7 @@ export function SentimentStrip({ fearGreed, sentiment, news, events, whale }: Se
         </div>
       </Cell>
 
-      <Cell label="WHALE FLOW 24H" env={whale}>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-          <span style={{ ...midValue, color: netflowColor(flow.netUsd) }}>
-            {flow.netUsd >= 0 ? '+' : '-'}
-            {fmtCompact(Math.abs(flow.netUsd))}
-          </span>
-          <span style={valueWord}>{netflowWord(flow.netUsd)}</span>
-        </div>
-        <div style={deltaLine}>
-          in {flow.inflowCount} / out {flow.outflowCount} · {flow.count} tx
-        </div>
-      </Cell>
-
+      {/* WHALE FLOW 24H removed: it repeated the 24h summary at the top of WHALE WIRE. */}
       <Cell label="WORLD EVENTS" env={events}>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
           <span style={{ ...bigValue, color: 'var(--txt)' }}>{ev.length}</span>
@@ -136,7 +120,10 @@ function Cell({
         <MockBadge env={env} />
       </span>
       <div style={cellLabel}>{label}</div>
-      <div style={{ marginTop: 5 }}>{children}</div>
+      {/* Mocked: no placeholder numbers, just say the source is missing. */}
+      <div style={{ marginTop: 5 }}>
+        {env.isMock ? <span style={{ fontSize: 11, color: 'var(--dim)' }}>data belum tersedia</span> : children}
+      </div>
     </div>
   );
 }

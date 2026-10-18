@@ -19,6 +19,10 @@ export interface DerivativesData {
   dvol: number;
   dvolChange7dPct: number;
   dvolHistory: { ts: number; close: number }[];
+  /** Seconds since the newest DVOL point; `null` when Deribit returned nothing. */
+  dvolAgeSec: number | null;
+  /** DVOL missing or older than `MAX_AGE_SEC.dvol` — the panel shows STALE. */
+  dvolStale: boolean;
   /**
    * Spot reference the basis and the max-pain gap are measured against.
    * Added beyond the perp/option fields because the options panel has to show

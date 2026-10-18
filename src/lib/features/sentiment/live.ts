@@ -37,7 +37,8 @@ export async function fetchSentiment({ days = 7 }: SentimentArgs) {
 
   return {
     data,
-    asOf: new Date().toISOString(),
+    // Newest headline the counts were taken over.
+    asOf: items[0]?.publishedAt ? new Date(items[0].publishedAt).toISOString() : null,
     synthetic: false,
   };
 }

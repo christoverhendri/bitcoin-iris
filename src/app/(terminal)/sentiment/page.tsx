@@ -1,3 +1,4 @@
+import { LiveOnly } from '@/components/primitives';
 import { getFearGreed } from '@/lib/features/fearGreed';
 import { getSentiment } from '@/lib/features/sentiment';
 import { getNews } from '@/lib/features/news';
@@ -42,7 +43,8 @@ export default async function GlobalSentimentPage({
   // wire and the layer toggle all treat them as first-class.
   const events = {
     ...newsEvents,
-    data: [...newsEvents.data, ...flowsToGeoEvents(flows.data.transfers)],
+    // Mocked flows would put placeholder transfers on the map — leave them out.
+    data: [...newsEvents.data, ...(flows.isMock ? [] : flowsToGeoEvents(flows.data.transfers))],
   };
 
   const activeCats =
@@ -57,11 +59,16 @@ export default async function GlobalSentimentPage({
         sentiment={sentiment}
         news={news}
         events={events}
-        whale={whale}
       />
-      <SocialSentimentPanel social={social} />
-      <GlobalSentimentPanel events={events} news={news} activeCats={activeCats} />
-      <WhaleWire initial={whale} limit={WHALE_LIMIT} />
+      <LiveOnly env={social} title="SOCIAL SENTIMENT">
+        <SocialSentimentPanel social={social} />
+      </LiveOnly>
+      <LiveOnly env={[events, news]} title="GLOBAL EVENT MAP">
+        <GlobalSentimentPanel events={events} news={news} activeCats={activeCats} />
+      </LiveOnly>
+      <LiveOnly env={whale} title="WHALE WIRE">
+        <WhaleWire initial={whale} limit={WHALE_LIMIT} />
+      </LiveOnly>
     </div>
   );
 }

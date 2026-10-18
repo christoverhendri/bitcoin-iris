@@ -7,7 +7,8 @@ import {
 } from '@/components/primitives';
 import type { Envelope } from '@/lib/envelope';
 import type { MacroMarketsData } from '@/lib/features/macroMarkets';
-import { toMacroMarketRows, corrTone, zTone, YAHOO_NOTE } from '@/lib/features/macroMarkets';
+import { toMacroMarketRows, YAHOO_NOTE } from '@/lib/features/macroMarkets';
+import { zWordsShort } from '@/lib/zWords';
 import { MiniSpark } from './MiniSpark';
 import { signTone, toneVar } from '@/lib/theme/tokens';
 
@@ -25,7 +26,7 @@ export function MarketsTable({ macro }: { macro: Envelope<MacroMarketsData> }) {
     <Panel>
       <PanelHeader
         title="GLOBAL MARKETS"
-        note={`daily · correlation vs BTC over ${d.btcSessions} sessions`}
+        note="daily · change over 1, 5 and 30 sessions"
         right={<MockBadge env={macro} />}
       />
 
@@ -34,11 +35,10 @@ export function MarketsTable({ macro }: { macro: Envelope<MacroMarketsData> }) {
           <tr>
             <th style={{ textAlign: 'left' }}>MARKET</th>
             <th style={{ textAlign: 'right' }}>LEVEL</th>
+            <th style={{ textAlign: 'left' }}>VS SETAHUN TERAKHIR</th>
             <th style={{ textAlign: 'right' }}>1D</th>
             <th style={{ textAlign: 'right' }}>5D</th>
             <th style={{ textAlign: 'right' }}>30D</th>
-            <th style={{ textAlign: 'right' }}>CORR</th>
-            <th style={{ textAlign: 'right' }}>Z 1Y</th>
             <th style={{ textAlign: 'left' }}>1Y</th>
           </tr>
         </thead>
@@ -52,6 +52,9 @@ export function MarketsTable({ macro }: { macro: Envelope<MacroMarketsData> }) {
                 </span>
               </td>
               <td style={{ textAlign: 'right', fontWeight: 700 }}>{r.level}</td>
+              <td style={{ fontSize: 10, color: r.raw.z1y !== null && Math.abs(r.raw.z1y) >= 2 ? 'var(--amber)' : 'var(--mut)', whiteSpace: 'nowrap' }}>
+                {zWordsShort(r.raw.z1y)}
+              </td>
               <td style={{ textAlign: 'right', color: toneVar(signTone(r.raw.change1dPct)) }}>
                 {r.change1d}
               </td>
@@ -61,12 +64,9 @@ export function MarketsTable({ macro }: { macro: Envelope<MacroMarketsData> }) {
               <td style={{ textAlign: 'right', color: toneVar(signTone(r.raw.change30dPct)) }}>
                 {r.change30d}
               </td>
-              <td style={{ textAlign: 'right', color: toneVar(corrTone(r.corrRaw)) }}>
-                {r.corr}
-              </td>
-              <td style={{ textAlign: 'right', color: toneVar(zTone(r.zRaw)) }}>{r.z}</td>
               <td>
                 <MiniSpark
+                  fmt={(v: number) => (r.raw.kind === 'rate' ? `${v.toFixed(2)}%` : v.toLocaleString('en-US', { maximumFractionDigits: 2 }))}
                   points={r.points}
                   stroke={r.raw.change30dPct >= 0 ? 'var(--up)' : 'var(--down)'}
                 />

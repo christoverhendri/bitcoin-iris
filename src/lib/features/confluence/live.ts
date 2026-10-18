@@ -192,9 +192,11 @@ export async function fetchConfluence({ symbol = 'BTC' }: ConfluenceArgs) {
     },
   };
 
+  // Dated by the price candles it is computed from (the technical layer is a
+  // third of the score); render time would hide a stale price feed.
   return {
     data,
-    asOf: new Date().toISOString(),
+    asOf: new Date(candles[candles.length - 1].ts * 1000).toISOString(),
     synthetic: false,
   };
 }

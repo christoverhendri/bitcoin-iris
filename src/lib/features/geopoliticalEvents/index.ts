@@ -1,4 +1,5 @@
 import { defineFeature } from '@/lib/defineFeature';
+import { MAX_AGE_SEC } from '@/lib/maxAge';
 import { fetchGeopoliticalEvents } from './live';
 import { mockGeopoliticalEvents } from './mock';
 import type { GeoEvent, GeoEventsArgs } from './types';
@@ -8,6 +9,7 @@ export const getGeopoliticalEvents = defineFeature<GeoEventsArgs, GeoEvent[]>({
   source: 'rss',
   live: fetchGeopoliticalEvents,
   mock: mockGeopoliticalEvents,
+  maxAgeSec: MAX_AGE_SEC.news,
 });
 
 export type { GeoEvent, GeoEventsArgs, EventCategory } from './types';

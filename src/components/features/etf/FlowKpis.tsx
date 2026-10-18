@@ -1,10 +1,11 @@
 import { PanelStrip, StatTile, MockBadge } from '@/components/primitives';
 import type { Envelope } from '@/lib/envelope';
 import type { EtfFlowsData } from '@/lib/features/etfFlows';
-import { toEtfLabels, flowTone, streakTone } from '@/lib/features/etfFlows';
+import { toEtfLabels, flowTone } from '@/lib/features/etfFlows';
 
 /**
- * The four numbers worth reading before the chart.
+ * The three numbers worth reading before the chart (STREAK and IBIT SHARE were
+ * removed in the 2026-10-18 curation).
  *
  * "Net" is deliberately labelled with its session count rather than a
  * timeframe: the window is whatever the publisher printed, and calling it
@@ -34,22 +35,10 @@ export function FlowKpis({ etf }: { etf: Envelope<EtfFlowsData> }) {
         detail={`avg ${l.avgDaily}/session`}
       />
       <StatTile
-        label="STREAK"
-        value={l.streak}
-        tone={streakTone(d)}
-        detail={`${l.greenDays} sessions positive`}
-      />
-      <StatTile
         label="LARGEST DAY"
         value={l.biggestDay}
         tone={flowTone(d.biggestDay.totalUsdM)}
         detail={l.biggestDate}
-      />
-      <StatTile
-        label="IBIT SHARE"
-        value={l.ibitShare}
-        tone="blue"
-        detail="of window gross flow"
       />
     </PanelStrip>
   );

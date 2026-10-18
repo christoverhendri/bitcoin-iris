@@ -78,7 +78,8 @@ export async function fetchChainFlows(_args: ChainFlowsArgs) {
   };
 
   const newest = transfers.reduce((m, t) => Math.max(m, t.blockTime), 0);
-  const asOf = newest > 0 ? new Date(newest * 1000).toISOString() : new Date().toISOString();
+  // No transfer in the window means no timestamp to trust — unknown, not "now".
+  const asOf = newest > 0 ? new Date(newest * 1000).toISOString() : null;
 
   return { data, asOf, synthetic: false };
 }

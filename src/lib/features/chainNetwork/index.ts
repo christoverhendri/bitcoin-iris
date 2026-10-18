@@ -1,4 +1,5 @@
 import { defineFeature } from '@/lib/defineFeature';
+import { MAX_AGE_SEC } from '@/lib/maxAge';
 import { fetchChainNetwork } from './live';
 import { mockChainNetwork } from './mock';
 import type { ChainNetworkArgs, ChainNetworkData } from './types';
@@ -8,6 +9,7 @@ export const getChainNetwork = defineFeature<ChainNetworkArgs, ChainNetworkData>
   source: 'mempool_space',
   live: fetchChainNetwork,
   mock: mockChainNetwork,
+  maxAgeSec: MAX_AGE_SEC.network,
 });
 
 export type {
