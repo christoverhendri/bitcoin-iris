@@ -9,14 +9,15 @@ included. Installation and all provided checks use only Node.js/npm.
 
 ## How the model works
 
-Financial DistilRoBERTa produces three sentiment probabilities from cleaned,
-tokenized financial text. Parser V3 audits explicit scope in the original text
-and can adjust the final label while retaining those probabilities. TF-IDF +
-Logistic Regression remains an independent baseline. A shared scheduler owns
-the result cache, active jobs and bounded inference queue.
+Financial DistilRoBERTa turns subword tokens into 768-dimensional embeddings,
+processes them through six Transformer layers, and classifies the final first-token
+representation into three logits. The Node.js wrapper applies softmax to obtain
+sentiment probabilities. Parser V3 can then adjust the label while retaining
+those probabilities; TF-IDF + Logistic Regression remains an independent baseline.
 
-See [cara kerja model, contoh keputusan, field output, dan cache](models/onnx-fp32/README.md)
-for the detailed explanation beside the ONNX weight file.
+See [cara kerja internal model: tokenisasi, attention, classification head, dan softmax](models/onnx-fp32/README.md)
+beside the ONNX weight file for the architecture, tensor shapes, worked softmax
+example, and the distinction between training and inference.
 
 ## Run
 

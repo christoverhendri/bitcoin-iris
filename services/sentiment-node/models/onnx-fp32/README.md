@@ -1,11 +1,177 @@
-# Cara kerja model sentimen IRIS
+# Cara kerja internal Financial DistilRoBERTa
 
-Folder ini menyimpan Financial DistilRoBERTa dalam format ONNX FP32. Pipeline
-lengkapnya menggabungkan prediksi neural dengan aturan IRIS Semantic Parser V3,
-serta menghitung TF-IDF + Logistic Regression sebagai baseline terpisah.
-Seluruh inferensi berjalan di backend Node.js melalui ONNX Runtime CPU.
+Financial DistilRoBERTa mengubah teks berita menjadi representasi angka yang
+memuat konteks, lalu mengklasifikasikannya sebagai `negative`, `neutral`, atau
+`positive`. Bagian berikut menjelaskan pekerjaan jaringan neural itu sendiri.
+Parser V3, baseline, dan cache dijelaskan setelah mekanisme neural karena
+ketiganya merupakan komponen terpisah dari bobot model.
 
-## Komponen dan perannya
+## Model yang dipakai
+
+Checkpoint yang digunakan adalah
+[`mrm8488/distilroberta-finetuned-financial-news-sentiment-analysis`](https://huggingface.co/mrm8488/distilroberta-finetuned-financial-news-sentiment-analysis),
+revision `ae0eab9ad336d7d548e0efe394b07c04bcaf6e91`. Model upstream sudah
+di-fine-tune pada Financial PhraseBank berbahasa Inggris; salinan penjelasannya
+tersedia di [kartu model upstream](../../UPSTREAM-MODEL-CARD.md).
+
+Dimensi berikut berasal dari [config.json](config.json) checkpoint ini:
+
+| Bagian | Konfigurasi |
+|---|---|
+| Arsitektur | `RobertaForSequenceClassification` |
+| Encoder | 6 layer Transformer bidirectional |
+| Ukuran representasi setiap token | 768 angka |
+| Self-attention | 12 head per layer, masing-masing berdimensi 64 |
+| Feed-forward per layer | 768 → 3072 → 768, aktivasi GELU |
+| Vocabulary | 50.265 token |
+| Kelas output sesuai urutan indeks | 0 = `negative`, 1 = `neutral`, 2 = `positive` |
+| Batas input layanan | 512 token termasuk token khusus |
+| Format inferensi | ONNX FP32, opset 17, ONNX Runtime CPU di Node.js |
+
+## Dari teks menjadi prediksi
+
+```mermaid
+flowchart TD
+    A[Teks berita] --> B[Cleaning dan tokenizer byte-level BPE]
+    B --> C[Token ID dan attention mask]
+    C --> D[Embedding token dan posisi: 768 dimensi]
+    D --> E[6 layer Transformer: self-attention dan feed-forward]
+    E --> F[Representasi akhir token awal s: 768 dimensi]
+    F --> G[Classification head: dense, tanh, proyeksi 3 kelas]
+    G --> H[ONNX mengeluarkan 3 logits]
+    H --> I[Wrapper Node.js: softmax dan argmax]
+    I --> J[Probabilitas dan label neural]
+```
+
+### 1. Tokenisasi: teks menjadi ID subword
+
+Wrapper menghapus URL, mention, dan banner awal seperti `JUST IN:` atau
+`BREAKING:`, lalu merapikan whitespace. Kapitalisasi tetap dipertahankan.
+Tokenizer **byte-level BPE** memecah teks menjadi token yang bisa berupa kata,
+bagian kata, atau tanda baca. Token kemudian dipetakan ke ID vocabulary; satu
+token tidak selalu sama dengan satu kata. Metode tokenisasi ini mengikuti
+[RoBERTa](https://huggingface.co/docs/transformers/model_doc/roberta).
+
+Token `<s>` ditambahkan di awal dan `</s>` di akhir. Tensor `input_ids` berisi
+ID tersebut, sedangkan `attention_mask` menandai token asli dengan 1 dan padding
+dengan 0. Dalam satu batch, padding mengikuti input terpanjang. Input melewati
+512 token dipotong dari kanan dengan `</s>` tetap dipertahankan; konteks yang
+dibuang tidak bisa digunakan model. Nilai `max_position_embeddings=514` pada
+config adalah ukuran tabel posisi RoBERTa, bukan izin membaca 514 token teks.
+
+### 2. Embedding: setiap token menjadi vektor
+
+ID token digunakan untuk mengambil vektor yang sudah dipelajari dari tabel
+embedding. Vektor token dijumlahkan dengan embedding posisi agar urutan kata
+terwakili. Implementasi juga memiliki satu embedding tipe segmen yang sama
+untuk seluruh input, sehingga tidak membedakan pasangan segmen. Hasilnya
+dinormalisasi dengan LayerNorm.
+
+Setiap posisi sekarang memiliki **768 angka**. Untuk batch berukuran `B` dengan
+panjang setelah padding `L`, bentuk representasinya adalah `[B, L, 768]`.
+Angka-angka ini merupakan fitur yang dipelajari, bukan label kata yang
+ditentukan manual.
+
+### 3. Enam layer Transformer: membangun konteks
+
+Pada setiap layer, **self-attention** menghitung hubungan antartoken dalam
+seluruh input yang tersedia. Sifat bidirectional memungkinkan satu token
+menggunakan konteks sebelum dan sesudahnya. Ini memberi model kemampuan
+membedakan konteks seperti kenaikan laba dan penyangkalan kenaikan laba,
+meskipun tidak menjamin negasi selalu ditafsirkan dengan benar.
+
+Untuk setiap head, representasi input `H` diproyeksikan dengan bobot terlatih:
+
+```text
+Q = H Wq        K = H Wk        V = H Wv
+attention(Q, K, V) = softmax(Q Kᵀ / sqrt(64) + M) V
+```
+
+`Q` dan `K` menentukan bobot hubungan antartoken; `V` membawa informasi yang
+digabungkan. `M` adalah mask yang menutup posisi padding. Ada 12 head dengan
+dimensi 64, sehingga beberapa proyeksi hubungan dapat dihitung bersamaan.
+Hasilnya digabung dan diproyeksikan kembali menjadi 768 dimensi.
+
+Setelah attention, terdapat residual connection dan LayerNorm. Berikutnya,
+jaringan feed-forward mengolah setiap posisi melalui
+`768 → 3072 → GELU → 768`, diikuti residual connection dan LayerNorm lagi.
+Rangkaian ini diulang enam kali. Keluaran akhirnya masih `[B, L, 768]`, tetapi
+representasi setiap token sudah dipengaruhi konteks token lain.
+
+Bobot attention tidak otomatis menjadi penjelasan sebab prediksi. Ekspor ONNX
+layanan ini mengeluarkan logits, bukan heatmap atau penjelasan kata per kata.
+
+### 4. Classification head: representasi konteks menjadi tiga logits
+
+Classifier mengambil representasi akhir **token pertama `<s>`**, bukan rata-rata
+seluruh token. Melalui training klasifikasi, representasi ini digunakan untuk
+keputusan pada tingkat keseluruhan input. Alurnya:
+
+```text
+representasi <s> [768]
+  → dense [768 → 768]
+  → tanh
+  → proyeksi output [768 → 3]
+  → logits [negative, neutral, positive]
+```
+
+Arsitektur training menempatkan dropout sebelum dense dan sebelum proyeksi
+output. Dropout dinonaktifkan saat inferensi. Struktur head ini mengikuti
+[implementasi RoBERTa di Transformers](https://github.com/huggingface/transformers/blob/v4.57.6/src/transformers/models/roberta/modeling_roberta.py#L1426).
+
+Logits adalah skor mentah yang belum dibatasi antara 0 dan 1. ONNX menerima
+`input_ids` dan `attention_mask` berbentuk `[B, L]`, lalu mengembalikan tensor
+`logits` berbentuk `[B, 3]`.
+
+### 5. Softmax: skor menjadi probabilitas kelas
+
+Wrapper [model.mjs](../../node/model.mjs) menerapkan softmax pada tiga logits.
+Softmax di sini terpisah dari softmax attention pada langkah 3: yang ini
+menormalisasi skor **kelas sentimen**, bukan hubungan antartoken.
+
+```text
+p(k) = exp(z[k] - max(z)) / sum_j(exp(z[j] - max(z)))
+label neural = kelas dengan p(k) terbesar
+```
+
+Pengurangan nilai maksimum menjaga stabilitas numerik tanpa mengubah hasil
+matematis. Sebagai ilustrasi perhitungan, bukan hasil inferensi berita tertentu:
+
+| Kelas | Logit ilustratif | Probabilitas softmax |
+|---|---:|---:|
+| negative | -1 | 0,0420 |
+| neutral | 0 | 0,1142 |
+| positive | 2 | 0,8438 |
+
+Pada ilustrasi ini labelnya `positive`. Nilai 0,8438 menyatakan skor relatif
+kelas dari model; belum ada bukti kalibrasi bahwa nilai tersebut berarti
+84,38% peluang prediksi benar pada berita IRIS. Model tetap memilih satu dari
+tiga kelas, sehingga `uncertain` pada anotasi manusia bukan kelas output neural.
+
+## Dari mana model belajar?
+
+Model dasar
+[DistilRoBERTa](https://huggingface.co/distilbert/distilroberta-base)
+merupakan hasil distillation RoBERTa-base: jaringan yang lebih kecil dilatih
+untuk meniru perilaku teacher dan mempelajari representasi bahasa. Model dasar
+ini memiliki sekitar 82 juta parameter dan enam layer. Upstream kemudian
+melakukan fine-tuning untuk klasifikasi sentimen finansial menggunakan contoh
+berlabel dari Financial PhraseBank. Parameter jaringan dan head menyesuaikan
+diri terhadap tugas tersebut.
+
+Integrasi IRIS memakai checkpoint hasil fine-tuning itu dan mengekspornya ke
+ONNX FP32. **Saat berita masuk, bobot tetap:** layanan hanya melakukan forward
+pass di atas. Tidak ada training ulang, pembelajaran dari request, quantization,
+atau pemakaian gold/holdout untuk memperbarui bobot. Distillation terjadi saat
+pembuatan model dasar; FP32 adalah presisi angka saat menjalankan model ini.
+
+Model menilai sentimen finansial teks sesuai pola yang dipelajarinya. Kenaikan
+harga minyak bisa bernada positif untuk minyak tanpa menentukan efeknya pada
+BTC. Teks yang ambigu, berbeda domain, memuat banyak aset, atau kehilangan
+konteks akibat truncation dapat menghasilkan prediksi keliru. Model ini tidak
+mengambil data pasar baru, memeriksa kebenaran berita, atau meramal harga BTC.
+
+## Berkas model dan komponen di luar jaringan
 
 | Komponen | Peran |
 |---|---|
@@ -16,59 +182,12 @@ Seluruh inferensi berjalan di backend Node.js melalui ONNX Runtime CPU.
 | [parser.mjs](../../node/parser.mjs) | Ekstraksi bukti dari teks asli dan kebijakan scope V3 |
 | [model.node.json](../tfidf/model.node.json) | Vocabulary, IDF dan koefisien baseline yang sudah dilatih sebelumnya |
 
-Model neural berasal dari
-`mrm8488/distilroberta-finetuned-financial-news-sentiment-analysis`, revision
-`ae0eab9ad336d7d548e0efe394b07c04bcaf6e91`. Arsitekturnya memiliki 6 Transformer
-layer, hidden size 768, dan 12 attention head. Model upstream sudah di-fine-tune
-pada berita finansial berbahasa Inggris dari Financial PhraseBank; lihat
-[kartu model upstream](../../UPSTREAM-MODEL-CARD.md).
-
-Integrasi ini mengekspor bobot yang sama ke ONNX FP32. Tidak ada training ulang,
-quantization, atau penggabungan bobot dengan parser maupun TF-IDF.
-
-## Alur dari berita ke hasil
-
-```mermaid
-flowchart TD
-    A[Teks berita asli] --> B[Validasi input]
-    B --> C{Hasil ada di cache?}
-    C -->|Ya| R[Kembalikan hasil lengkap]
-    C -->|Tidak| D{Pekerjaan yang sama sudah ada?}
-    D -->|Ya| W[Tunggu Promise yang sama]
-    W --> R
-    D -->|Tidak| Q[Masuk antrean terbatas]
-    Q --> N[DistilRoBERTa: probabilitas dan label model]
-    N --> P[Parser V3: audit scope pada teks asli]
-    P --> T[Hitung baseline TF-IDF secara terpisah]
-    T --> S[Simpan hasil gabungan ke cache]
-    S --> R
-```
-
-1. **Validasi dan pembersihan.** API menerima 1–40 artikel dengan `id` unik dan
-   `text`. Teks asli tetap disimpan. Untuk model, URL, mention, serta banner awal
-   seperti `JUST IN:` atau `BREAKING:` dihapus dan whitespace dirapikan. Teks
-   neural mempertahankan kapitalisasi. Parser menggunakan teks asli; bagian
-   yang diabaikan dimask agar offset bukti tetap menunjuk ke teks tersebut.
-2. **Tokenisasi.** Byte-level BPE mengubah teks menjadi ID subword, kemudian
-   menambahkan token khusus RoBERTa. Batas input adalah 512 token termasuk token
-   khusus. Input lebih panjang dipotong dari kanan dengan token penutup tetap
-   dipertahankan. Dalam satu batch, padding mengikuti teks terpanjang dan
-   `attention_mask` menandai token yang perlu diperhatikan model.
-3. **Inferensi neural.** ONNX menerima `input_ids` dan `attention_mask`, lalu
-   menghasilkan tiga logit. Softmax mengubahnya menjadi probabilitas tiga kelas
-   yang berjumlah sekitar 1. Kelas dengan probabilitas terbesar disimpan sebagai
-   `model_sentiment`. Ini adalah sentimen keseluruhan teks, bukan prediksi harga
-   atau probabilitas naik/turunnya Bitcoin.
-4. **Audit parser V3.** Parser memeriksa siapa pemegang stance, apa targetnya,
-   scope negasi, arah usulan, serta hubungan stance dan waktu dalam pola kalimat
-   yang didukung. Bila scope memenuhi aturan, label akhir mengikuti kandidat
-   parser. Bila parser abstain, label neural dipertahankan. Parser tidak
-   menghitung ulang probabilitas neural.
-5. **Baseline dan respons.** TF-IDF mengubah teks menjadi fitur kata unigram dan
-   bigram, menerapkan bobot IDF dan normalisasi L2, lalu Logistic Regression
-   menghitung probabilitasnya sendiri. Vocabulary dan koefisien berasal dari
-   model baseline lama. Baseline dikembalikan pada field terpisah tanpa voting
-   atau rata-rata dengan hasil neural. Respons lengkap kemudian disimpan di cache.
+`model.onnx` menyimpan graph komputasi dan bobot terlatih. Tokenizer merupakan
+aset pendamping untuk menyiapkan input. Parser V3 memeriksa teks asli dan dapat
+mengubah label akhir setelah prediksi neural dihitung; probabilitas neural
+tetap sama. TF-IDF + Logistic Regression memakai vocabulary, IDF, normalisasi
+L2, dan koefisiennya sendiri untuk menghasilkan baseline independen. Tidak ada
+penggabungan bobot, voting, atau rata-rata probabilitas antarkedua model.
 
 ## Kapan parser mengubah label?
 
