@@ -24,6 +24,32 @@ data past its panel's age limit (`src/lib/maxAge.ts`) carries a red
 `STALE · age` badge. See `docs/DECISIONS.md` §13 (including the ISP DNS block
 that made this necessary).
 
+## Local sentiment model
+
+Financial DistilRoBERTa + frozen IRIS parser V3 is connected to the news labels
+and sentiment panel, with TF-IDF preserved as an explicit baseline comparison.
+The active model service lives in `services/sentiment-node/` and uses Node.js +
+ONNX FP32, with a bounded queue, per-text single flight and versioned result
+caching. Setup, serving and bundled checks use Node.js/npm. The previous
+`services/sentiment/` directory is retained locally as a historical reference and
+excluded from this Node.js branch.
+
+```powershell
+git lfs install --local
+git lfs pull
+npm ci
+npm run dev:sentiment
+```
+
+`services/sentiment-node/models/onnx-fp32/model.onnx` is versioned with Git LFS.
+Run `git lfs pull` after cloning if model files were not downloaded automatically.
+The worker verifies the full weight file before loading it. See
+[Node setup, concurrency, cache and validation](docs/SENTIMENT_NODE.md).
+The [previous Python integration](docs/SENTIMENT_MODEL.md) is retained for reference.
+
+Run `npm run sentiment:check` for Node unit tests, synthetic parity and concurrent
+HTTP tests. For production locally, use `npm run build` then `npm run start:sentiment`.
+
 ## Checks
 
 ```bash

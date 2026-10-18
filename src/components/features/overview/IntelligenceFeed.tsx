@@ -5,7 +5,8 @@ import { Panel, PanelHeader, Tag, MockBadge, SourceFootnote } from '@/components
 import type { Envelope } from '@/lib/envelope';
 import type { SentimentData } from '@/lib/features/sentiment';
 import type { NewsArticle } from '@/lib/features/news';
-import { newsSentimentWord, newsCategoryColor } from '@/lib/features/news';
+import { newsSentimentWord, newsCategoryColor } from '@/lib/features/news/present';
+import { HeadlineModel, ModelProvenance } from '@/components/features/sentiment/ModelProvenance';
 
 export interface IntelligenceFeedProps {
   sentiment: Envelope<SentimentData>;
@@ -131,6 +132,7 @@ export function IntelligenceFeed({ sentiment, news }: IntelligenceFeedProps) {
                         <span>·</span>
                         <span>{a.btcWindow}</span>
                       </span>
+                      <HeadlineModel assessment={a.sentimentAssessment} />
                     </span>
                     <span
                       style={{
@@ -189,6 +191,7 @@ export function IntelligenceFeed({ sentiment, news }: IntelligenceFeedProps) {
         </div>
       </div>
 
+      <ModelProvenance analysis={s.analysis} />
       <SourceFootnote env={news} />
     </Panel>
   );

@@ -1,0 +1,9 @@
+{
+  "backend": "node-onnx-fp32",
+  "precision": "fp32",
+  "model_loads": 1,
+  "http_status": 200,
+  "sentiment": "positive",
+  "baseline_present": true,
+  "node_only": true
+}

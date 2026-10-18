@@ -4,6 +4,13 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:sentiment": "node scripts/sentiment-dev.mjs",
+    "start:sentiment": "node scripts/sentiment-dev.mjs --production",
+    "sentiment:serve": "node scripts/sentiment-dev.mjs --worker-only",
+    "sentiment:test": "node --test services/sentiment-node/node/tests/*.test.mjs services/sentiment-node/node/parser.test.mjs",
+    "sentiment:validate": "node services/sentiment-node/node/verify.mjs",
+    "sentiment:test:http": "node services/sentiment-node/node/http-test.mjs",
+    "sentiment:check": "npm run sentiment:test && npm run sentiment:validate && npm run sentiment:test:http",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
@@ -12,6 +19,7 @@
     "verify:registry": "node scripts/verify-registry.mjs"
   },
   "dependencies": {
+    "@huggingface/tokenizers": "0.2.0",
     "@supabase/supabase-js": "^2.114.0",
     "d3-geo": "^3.1.1",
     "d3-scale": "^4.0.2",
@@ -22,6 +30,7 @@
     "lightweight-charts": "^5.2.1",
     "next": "16.3.4",
     "nuqs": "^2.10.1",
+    "onnxruntime-node": "1.30.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "server-only": "^0.0.1",

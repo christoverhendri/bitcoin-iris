@@ -14,6 +14,7 @@ import { WhaleWire } from '@/components/features/whale/WhaleWire';
 import { SocialSentimentPanel } from '@/components/features/socialSentiment/SocialSentimentPanel';
 
 export const revalidate = 30;
+export const dynamic = 'force-dynamic';
 
 /**
  * Shared by the server fetch and the panel's client poll, so the first paint and

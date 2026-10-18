@@ -17,6 +17,7 @@ import { TechReadout } from '@/components/features/overview/TechReadout';
 import { IntelligenceFeed } from '@/components/features/overview/IntelligenceFeed';
 
 export const revalidate = 30;
+export const dynamic = 'force-dynamic';
 
 export default async function OverviewPage({
   searchParams,

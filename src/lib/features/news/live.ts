@@ -1,14 +1,14 @@
 /**
- * Live crypto news — merged public RSS feeds. Sentiment is a keyword heuristic
- * (see `sources/lexicon.ts`); category reuses the Global Events keyword
- * classifier. None of it is a model; the panel labels it as heuristic.
+ * Live crypto news — merged public RSS feeds. Sentiment labels come from the
+ * researcher's model worker (with an explicitly labelled keyword fallback when
+ * it is down); category reuses the Global Events keyword classifier.
  *
  * Ordered newest first. There is no impact ranking: the score that used to sort
  * this list (a hand-picked base per category plus a recency bonus) had nothing
- * behind its numbers and was removed on 2026-10-16.
+ * behind its numbers and was removed on 2026-10-16 — the model branch's copy of
+ * it was not merged back.
  */
-import { getCryptoNews } from '@/lib/sources/rss';
-import { scoreHeadline } from '@/lib/sources/lexicon';
+import { getAnalyzedCryptoNews } from '@/lib/sentiment/news';
 import { classify } from '@/lib/geo/classify';
 import type { NewsArticle, NewsArgs } from './types';
 
@@ -22,7 +22,7 @@ function ago(ms: number): string {
 }
 
 export async function fetchNews({ limit = 5 }: NewsArgs) {
-  const items = await getCryptoNews(15);
+  const items = await getAnalyzedCryptoNews();
   if (!items.length) return null;
 
   const newest = items[0]?.publishedAt || Date.now();
@@ -30,7 +30,8 @@ export async function fetchNews({ limit = 5 }: NewsArgs) {
   const articles: NewsArticle[] = items.map((it) => ({
     title: it.title,
     source: it.source,
-    sentiment: scoreHeadline(it.title),
+    sentiment: it.assessment.label,
+    sentimentAssessment: it.assessment,
     btcWindow: ago(it.publishedAt),
     url: it.link || undefined,
     description: it.description,

@@ -6,8 +6,9 @@ import type { Tone } from '@/lib/theme/tokens';
 import { CATEGORY_COLOR, toEventRow } from '@/lib/features/geopoliticalEvents';
 import type { EventCategory, GeoEvent } from '@/lib/features/geopoliticalEvents';
 import type { NewsArticle } from '@/lib/features/news';
-import { newsCategoryColor, newsSentimentWord } from '@/lib/features/news';
+import { newsCategoryColor, newsSentimentWord } from '@/lib/features/news/present';
 import type { DetailPayload } from './WorldMap';
+import { HeadlineModel } from '@/components/features/sentiment/ModelProvenance';
 
 const SENTIMENT_TONE: Record<GeoEvent['sentiment'], Tone> = {
   positive: 'up',
@@ -129,6 +130,7 @@ export function EventNewsRail({
                         <span>·</span>
                         <span>{a.btcWindow}</span>
                       </span>
+                      <HeadlineModel assessment={a.sentimentAssessment} />
                     </span>
                     <span style={{ marginTop: 2, flexShrink: 0, display: 'flex', gap: 6 }}>
                       <Tag label={newsSentimentWord(a.sentiment)} tone={SENTIMENT_TONE[a.sentiment]} />

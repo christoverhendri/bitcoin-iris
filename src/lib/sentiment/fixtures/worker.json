@@ -1,0 +1,153 @@
+{
+  "schema": "iris-sentiment-worker/v1",
+  "release_id": "iris-sentiment-local/1.0.0",
+  "rows": [
+    {
+      "id": "fa2cc34bec48e61ad5175134ff7ef5aad866dbb6c992df9b7d82e96cebb05b71",
+      "content_hash": "fa2cc34bec48e61ad5175134ff7ef5aad866dbb6c992df9b7d82e96cebb05b71",
+      "prediction": {
+        "raw_text": "The director investors say opposes Bitcoin adoption endorses Bitcoin adoption.",
+        "cleaned_text": "The director investors say opposes Bitcoin adoption endorses Bitcoin adoption.",
+        "content_hash": "fa2cc34bec48e61ad5175134ff7ef5aad866dbb6c992df9b7d82e96cebb05b71",
+        "sentiment": "neutral",
+        "probabilities": {
+          "negative": 0.00020300116739235818,
+          "neutral": 0.9994646906852722,
+          "positive": 0.00033233710564672947
+        },
+        "needs_review": true,
+        "review_reasons": [
+          "semantic_review",
+          "v3_scope_requires_review"
+        ],
+        "explicit_btc_mention": true,
+        "model_id": "mrm8488/distilroberta-finetuned-financial-news-sentiment-analysis@ae0eab9ad336d7d548e0efe394b07c04bcaf6e91",
+        "label_basis": "pretrained_financial_phrasebank",
+        "inference": {
+          "input_tokens": 14,
+          "max_tokens": 512,
+          "truncated": false
+        },
+        "research_only": true,
+        "classified_at": "2026-10-17T15:02:10.125994+00:00",
+        "model_sentiment": "neutral",
+        "model_label_basis": "pretrained_financial_phrasebank",
+        "sentiment_policy": "parser_scope_v3",
+        "probabilities_basis": "unmodified_model_only",
+        "sentiment_source": "model",
+        "sentiment_adjustment": {
+          "rules_version": "iris-sentiment-scope/0.3.0",
+          "eligible": false,
+          "changed": false,
+          "evidence": null,
+          "abstention_reason": "unsupported_context_frame",
+          "context_resolution": "unresolved",
+          "relations": []
+        }
+      },
+      "baseline": {
+        "sentiment": "positive",
+        "probabilities": {
+          "negative": 0.0051088276029531985,
+          "neutral": 0.027363057981073455,
+          "positive": 0.9675281144159734
+        },
+        "model_id": "tfidf-logreg-d0d85bc862b5",
+        "needs_review": true
+      }
+    },
+    {
+      "id": "6be902818baf3af2f5aff4c65f425a7550d2ce1cfa3bd9152ec75c17194b429c",
+      "content_hash": "6be902818baf3af2f5aff4c65f425a7550d2ce1cfa3bd9152ec75c17194b429c",
+      "prediction": {
+        "raw_text": "An association which criticizes crypto adoption opposes crypto adoption.",
+        "cleaned_text": "An association which criticizes crypto adoption opposes crypto adoption.",
+        "content_hash": "6be902818baf3af2f5aff4c65f425a7550d2ce1cfa3bd9152ec75c17194b429c",
+        "sentiment": "negative",
+        "probabilities": {
+          "negative": 0.00030663335928693414,
+          "neutral": 0.9996217489242554,
+          "positive": 7.157980871852487e-05
+        },
+        "needs_review": true,
+        "review_reasons": [
+          "semantic_review",
+          "development_parser_scope_decision"
+        ],
+        "explicit_btc_mention": false,
+        "model_id": "mrm8488/distilroberta-finetuned-financial-news-sentiment-analysis@ae0eab9ad336d7d548e0efe394b07c04bcaf6e91",
+        "label_basis": "model_plus_development_scoped_rules",
+        "inference": {
+          "input_tokens": 13,
+          "max_tokens": 512,
+          "truncated": false
+        },
+        "research_only": true,
+        "classified_at": "2026-10-17T15:02:10.472461+00:00",
+        "model_sentiment": "neutral",
+        "model_label_basis": "pretrained_financial_phrasebank",
+        "sentiment_policy": "parser_scope_v3",
+        "probabilities_basis": "unmodified_model_only",
+        "sentiment_source": "parser_scope",
+        "sentiment_adjustment": {
+          "rules_version": "iris-sentiment-scope/0.3.0",
+          "eligible": true,
+          "changed": true,
+          "evidence": {
+            "kind": "explicit_stance",
+            "proposed_sentiment": "negative",
+            "cue": {
+              "text": "opposes",
+              "start": 48,
+              "end": 55
+            },
+            "target": {
+              "text": "crypto adoption",
+              "start": 56,
+              "end": 71
+            },
+            "asset": {
+              "text": "crypto",
+              "start": 56,
+              "end": 62
+            },
+            "evidence": {
+              "text": "An association which criticizes crypto adoption opposes crypto adoption.",
+              "start": 0,
+              "end": 72
+            },
+            "negation_scope": null,
+            "modality": "attributed_stance",
+            "verified_occurrence": false
+          },
+          "abstention_reason": null,
+          "context_resolution": "complete_bounded_relative_frame",
+          "relations": [
+            {
+              "holder_relation": "same_shared_subject",
+              "target_relation": "same",
+              "evidence": [
+                {
+                  "text": "which",
+                  "start": 15,
+                  "end": 20
+                }
+              ],
+              "status": "compatible_same_target"
+            }
+          ]
+        }
+      },
+      "baseline": {
+        "sentiment": "positive",
+        "probabilities": {
+          "negative": 0.005228966832860577,
+          "neutral": 0.0074540420693498905,
+          "positive": 0.9873169910977896
+        },
+        "model_id": "tfidf-logreg-d0d85bc862b5",
+        "needs_review": true
+      }
+    }
+  ]
+}

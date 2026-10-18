@@ -1,9 +1,11 @@
 import type { EventCategory } from '@/lib/geo/classify';
+import type { SentimentAssessment } from '@/lib/sentiment/types';
 
 export interface NewsArticle {
   title: string;
   source: string;
   sentiment: 'positive' | 'negative' | 'neutral';
+  sentimentAssessment?: SentimentAssessment;
   /** "time ago" label, kept for the compact row. */
   btcWindow: string;
   url?: string;

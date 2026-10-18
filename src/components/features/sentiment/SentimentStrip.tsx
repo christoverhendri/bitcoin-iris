@@ -8,6 +8,7 @@ import { toFearGreedLabel } from '@/lib/features/fearGreed';
 import type { SentimentData } from '@/lib/features/sentiment';
 import type { NewsArticle } from '@/lib/features/news';
 import type { GeoEvent } from '@/lib/features/geopoliticalEvents';
+import { ModelProvenance } from './ModelProvenance';
 
 const DAY_MS = 86_400_000;
 
@@ -81,6 +82,8 @@ export function SentimentStrip({ fearGreed, sentiment, news, events }: Sentiment
           {Math.round(s.positivePct)} / {Math.round(s.neutralPct)} / {Math.round(s.negativePct)}
           {' '}% of {s.headlineCount} headlines
         </div>
+        {/* Which engine labelled these headlines (model / baseline / heuristic fallback). */}
+        <ModelProvenance analysis={s.analysis} />
       </Cell>
 
       <Cell label="NEWS TONE" env={news}>

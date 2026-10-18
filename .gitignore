@@ -55,3 +55,7 @@ __pycache__/
 
 # supabase cli temp
 supabase/.temp/
+
+/.local/
+# Historical Python/reference package is preserved locally; active service is Node.js.
+/services/sentiment/
