@@ -725,3 +725,69 @@ last decade's returns — a decade that contained two halvings and two full cycl
 which is a strength for sample size and a weakness for stationarity.
 
 It cannot forecast direction, and by construction does not try.
+
+---
+
+## 13. Kurasi dashboard, real-time, dan anti data basi (18 Okt 2026)
+
+Kurasi ini dilakukan pemilik proyek panel demi panel. (Spec penyederhanaan otomatis sebelumnya
+ditolak dan disimpan di branch `simplification-spec`.) Panel yang dihapus di bawah **tidak
+ditambahkan lagi tanpa persetujuan pemilik**; rasio long/short, distribusi cold/hot, dan
+transfer real-time **wajib dipertahankan**.
+
+### Dihapus (dan ke mana link lamanya)
+
+Semua redirect memakai **307 (sementara)** — 308 permanen disimpan browser selamanya dan sempat
+membuat halaman yang dikembalikan tetap terlempar.
+
+| Yang dihapus | Redirect |
+|---|---|
+| Tab Market (Price, Technicals) | `/market/*` → `/overview` |
+| Quant → Volatility | → `/quant/seasonality` |
+| On-Chain: Supply, Network, Derivatives | Supply → `/chain/wallets`, Network → `/chain/etf`, Derivatives → `/chain/long-short` |
+| Positioning: DIVERGENCE, BIAS · OPINION, COINBASE PREMIUM | `/chain/positioning` → `/chain/long-short` |
+| Flows: kartu DEPOSIT, FLOW SUMMARY, netflow gauge ganda | `/chain/flows` → `/chain/wallets` |
+| ETF: STREAK, IBIT SHARE, BY ISSUER, kolom NET matrix | — |
+| Sentiment: bar chart social 30 hari, sel WHALE FLOW 24H | — |
+| Macro: negara selain US, COMPOSITE IMPULSE, kolom CORR & Z 1Y, strip z-score, semua angka sigma | — |
+| Forecast: tab Calibration, OUTCOME DENSITY, PROBABILITY ABOVE, MODEL STATE, kolom WINDOWS | `/forecast/calibration` → `/forecast/distribution` |
+
+Sub-tab On-Chain memakai slug baru (`etf`, `long-short`, `wallets`) supaya tidak bertabrakan
+dengan redirect 308 lama yang sudah tersimpan di browser.
+
+### Aturan tampilan
+
+- **Tidak ada informasi ditulis dua kali** di satu halaman (cold/hot satu bar saja, net per sesi
+  hanya di grafik, kisaran mingguan sekali, dst.).
+- **Tanpa sigma / persentil di layar.** z-score ditulis dengan kata (`src/lib/zWords.ts`, batas
+  ±1/±2 simpangan baku); persentil distribusi jadi SANGAT RENDAH … SANGAT TINGGI.
+- **Kalimat sederhana di tiap tab.**
+- **Setiap grafik punya tanggal dan nilai saat hover** (`src/components/charts/ChartHover.tsx`,
+  tanggal diformat manual dalam UTC di `src/lib/dates.ts` agar server dan browser sama).
+- **Korelasi:** grafik korelasi 30 hari bergulir per pasar (small multiples, skala −1..+1 sama),
+  dengan area "noise" `|r| < 1.96/√30`. Satu grafik dengan lima garis ditolak karena saling tumpuk.
+- **Seasonality** memakai bar bulanan Yahoo sejak Okt 2014; "peluang naik" = tahun naik ÷ total
+  tahun, bulan berjalan tidak dihitung.
+- **Regime NORMAL**: kalau pertumbuhan dan inflasi sama-sama dalam ±1 simpangan baku, label
+  kuadran tidak dipakai (sebelumnya "DEFLATION" tampil di samping tulisan "sekitar biasanya").
+
+### Real-time dan anti data basi
+
+Ditemukan 18 Okt: harga BTC tertahan di 82,186.92 (cache ±2 hari) dan Flow Radar menampilkan
+transaksi PENDING dari 3 hari sebelumnya, semuanya berlabel LIVE. Penyebab: DNS Indosat
+memblokir Coinbase, Kraken, Binance, Bybit, OKX, Blockstream dan mempool.space; Next.js terus
+menyajikan respons cache terakhir saat revalidasi gagal, sehingga tidak ada fallback yang jalan.
+
+1. **Penjaga cache basi** (`src/lib/sources/http.ts`): umur respons dari header `date`; lebih tua
+   dari `max(4 × revalidate, 5 menit)` → diambil ulang tanpa cache; gagal → error, sehingga
+   sumber cadangan (Coinbase → Kraken → Yahoo) atau penyembunyian panel berjalan.
+2. **Umur dari data** (`asOf` dari payload, `maxAgeSec` per fitur di `src/lib/maxAge.ts`) dan
+   badge **STALE · umur**; tidak ada lagi "0s ago" dari waktu render.
+3. **Panel dummy disembunyikan** (`LiveOnly`): placeholder tidak pernah tampil; harga topbar kosong
+   kalau sumbernya mock; transfer mock tidak masuk peta event.
+4. **Auto-refresh** 30 detik (`AutoRefresh`, `router.refresh()`), berhenti saat tab tersembunyi.
+5. Jaringan uji dibuka dengan DNS publik (1.1.1.1 / 1.0.0.1, 2606:4700:4700::1111 / ::1001).
+
+Bug lain yang diperbaiki saat itu: tanggal harian CoinGecko bergeser satu hari (korelasi BTC ±0),
+batas kesegaran FRED kuartalan 200 → 270 hari, kolom 1D Macro Markets (dulu ±1 tahun), satuan
+taker flow ("$" → BTC), dan teks mining pool / subset yang salah.
