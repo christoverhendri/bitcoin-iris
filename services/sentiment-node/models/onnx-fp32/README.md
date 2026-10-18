@@ -171,6 +171,40 @@ BTC. Teks yang ambigu, berbeda domain, memuat banyak aset, atau kehilangan
 konteks akibat truncation dapat menghasilkan prediksi keliru. Model ini tidak
 mengambil data pasar baru, memeriksa kebenaran berita, atau meramal harga BTC.
 
+## Hasil screening manusia: gold v2
+
+Screening dilakukan pada **120 berita asli**, dengan label sentimen manusia
+yang dikunci. Sebanyak **114 berita berlabel pasti** masuk metrik tiga kelas;
+**6 berita `uncertain` dilaporkan terpisah**, sehingga coverage penilaian adalah
+95%. Kedua model dinilai pada 114 ID berita yang sama.
+
+| Model, sebelum koreksi parser | Macro-F1, 3 kelas | Accuracy |
+|---|---:|---:|
+| TF-IDF + Logistic Regression | 0,3928 | 40,35% |
+| Financial DistilRoBERTa | 0,6318 | 66,67% |
+
+Gold v2 dibuat setelah adjudikasi lima berita minyak menjadi `positive`;
+label efek BTC kelimanya tetap `unknown`. Snapshot gold sebelumnya disimpan.
+Prediksi model tidak berubah saat evaluasi ulang: perubahan skor terhadap gold
+v1 berasal dari revisi acuan, bukan training atau perbaikan bobot. Gold v2 ini
+merupakan hasil adjudikasi setelah audit, bukan tes blind baru.
+
+Pada sampel ini, Financial DistilRoBERTa lebih sesuai dengan label sentimen
+manusia dibanding baseline. Sampel awal diseimbangkan menurut weak labels,
+sehingga hasilnya belum mewakili distribusi berita produksi. Sepuluh stress
+case, contoh development sintetis, dan holdout **tidak masuk metrik utama ini**.
+Label efek BTC juga tidak dinilai dengan accuracy/F1 karena kedua classifier
+memprediksi sentimen dokumen, bukan efek terhadap BTC.
+
+**Angka di atas mengukur model saja, sebelum parser V3.** Screening manusia
+independen untuk pipeline final Financial DistilRoBERTa + parser V3 belum
+dilakukan. V3 memiliki hasil diagnostik sintetis terpisah; uji kesetaraan ONNX
+dan request bersamaan memeriksa integrasi, bukan akurasi terhadap label manusia.
+Gold dan holdout tidak digunakan untuk training atau tuning.
+
+Salinan laporan sumber tersedia di
+[laporan screening gold v2](../../validation/human-screening-gold-v2.md).
+
 ## Berkas model dan komponen di luar jaringan
 
 | Komponen | Peran |

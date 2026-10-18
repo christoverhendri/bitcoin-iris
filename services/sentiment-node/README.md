@@ -19,6 +19,21 @@ See [cara kerja internal model: tokenisasi, attention, classification head, dan 
 beside the ONNX weight file for the architecture, tensor shapes, worked softmax
 example, and the distinction between training and inference.
 
+## Human screening results
+
+On the same 114 determinate news items from a 120-article human-labeled sample,
+TF-IDF achieved macro-F1 **0.3928** / accuracy **40.35%**, and Financial
+DistilRoBERTa achieved macro-F1 **0.6318** / accuracy **66.67%** against adjudicated
+gold v2. The other **6 uncertain items** and **10 separate stress cases** are
+excluded from these metrics. Gold v2 revises five oil-news sentiment labels;
+predictions were unchanged, so this is not a new blind test or a model update.
+
+These are **model-only** results. The final parser V3 pipeline has synthetic
+diagnostics but has not undergone independent human screening. The sample was
+balanced by weak labels and does not establish production-wide accuracy or BTC
+price effects. See the [screening scope and limitations](models/onnx-fp32/README.md#hasil-screening-manusia-gold-v2)
+and [preserved source report](validation/human-screening-gold-v2.md).
+
 ## Run
 
 Requires Node.js 22+ and npm. For a Git checkout, first run `git lfs install --local`
