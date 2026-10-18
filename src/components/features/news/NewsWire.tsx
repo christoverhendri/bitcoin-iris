@@ -2,6 +2,7 @@ import { Panel, PanelHeader, Tag, MockBadge, SourceFootnote } from '@/components
 import type { Envelope } from '@/lib/envelope';
 import type { NewsArticle } from '@/lib/features/news';
 import type { Tone } from '@/lib/theme/tokens';
+import { HeadlineModel } from '@/components/features/sentiment/ModelProvenance';
 
 export type NewsFilter = 'all' | 'bullish' | 'bearish';
 
@@ -121,6 +122,7 @@ export function NewsWire({ news, filter }: NewsWireProps) {
                   <span>·</span>
                   <span>BTC {a.btcWindow} window</span>
                 </div>
+                <HeadlineModel assessment={a.sentimentAssessment} />
               </div>
             </div>
           ))

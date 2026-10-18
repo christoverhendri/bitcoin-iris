@@ -1,10 +1,8 @@
 /**
- * Live crypto news — merged public RSS feeds. Sentiment is a keyword heuristic
- * (see `sources/lexicon.ts`); category and impact reuse the Global Events
- * classifier. None of it is a model; the panel labels it as heuristic.
+ * Live RSS with shared worker predictions. Category/impact remain heuristics;
+ * sentiment provenance explicitly identifies model, baseline or fallback.
  */
-import { getCryptoNews } from '@/lib/sources/rss';
-import { scoreHeadline } from '@/lib/sources/lexicon';
+import { getAnalyzedCryptoNews } from '@/lib/sentiment/news';
 import { classify, type EventCategory } from '@/lib/geo/classify';
 import { impactTier } from '@/lib/features/geopoliticalEvents/present';
 import type { NewsArticle, NewsArgs } from './types';
@@ -34,7 +32,7 @@ function ago(ms: number): string {
 }
 
 export async function fetchNews({ limit = 5 }: NewsArgs) {
-  const items = await getCryptoNews(15);
+  const items = await getAnalyzedCryptoNews();
   if (!items.length) return null;
 
   const newest = items[0]?.publishedAt || Date.now();
@@ -47,7 +45,8 @@ export async function fetchNews({ limit = 5 }: NewsArgs) {
     return {
       title: it.title,
       source: it.source,
-      sentiment: scoreHeadline(it.title),
+      sentiment: it.assessment.label,
+      sentimentAssessment: it.assessment,
       btcWindow: ago(it.publishedAt),
       url: it.link || undefined,
       description: it.description,

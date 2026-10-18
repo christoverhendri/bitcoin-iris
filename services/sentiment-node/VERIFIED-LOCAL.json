@@ -1,0 +1,19 @@
+{
+  "node_only": true,
+  "node_version_tested": "22.23.3",
+  "npm_ci_passed_in_isolated_directory": true,
+  "unit_tests_passed": 16,
+  "synthetic_parity_examples": 66,
+  "concurrent_http_requests": 32,
+  "requested_article_occurrences": 256,
+  "unique_inferences": 16,
+  "native_batches": 2,
+  "max_active_batches": 1,
+  "startup_and_real_http_prediction_passed": true,
+  "source_modules_match_integrated_backend": true,
+  "protected_files_unchanged": 205,
+  "gold_holdout_used": false,
+  "trained": false,
+  "quantized": false,
+  "pushed": false
+}

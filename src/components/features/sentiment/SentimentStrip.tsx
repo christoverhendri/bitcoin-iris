@@ -10,6 +10,7 @@ import type { NewsArticle } from '@/lib/features/news';
 import type { GeoEvent } from '@/lib/features/geopoliticalEvents';
 import type { WhaleEvent } from '@/lib/features/whaleEvents';
 import { summarizeWhaleFlow, netflowColor, netflowWord } from '@/lib/features/whaleEvents';
+import { ModelProvenance } from './ModelProvenance';
 
 const DAY_MS = 86_400_000;
 
@@ -76,11 +77,12 @@ export function SentimentStrip({ fearGreed, sentiment, news, events, whale }: Se
         <div style={deltaLine}>{fmtPct(fg.changePct)} 24h</div>
       </Cell>
 
-      <Cell label="SOCIAL SCORE" env={sentiment}>
+      <Cell label="NEWS + MARKET SCORE" env={sentiment}>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
           <span style={{ ...bigValue, color: toneVar(signTone(s.score)) }}>{fmtZ(s.score)}</span>
           <span style={valueWord}>{socialWord}</span>
         </div>
+        <ModelProvenance analysis={s.analysis} />
       </Cell>
 
       <Cell label="SENTIMENT MIX" env={sentiment}>

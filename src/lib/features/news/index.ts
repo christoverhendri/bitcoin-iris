@@ -5,7 +5,7 @@ import type { NewsArticle, NewsArgs } from './types';
 
 export const getNews = defineFeature<NewsArgs, NewsArticle[]>({
   key: 'news',
-  source: 'cryptopanic',
+  source: 'rss',
   live: fetchNews,
   mock: mockNews,
 });

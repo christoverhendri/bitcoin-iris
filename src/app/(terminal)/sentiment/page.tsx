@@ -11,6 +11,7 @@ import { GlobalSentimentPanel } from '@/components/features/events/GlobalSentime
 import { WhaleWire } from '@/components/features/whale/WhaleWire';
 
 export const revalidate = 30;
+export const dynamic = 'force-dynamic';
 
 /**
  * Shared by the server fetch and the panel's client poll, so the first paint and

@@ -1,0 +1,2566 @@
+[
+  {
+    "id": "edge-0",
+    "text": "🚀 Bitcoin rises 10.50% today https://example.test/x.ª",
+    "parse": {
+      "parser_version": "iris-news-rules/1.3.0",
+      "offset_basis": "raw_text_unicode_codepoints",
+      "segments": [
+        {
+          "id": "s1",
+          "text": "🚀 Bitcoin rises 10.50% today",
+          "start": 0,
+          "end": 28,
+          "negation_cues": [],
+          "modality_cues": [],
+          "attribution_cues": []
+        }
+      ],
+      "entities": [
+        {
+          "text": "Bitcoin",
+          "start": 2,
+          "end": 9,
+          "canonical": "bitcoin",
+          "kind": "asset",
+          "basis": "alias_dictionary"
+        }
+      ],
+      "quantities": [
+        {
+          "text": "10.50%",
+          "start": 16,
+          "end": 22,
+          "value": "10.50",
+          "unit": "%",
+          "currency_symbol": null,
+          "basis": "explicit_text",
+          "event_role": null
+        }
+      ],
+      "time_expressions": [
+        {
+          "text": "today",
+          "start": 23,
+          "end": 28
+        }
+      ],
+      "ignored_spans": [
+        {
+          "text": "https://example.test/x.ª",
+          "start": 29,
+          "end": 53
+        }
+      ],
+      "events": [
+        {
+          "id": "e1",
+          "segment_id": "s1",
+          "event_type": "upward_movement",
+          "trigger": {
+            "text": "rises",
+            "start": 10,
+            "end": 15
+          },
+          "polarity": "affirmed",
+          "modality": "asserted",
+          "attribution_cues": [],
+          "speaker": null,
+          "actor": null,
+          "target": null,
+          "entity_mentions": [
+            {
+              "text": "Bitcoin",
+              "start": 2,
+              "end": 9,
+              "canonical": "bitcoin",
+              "kind": "asset",
+              "basis": "alias_dictionary"
+            }
+          ],
+          "evidence": {
+            "text": "🚀 Bitcoin rises 10.50% today",
+            "start": 0,
+            "end": 28
+          },
+          "needs_review": false,
+          "basis": "heuristic_rules",
+          "verified_occurrence": false
+        }
+      ],
+      "unresolved": [],
+      "sentiment_scope": {
+        "rules_version": "iris-sentiment-scope/0.1.0",
+        "basis": "development_derived_explicit_scope_rules",
+        "eligible": false,
+        "candidate": null,
+        "abstention_reason": "unsupported_scope"
+      },
+      "btc_relevance": "explicit_mention",
+      "needs_review": false
+    },
+    "v3": {
+      "raw_text": "🚀 Bitcoin rises 10.50% today https://example.test/x.ª",
+      "sentiment": "neutral",
+      "label_basis": "synthetic",
+      "review_reasons": [
+        "v3_scope_requires_review"
+      ],
+      "needs_review": true,
+      "semantic_parse": {
+        "parser_version": "iris-news-rules/1.3.0",
+        "offset_basis": "raw_text_unicode_codepoints",
+        "segments": [
+          {
+            "id": "s1",
+            "text": "🚀 Bitcoin rises 10.50% today",
+            "start": 0,
+            "end": 28,
+            "negation_cues": [],
+            "modality_cues": [],
+            "attribution_cues": []
+          }
+        ],
+        "entities": [
+          {
+            "text": "Bitcoin",
+            "start": 2,
+            "end": 9,
+            "canonical": "bitcoin",
+            "kind": "asset",
+            "basis": "alias_dictionary"
+          }
+        ],
+        "quantities": [
+          {
+            "text": "10.50%",
+            "start": 16,
+            "end": 22,
+            "value": "10.50",
+            "unit": "%",
+            "currency_symbol": null,
+            "basis": "explicit_text",
+            "event_role": null
+          }
+        ],
+        "time_expressions": [
+          {
+            "text": "today",
+            "start": 23,
+            "end": 28
+          }
+        ],
+        "ignored_spans": [
+          {
+            "text": "https://example.test/x.ª",
+            "start": 29,
+            "end": 53
+          }
+        ],
+        "events": [
+          {
+            "id": "e1",
+            "segment_id": "s1",
+            "event_type": "upward_movement",
+            "trigger": {
+              "text": "rises",
+              "start": 10,
+              "end": 15
+            },
+            "polarity": "affirmed",
+            "modality": "asserted",
+            "attribution_cues": [],
+            "speaker": null,
+            "actor": null,
+            "target": null,
+            "entity_mentions": [
+              {
+                "text": "Bitcoin",
+                "start": 2,
+                "end": 9,
+                "canonical": "bitcoin",
+                "kind": "asset",
+                "basis": "alias_dictionary"
+              }
+            ],
+            "evidence": {
+              "text": "🚀 Bitcoin rises 10.50% today",
+              "start": 0,
+              "end": 28
+            },
+            "needs_review": false,
+            "basis": "heuristic_rules",
+            "verified_occurrence": false
+          }
+        ],
+        "unresolved": [],
+        "sentiment_scope": {
+          "rules_version": "iris-sentiment-scope/0.1.0",
+          "basis": "development_derived_explicit_scope_rules",
+          "eligible": false,
+          "candidate": null,
+          "abstention_reason": "unsupported_scope"
+        },
+        "btc_relevance": "explicit_mention",
+        "needs_review": false,
+        "sentiment_scope_v3": {
+          "rules_version": "iris-sentiment-scope/0.3.0",
+          "parent_rules_version": "iris-sentiment-scope/0.1.0",
+          "basis": "bounded_proposition_relations_not_general_coreference",
+          "eligible": false,
+          "candidate": null,
+          "propositions": [],
+          "relations": [],
+          "guard_evidence": [],
+          "context_resolution": "unresolved",
+          "abstention_reason": "unsupported_context_frame"
+        }
+      },
+      "model_sentiment": "neutral",
+      "model_label_basis": "synthetic",
+      "sentiment_policy": "parser_scope_v3",
+      "probabilities_basis": "unmodified_model_only",
+      "sentiment_source": "model",
+      "sentiment_adjustment": {
+        "rules_version": "iris-sentiment-scope/0.3.0",
+        "eligible": false,
+        "changed": false,
+        "evidence": null,
+        "abstention_reason": "unsupported_context_frame",
+        "context_resolution": "unresolved",
+        "relations": []
+      }
+    }
+  },
+  {
+    "id": "edge-1",
+    "text": "Bitcoin didn’t rise; BTC won’t fall.",
+    "parse": {
+      "parser_version": "iris-news-rules/1.3.0",
+      "offset_basis": "raw_text_unicode_codepoints",
+      "segments": [
+        {
+          "id": "s1",
+          "text": "Bitcoin didn’t rise",
+          "start": 0,
+          "end": 19,
+          "negation_cues": [
+            {
+              "text": "didn’t",
+              "start": 8,
+              "end": 14
+            }
+          ],
+          "modality_cues": [],
+          "attribution_cues": []
+        },
+        {
+          "id": "s2",
+          "text": "BTC won’t fall.",
+          "start": 21,
+          "end": 36,
+          "negation_cues": [
+            {
+              "text": "won’t",
+              "start": 25,
+              "end": 30
+            }
+          ],
+          "modality_cues": [],
+          "attribution_cues": []
+        }
+      ],
+      "entities": [
+        {
+          "text": "Bitcoin",
+          "start": 0,
+          "end": 7,
+          "canonical": "bitcoin",
+          "kind": "asset",
+          "basis": "alias_dictionary"
+        },
+        {
+          "text": "BTC",
+          "start": 21,
+          "end": 24,
+          "canonical": "bitcoin",
+          "kind": "asset",
+          "basis": "alias_dictionary"
+        }
+      ],
+      "quantities": [],
+      "time_expressions": [],
+      "ignored_spans": [],
+      "events": [
+        {
+          "id": "e1",
+          "segment_id": "s1",
+          "event_type": "upward_movement",
+          "trigger": {
+            "text": "rise",
+            "start": 15,
+            "end": 19
+          },
+          "polarity": "negated",
+          "modality": "asserted",
+          "attribution_cues": [],
+          "speaker": null,
+          "actor": null,
+          "target": null,
+          "entity_mentions": [
+            {
+              "text": "Bitcoin",
+              "start": 0,
+              "end": 7,
+              "canonical": "bitcoin",
+              "kind": "asset",
+              "basis": "alias_dictionary"
+            }
+          ],
+          "evidence": {
+            "text": "Bitcoin didn’t rise",
+            "start": 0,
+            "end": 19
+          },
+          "needs_review": true,
+          "basis": "heuristic_rules",
+          "verified_occurrence": false
+        },
+        {
+          "id": "e2",
+          "segment_id": "s2",
+          "event_type": "downward_movement",
+          "trigger": {
+            "text": "fall",
+            "start": 31,
+            "end": 35
+          },
+          "polarity": "negated",
+          "modality": "asserted",
+          "attribution_cues": [],
+          "speaker": null,
+          "actor": null,
+          "target": null,
+          "entity_mentions": [
+            {
+              "text": "BTC",
+              "start": 21,
+              "end": 24,
+              "canonical": "bitcoin",
+              "kind": "asset",
+              "basis": "alias_dictionary"
+            }
+          ],
+          "evidence": {
+            "text": "BTC won’t fall.",
+            "start": 21,
+            "end": 36
+          },
+          "needs_review": true,
+          "basis": "heuristic_rules",
+          "verified_occurrence": false
+        }
+      ],
+      "unresolved": [],
+      "sentiment_scope": {
+        "rules_version": "iris-sentiment-scope/0.1.0",
+        "basis": "development_derived_explicit_scope_rules",
+        "eligible": false,
+        "candidate": null,
+        "abstention_reason": "unsupported_scope"
+      },
+      "btc_relevance": "explicit_mention",
+      "needs_review": true
+    },
+    "v3": {
+      "raw_text": "Bitcoin didn’t rise; BTC won’t fall.",
+      "sentiment": "neutral",
+      "label_basis": "synthetic",
+      "review_reasons": [
+        "v3_scope_requires_review"
+      ],
+      "needs_review": true,
+      "semantic_parse": {
+        "parser_version": "iris-news-rules/1.3.0",
+        "offset_basis": "raw_text_unicode_codepoints",
+        "segments": [
+          {
+            "id": "s1",
+            "text": "Bitcoin didn’t rise",
+            "start": 0,
+            "end": 19,
+            "negation_cues": [
+              {
+                "text": "didn’t",
+                "start": 8,
+                "end": 14
+              }
+            ],
+            "modality_cues": [],
+            "attribution_cues": []
+          },
+          {
+            "id": "s2",
+            "text": "BTC won’t fall.",
+            "start": 21,
+            "end": 36,
+            "negation_cues": [
+              {
+                "text": "won’t",
+                "start": 25,
+                "end": 30
+              }
+            ],
+            "modality_cues": [],
+            "attribution_cues": []
+          }
+        ],
+        "entities": [
+          {
+            "text": "Bitcoin",
+            "start": 0,
+            "end": 7,
+            "canonical": "bitcoin",
+            "kind": "asset",
+            "basis": "alias_dictionary"
+          },
+          {
+            "text": "BTC",
+            "start": 21,
+            "end": 24,
+            "canonical": "bitcoin",
+            "kind": "asset",
+            "basis": "alias_dictionary"
+          }
+        ],
+        "quantities": [],
+        "time_expressions": [],
+        "ignored_spans": [],
+        "events": [
+          {
+            "id": "e1",
+            "segment_id": "s1",
+            "event_type": "upward_movement",
+            "trigger": {
+              "text": "rise",
+              "start": 15,
+              "end": 19
+            },
+            "polarity": "negated",
+            "modality": "asserted",
+            "attribution_cues": [],
+            "speaker": null,
+            "actor": null,
+            "target": null,
+            "entity_mentions": [
+              {
+                "text": "Bitcoin",
+                "start": 0,
+                "end": 7,
+                "canonical": "bitcoin",
+                "kind": "asset",
+                "basis": "alias_dictionary"
+              }
+            ],
+            "evidence": {
+              "text": "Bitcoin didn’t rise",
+              "start": 0,
+              "end": 19
+            },
+            "needs_review": true,
+            "basis": "heuristic_rules",
+            "verified_occurrence": false
+          },
+          {
+            "id": "e2",
+            "segment_id": "s2",
+            "event_type": "downward_movement",
+            "trigger": {
+              "text": "fall",
+              "start": 31,
+              "end": 35
+            },
+            "polarity": "negated",
+            "modality": "asserted",
+            "attribution_cues": [],
+            "speaker": null,
+            "actor": null,
+            "target": null,
+            "entity_mentions": [
+              {
+                "text": "BTC",
+                "start": 21,
+                "end": 24,
+                "canonical": "bitcoin",
+                "kind": "asset",
+                "basis": "alias_dictionary"
+              }
+            ],
+            "evidence": {
+              "text": "BTC won’t fall.",
+              "start": 21,
+              "end": 36
+            },
+            "needs_review": true,
+            "basis": "heuristic_rules",
+            "verified_occurrence": false
+          }
+        ],
+        "unresolved": [],
+        "sentiment_scope": {
+          "rules_version": "iris-sentiment-scope/0.1.0",
+          "basis": "development_derived_explicit_scope_rules",
+          "eligible": false,
+          "candidate": null,
+          "abstention_reason": "unsupported_scope"
+        },
+        "btc_relevance": "explicit_mention",
+        "needs_review": true,
+        "sentiment_scope_v3": {
+          "rules_version": "iris-sentiment-scope/0.3.0",
+          "parent_rules_version": "iris-sentiment-scope/0.1.0",
+          "basis": "bounded_proposition_relations_not_general_coreference",
+          "eligible": false,
+          "candidate": null,
+          "propositions": [],
+          "relations": [],
+          "guard_evidence": [],
+          "context_resolution": "unresolved",
+          "abstention_reason": "unsupported_context_frame"
+        }
+      },
+      "model_sentiment": "neutral",
+      "model_label_basis": "synthetic",
+      "sentiment_policy": "parser_scope_v3",
+      "probabilities_basis": "unmodified_model_only",
+      "sentiment_source": "model",
+      "sentiment_adjustment": {
+        "rules_version": "iris-sentiment-scope/0.3.0",
+        "eligible": false,
+        "changed": false,
+        "evidence": null,
+        "abstention_reason": "unsupported_context_frame",
+        "context_resolution": "unresolved",
+        "relations": []
+      }
+    }
+  },
+  {
+    "id": "edge-2",
+    "text": "Bitcoin can’t rise, but Ethereum rises.",
+    "parse": {
+      "parser_version": "iris-news-rules/1.3.0",
+      "offset_basis": "raw_text_unicode_codepoints",
+      "segments": [
+        {
+          "id": "s1",
+          "text": "Bitcoin can’t rise,",
+          "start": 0,
+          "end": 19,
+          "negation_cues": [
+            {
+              "text": "can’t",
+              "start": 8,
+              "end": 13
+            }
+          ],
+          "modality_cues": [],
+          "attribution_cues": []
+        },
+        {
+          "id": "s2",
+          "text": "Ethereum rises.",
+          "start": 24,
+          "end": 39,
+          "negation_cues": [],
+          "modality_cues": [],
+          "attribution_cues": []
+        }
+      ],
+      "entities": [
+        {
+          "text": "Bitcoin",
+          "start": 0,
+          "end": 7,
+          "canonical": "bitcoin",
+          "kind": "asset",
+          "basis": "alias_dictionary"
+        },
+        {
+          "text": "Ethereum",
+          "start": 24,
+          "end": 32,
+          "canonical": "ethereum",
+          "kind": "asset",
+          "basis": "alias_dictionary"
+        }
+      ],
+      "quantities": [],
+      "time_expressions": [],
+      "ignored_spans": [],
+      "events": [
+        {
+          "id": "e1",
+          "segment_id": "s1",
+          "event_type": "upward_movement",
+          "trigger": {
+            "text": "rise",
+            "start": 14,
+            "end": 18
+          },
+          "polarity": "negated",
+          "modality": "asserted",
+          "attribution_cues": [],
+          "speaker": null,
+          "actor": null,
+          "target": null,
+          "entity_mentions": [
+            {
+              "text": "Bitcoin",
+              "start": 0,
+              "end": 7,
+              "canonical": "bitcoin",
+              "kind": "asset",
+              "basis": "alias_dictionary"
+            }
+          ],
+          "evidence": {
+            "text": "Bitcoin can’t rise,",
+            "start": 0,
+            "end": 19
+          },
+          "needs_review": true,
+          "basis": "heuristic_rules",
+          "verified_occurrence": false
+        },
+        {
+          "id": "e2",
+          "segment_id": "s2",
+          "event_type": "upward_movement",
+          "trigger": {
+            "text": "rises",
+            "start": 33,
+            "end": 38
+          },
+          "polarity": "affirmed",
+          "modality": "asserted",
+          "attribution_cues": [],
+          "speaker": null,
+          "actor": null,
+          "target": null,
+          "entity_mentions": [
+            {
+              "text": "Ethereum",
+              "start": 24,
+              "end": 32,
+              "canonical": "ethereum",
+              "kind": "asset",
+              "basis": "alias_dictionary"
+            }
+          ],
+          "evidence": {
+            "text": "Ethereum rises.",
+            "start": 24,
+            "end": 39
+          },
+          "needs_review": false,
+          "basis": "heuristic_rules",
+          "verified_occurrence": false
+        }
+      ],
+      "unresolved": [],
+      "sentiment_scope": {
+        "rules_version": "iris-sentiment-scope/0.1.0",
+        "basis": "development_derived_explicit_scope_rules",
+        "eligible": false,
+        "candidate": null,
+        "abstention_reason": "multiple_asset_targets"
+      },
+      "btc_relevance": "explicit_mention",
+      "needs_review": true
+    },
+    "v3": {
+      "raw_text": "Bitcoin can’t rise, but Ethereum rises.",
+      "sentiment": "neutral",
+      "label_basis": "synthetic",
+      "review_reasons": [
+        "v3_scope_requires_review"
+      ],
+      "needs_review": true,
+      "semantic_parse": {
+        "parser_version": "iris-news-rules/1.3.0",
+        "offset_basis": "raw_text_unicode_codepoints",
+        "segments": [
+          {
+            "id": "s1",
+            "text": "Bitcoin can’t rise,",
+            "start": 0,
+            "end": 19,
+            "negation_cues": [
+              {
+                "text": "can’t",
+                "start": 8,
+                "end": 13
+              }
+            ],
+            "modality_cues": [],
+            "attribution_cues": []
+          },
+          {
+            "id": "s2",
+            "text": "Ethereum rises.",
+            "start": 24,
+            "end": 39,
+            "negation_cues": [],
+            "modality_cues": [],
+            "attribution_cues": []
+          }
+        ],
+        "entities": [
+          {
+            "text": "Bitcoin",
+            "start": 0,
+            "end": 7,
+            "canonical": "bitcoin",
+            "kind": "asset",
+            "basis": "alias_dictionary"
+          },
+          {
+            "text": "Ethereum",
+            "start": 24,
+            "end": 32,
+            "canonical": "ethereum",
+            "kind": "asset",
+            "basis": "alias_dictionary"
+          }
+        ],
+        "quantities": [],
+        "time_expressions": [],
+        "ignored_spans": [],
+        "events": [
+          {
+            "id": "e1",
+            "segment_id": "s1",
+            "event_type": "upward_movement",
+            "trigger": {
+              "text": "rise",
+              "start": 14,
+              "end": 18
+            },
+            "polarity": "negated",
+            "modality": "asserted",
+            "attribution_cues": [],
+            "speaker": null,
+            "actor": null,
+            "target": null,
+            "entity_mentions": [
+              {
+                "text": "Bitcoin",
+                "start": 0,
+                "end": 7,
+                "canonical": "bitcoin",
+                "kind": "asset",
+                "basis": "alias_dictionary"
+              }
+            ],
+            "evidence": {
+              "text": "Bitcoin can’t rise,",
+              "start": 0,
+              "end": 19
+            },
+            "needs_review": true,
+            "basis": "heuristic_rules",
+            "verified_occurrence": false
+          },
+          {
+            "id": "e2",
+            "segment_id": "s2",
+            "event_type": "upward_movement",
+            "trigger": {
+              "text": "rises",
+              "start": 33,
+              "end": 38
+            },
+            "polarity": "affirmed",
+            "modality": "asserted",
+            "attribution_cues": [],
+            "speaker": null,
+            "actor": null,
+            "target": null,
+            "entity_mentions": [
+              {
+                "text": "Ethereum",
+                "start": 24,
+                "end": 32,
+                "canonical": "ethereum",
+                "kind": "asset",
+                "basis": "alias_dictionary"
+              }
+            ],
+            "evidence": {
+              "text": "Ethereum rises.",
+              "start": 24,
+              "end": 39
+            },
+            "needs_review": false,
+            "basis": "heuristic_rules",
+            "verified_occurrence": false
+          }
+        ],
+        "unresolved": [],
+        "sentiment_scope": {
+          "rules_version": "iris-sentiment-scope/0.1.0",
+          "basis": "development_derived_explicit_scope_rules",
+          "eligible": false,
+          "candidate": null,
+          "abstention_reason": "multiple_asset_targets"
+        },
+        "btc_relevance": "explicit_mention",
+        "needs_review": true,
+        "sentiment_scope_v3": {
+          "rules_version": "iris-sentiment-scope/0.3.0",
+          "parent_rules_version": "iris-sentiment-scope/0.1.0",
+          "basis": "bounded_proposition_relations_not_general_coreference",
+          "eligible": false,
+          "candidate": null,
+          "propositions": [],
+          "relations": [],
+          "guard_evidence": [],
+          "context_resolution": "unresolved",
+          "abstention_reason": "multiple_asset_targets"
+        }
+      },
+      "model_sentiment": "neutral",
+      "model_label_basis": "synthetic",
+      "sentiment_policy": "parser_scope_v3",
+      "probabilities_basis": "unmodified_model_only",
+      "sentiment_source": "model",
+      "sentiment_adjustment": {
+        "rules_version": "iris-sentiment-scope/0.3.0",
+        "eligible": false,
+        "changed": false,
+        "evidence": null,
+        "abstention_reason": "multiple_asset_targets",
+        "context_resolution": "unresolved",
+        "relations": []
+      }
+    }
+  },
+  {
+    "id": "edge-3",
+    "text": "Bitcoin rises 1.2300 billion and falls 2.000000 BTC.",
+    "parse": {
+      "parser_version": "iris-news-rules/1.3.0",
+      "offset_basis": "raw_text_unicode_codepoints",
+      "segments": [
+        {
+          "id": "s1",
+          "text": "Bitcoin rises 1.2300 billion and falls 2.000000 BTC.",
+          "start": 0,
+          "end": 52,
+          "negation_cues": [],
+          "modality_cues": [],
+          "attribution_cues": []
+        }
+      ],
+      "entities": [
+        {
+          "text": "Bitcoin",
+          "start": 0,
+          "end": 7,
+          "canonical": "bitcoin",
+          "kind": "asset",
+          "basis": "alias_dictionary"
+        },
+        {
+          "text": "BTC",
+          "start": 48,
+          "end": 51,
+          "canonical": "bitcoin",
+          "kind": "asset",
+          "basis": "alias_dictionary"
+        }
+      ],
+      "quantities": [
+        {
+          "text": "1.2300 billion",
+          "start": 14,
+          "end": 28,
+          "value": "1230000000.0000",
+          "unit": "unspecified",
+          "currency_symbol": null,
+          "basis": "explicit_text",
+          "event_role": null
+        },
+        {
+          "text": "2.000000 BTC",
+          "start": 39,
+          "end": 51,
+          "value": "2.000000",
+          "unit": "BTC",
+          "currency_symbol": null,
+          "basis": "explicit_text",
+          "event_role": null
+        }
+      ],
+      "time_expressions": [],
+      "ignored_spans": [],
+      "events": [
+        {
+          "id": "e1",
+          "segment_id": "s1",
+          "event_type": "upward_movement",
+          "trigger": {
+            "text": "rises",
+            "start": 8,
+            "end": 13
+          },
+          "polarity": "unresolved",
+          "modality": "unresolved",
+          "attribution_cues": [],
+          "speaker": null,
+          "actor": null,
+          "target": null,
+          "entity_mentions": [
+            {
+              "text": "Bitcoin",
+              "start": 0,
+              "end": 7,
+              "canonical": "bitcoin",
+              "kind": "asset",
+              "basis": "alias_dictionary"
+            },
+            {
+              "text": "BTC",
+              "start": 48,
+              "end": 51,
+              "canonical": "bitcoin",
+              "kind": "asset",
+              "basis": "alias_dictionary"
+            }
+          ],
+          "evidence": {
+            "text": "Bitcoin rises 1.2300 billion and falls 2.000000 BTC.",
+            "start": 0,
+            "end": 52
+          },
+          "needs_review": true,
+          "basis": "heuristic_rules",
+          "verified_occurrence": false
+        },
+        {
+          "id": "e2",
+          "segment_id": "s1",
+          "event_type": "downward_movement",
+          "trigger": {
+            "text": "falls",
+            "start": 33,
+            "end": 38
+          },
+          "polarity": "unresolved",
+          "modality": "unresolved",
+          "attribution_cues": [],
+          "speaker": null,
+          "actor": null,
+          "target": null,
+          "entity_mentions": [
+            {
+              "text": "Bitcoin",
+              "start": 0,
+              "end": 7,
+              "canonical": "bitcoin",
+              "kind": "asset",
+              "basis": "alias_dictionary"
+            },
+            {
+              "text": "BTC",
+              "start": 48,
+              "end": 51,
+              "canonical": "bitcoin",
+              "kind": "asset",
+              "basis": "alias_dictionary"
+            }
+          ],
+          "evidence": {
+            "text": "Bitcoin rises 1.2300 billion and falls 2.000000 BTC.",
+            "start": 0,
+            "end": 52
+          },
+          "needs_review": true,
+          "basis": "heuristic_rules",
+          "verified_occurrence": false
+        }
+      ],
+      "unresolved": [
+        {
+          "segment_id": "s1",
+          "reason": "complex_scope"
+        }
+      ],
+      "sentiment_scope": {
+        "rules_version": "iris-sentiment-scope/0.1.0",
+        "basis": "development_derived_explicit_scope_rules",
+        "eligible": false,
+        "candidate": null,
+        "abstention_reason": "unsupported_scope"
+      },
+      "btc_relevance": "explicit_mention",
+      "needs_review": true
+    },
+    "v3": {
+      "raw_text": "Bitcoin rises 1.2300 billion and falls 2.000000 BTC.",
+      "sentiment": "neutral",
+      "label_basis": "synthetic",
+      "review_reasons": [
+        "v3_scope_requires_review"
+      ],
+      "needs_review": true,
+      "semantic_parse": {
+        "parser_version": "iris-news-rules/1.3.0",
+        "offset_basis": "raw_text_unicode_codepoints",
+        "segments": [
+          {
+            "id": "s1",
+            "text": "Bitcoin rises 1.2300 billion and falls 2.000000 BTC.",
+            "start": 0,
+            "end": 52,
+            "negation_cues": [],
+            "modality_cues": [],
+            "attribution_cues": []
+          }
+        ],
+        "entities": [
+          {
+            "text": "Bitcoin",
+            "start": 0,
+            "end": 7,
+            "canonical": "bitcoin",
+            "kind": "asset",
+            "basis": "alias_dictionary"
+          },
+          {
+            "text": "BTC",
+            "start": 48,
+            "end": 51,
+            "canonical": "bitcoin",
+            "kind": "asset",
+            "basis": "alias_dictionary"
+          }
+        ],
+        "quantities": [
+          {
+            "text": "1.2300 billion",
+            "start": 14,
+            "end": 28,
+            "value": "1230000000.0000",
+            "unit": "unspecified",
+            "currency_symbol": null,
+            "basis": "explicit_text",
+            "event_role": null
+          },
+          {
+            "text": "2.000000 BTC",
+            "start": 39,
+            "end": 51,
+            "value": "2.000000",
+            "unit": "BTC",
+            "currency_symbol": null,
+            "basis": "explicit_text",
+            "event_role": null
+          }
+        ],
+        "time_expressions": [],
+        "ignored_spans": [],
+        "events": [
+          {
+            "id": "e1",
+            "segment_id": "s1",
+            "event_type": "upward_movement",
+            "trigger": {
+              "text": "rises",
+              "start": 8,
+              "end": 13
+            },
+            "polarity": "unresolved",
+            "modality": "unresolved",
+            "attribution_cues": [],
+            "speaker": null,
+            "actor": null,
+            "target": null,
+            "entity_mentions": [
+              {
+                "text": "Bitcoin",
+                "start": 0,
+                "end": 7,
+                "canonical": "bitcoin",
+                "kind": "asset",
+                "basis": "alias_dictionary"
+              },
+              {
+                "text": "BTC",
+                "start": 48,
+                "end": 51,
+                "canonical": "bitcoin",
+                "kind": "asset",
+                "basis": "alias_dictionary"
+              }
+            ],
+            "evidence": {
+              "text": "Bitcoin rises 1.2300 billion and falls 2.000000 BTC.",
+              "start": 0,
+              "end": 52
+            },
+            "needs_review": true,
+            "basis": "heuristic_rules",
+            "verified_occurrence": false
+          },
+          {
+            "id": "e2",
+            "segment_id": "s1",
+            "event_type": "downward_movement",
+            "trigger": {
+              "text": "falls",
+              "start": 33,
+              "end": 38
+            },
+            "polarity": "unresolved",
+            "modality": "unresolved",
+            "attribution_cues": [],
+            "speaker": null,
+            "actor": null,
+            "target": null,
+            "entity_mentions": [
+              {
+                "text": "Bitcoin",
+                "start": 0,
+                "end": 7,
+                "canonical": "bitcoin",
+                "kind": "asset",
+                "basis": "alias_dictionary"
+              },
+              {
+                "text": "BTC",
+                "start": 48,
+                "end": 51,
+                "canonical": "bitcoin",
+                "kind": "asset",
+                "basis": "alias_dictionary"
+              }
+            ],
+            "evidence": {
+              "text": "Bitcoin rises 1.2300 billion and falls 2.000000 BTC.",
+              "start": 0,
+              "end": 52
+            },
+            "needs_review": true,
+            "basis": "heuristic_rules",
+            "verified_occurrence": false
+          }
+        ],
+        "unresolved": [
+          {
+            "segment_id": "s1",
+            "reason": "complex_scope"
+          }
+        ],
+        "sentiment_scope": {
+          "rules_version": "iris-sentiment-scope/0.1.0",
+          "basis": "development_derived_explicit_scope_rules",
+          "eligible": false,
+          "candidate": null,
+          "abstention_reason": "unsupported_scope"
+        },
+        "btc_relevance": "explicit_mention",
+        "needs_review": true,
+        "sentiment_scope_v3": {
+          "rules_version": "iris-sentiment-scope/0.3.0",
+          "parent_rules_version": "iris-sentiment-scope/0.1.0",
+          "basis": "bounded_proposition_relations_not_general_coreference",
+          "eligible": false,
+          "candidate": null,
+          "propositions": [],
+          "relations": [],
+          "guard_evidence": [],
+          "context_resolution": "unresolved",
+          "abstention_reason": "unsupported_context_frame"
+        }
+      },
+      "model_sentiment": "neutral",
+      "model_label_basis": "synthetic",
+      "sentiment_policy": "parser_scope_v3",
+      "probabilities_basis": "unmodified_model_only",
+      "sentiment_source": "model",
+      "sentiment_adjustment": {
+        "rules_version": "iris-sentiment-scope/0.3.0",
+        "eligible": false,
+        "changed": false,
+        "evidence": null,
+        "abstention_reason": "unsupported_context_frame",
+        "context_resolution": "unresolved",
+        "relations": []
+      }
+    }
+  },
+  {
+    "id": "edge-4",
+    "text": "JUST IN: The bank supports Bitcoin adoption. @reader https://example.test",
+    "parse": {
+      "parser_version": "iris-news-rules/1.3.0",
+      "offset_basis": "raw_text_unicode_codepoints",
+      "segments": [
+        {
+          "id": "s1",
+          "text": "The bank supports Bitcoin adoption",
+          "start": 9,
+          "end": 43,
+          "negation_cues": [],
+          "modality_cues": [],
+          "attribution_cues": []
+        }
+      ],
+      "entities": [
+        {
+          "text": "Bitcoin",
+          "start": 27,
+          "end": 34,
+          "canonical": "bitcoin",
+          "kind": "asset",
+          "basis": "alias_dictionary"
+        }
+      ],
+      "quantities": [],
+      "time_expressions": [],
+      "ignored_spans": [
+        {
+          "text": "https://example.test",
+          "start": 53,
+          "end": 73
+        },
+        {
+          "text": "@reader",
+          "start": 45,
+          "end": 52
+        },
+        {
+          "text": "JUST IN:",
+          "start": 0,
+          "end": 8
+        }
+      ],
+      "events": [],
+      "unresolved": [
+        {
+          "segment_id": "s1",
+          "reason": "no_supported_event_trigger"
+        }
+      ],
+      "sentiment_scope": {
+        "rules_version": "iris-sentiment-scope/0.1.0",
+        "basis": "development_derived_explicit_scope_rules",
+        "eligible": true,
+        "candidate": {
+          "kind": "explicit_stance",
+          "proposed_sentiment": "positive",
+          "cue": {
+            "text": "supports",
+            "start": 18,
+            "end": 26
+          },
+          "target": {
+            "text": "Bitcoin adoption",
+            "start": 27,
+            "end": 43
+          },
+          "asset": {
+            "text": "Bitcoin",
+            "start": 27,
+            "end": 34
+          },
+          "evidence": {
+            "text": "JUST IN: The bank supports Bitcoin adoption. @reader https://example.test",
+            "start": 0,
+            "end": 73
+          },
+          "negation_scope": null,
+          "modality": "attributed_stance",
+          "verified_occurrence": false
+        },
+        "abstention_reason": null
+      },
+      "btc_relevance": "explicit_mention",
+      "needs_review": true
+    },
+    "v3": {
+      "raw_text": "JUST IN: The bank supports Bitcoin adoption. @reader https://example.test",
+      "sentiment": "positive",
+      "label_basis": "model_plus_development_scoped_rules",
+      "review_reasons": [
+        "development_parser_scope_decision"
+      ],
+      "needs_review": true,
+      "semantic_parse": {
+        "parser_version": "iris-news-rules/1.3.0",
+        "offset_basis": "raw_text_unicode_codepoints",
+        "segments": [
+          {
+            "id": "s1",
+            "text": "The bank supports Bitcoin adoption",
+            "start": 9,
+            "end": 43,
+            "negation_cues": [],
+            "modality_cues": [],
+            "attribution_cues": []
+          }
+        ],
+        "entities": [
+          {
+            "text": "Bitcoin",
+            "start": 27,
+            "end": 34,
+            "canonical": "bitcoin",
+            "kind": "asset",
+            "basis": "alias_dictionary"
+          }
+        ],
+        "quantities": [],
+        "time_expressions": [],
+        "ignored_spans": [
+          {
+            "text": "https://example.test",
+            "start": 53,
+            "end": 73
+          },
+          {
+            "text": "@reader",
+            "start": 45,
+            "end": 52
+          },
+          {
+            "text": "JUST IN:",
+            "start": 0,
+            "end": 8
+          }
+        ],
+        "events": [],
+        "unresolved": [
+          {
+            "segment_id": "s1",
+            "reason": "no_supported_event_trigger"
+          }
+        ],
+        "sentiment_scope": {
+          "rules_version": "iris-sentiment-scope/0.1.0",
+          "basis": "development_derived_explicit_scope_rules",
+          "eligible": true,
+          "candidate": {
+            "kind": "explicit_stance",
+            "proposed_sentiment": "positive",
+            "cue": {
+              "text": "supports",
+              "start": 18,
+              "end": 26
+            },
+            "target": {
+              "text": "Bitcoin adoption",
+              "start": 27,
+              "end": 43
+            },
+            "asset": {
+              "text": "Bitcoin",
+              "start": 27,
+              "end": 34
+            },
+            "evidence": {
+              "text": "JUST IN: The bank supports Bitcoin adoption. @reader https://example.test",
+              "start": 0,
+              "end": 73
+            },
+            "negation_scope": null,
+            "modality": "attributed_stance",
+            "verified_occurrence": false
+          },
+          "abstention_reason": null
+        },
+        "btc_relevance": "explicit_mention",
+        "needs_review": true,
+        "sentiment_scope_v3": {
+          "rules_version": "iris-sentiment-scope/0.3.0",
+          "parent_rules_version": "iris-sentiment-scope/0.1.0",
+          "basis": "bounded_proposition_relations_not_general_coreference",
+          "eligible": true,
+          "candidate": {
+            "kind": "explicit_stance",
+            "proposed_sentiment": "positive",
+            "cue": {
+              "text": "supports",
+              "start": 18,
+              "end": 26
+            },
+            "target": {
+              "text": "Bitcoin adoption",
+              "start": 27,
+              "end": 43
+            },
+            "asset": {
+              "text": "Bitcoin",
+              "start": 27,
+              "end": 34
+            },
+            "evidence": {
+              "text": "JUST IN: The bank supports Bitcoin adoption. @reader https://example.test",
+              "start": 0,
+              "end": 73
+            },
+            "negation_scope": null,
+            "modality": "attributed_stance",
+            "verified_occurrence": false
+          },
+          "propositions": [
+            {
+              "holder": {
+                "text": "The bank",
+                "start": 9,
+                "end": 17
+              },
+              "holder_resolution": "explicit_supported_frame",
+              "cue": {
+                "text": "supports",
+                "start": 18,
+                "end": 26
+              },
+              "target": {
+                "text": "Bitcoin adoption",
+                "start": 27,
+                "end": 43
+              },
+              "asset": {
+                "text": "Bitcoin",
+                "start": 27,
+                "end": 34
+              },
+              "orientation": "positive",
+              "target_key": [
+                "bitcoin",
+                "adoption"
+              ],
+              "target_resolution": "explicit_supported_frame_or_proposal_antecedent",
+              "negation_scope": null,
+              "attribution_chain": [],
+              "time": "unspecified",
+              "verified_occurrence": false
+            }
+          ],
+          "relations": [],
+          "guard_evidence": [],
+          "context_resolution": "complete_supported_direct_frame",
+          "abstention_reason": null
+        }
+      },
+      "model_sentiment": "neutral",
+      "model_label_basis": "synthetic",
+      "sentiment_policy": "parser_scope_v3",
+      "probabilities_basis": "unmodified_model_only",
+      "sentiment_source": "parser_scope",
+      "sentiment_adjustment": {
+        "rules_version": "iris-sentiment-scope/0.3.0",
+        "eligible": true,
+        "changed": true,
+        "evidence": {
+          "kind": "explicit_stance",
+          "proposed_sentiment": "positive",
+          "cue": {
+            "text": "supports",
+            "start": 18,
+            "end": 26
+          },
+          "target": {
+            "text": "Bitcoin adoption",
+            "start": 27,
+            "end": 43
+          },
+          "asset": {
+            "text": "Bitcoin",
+            "start": 27,
+            "end": 34
+          },
+          "evidence": {
+            "text": "JUST IN: The bank supports Bitcoin adoption. @reader https://example.test",
+            "start": 0,
+            "end": 73
+          },
+          "negation_scope": null,
+          "modality": "attributed_stance",
+          "verified_occurrence": false
+        },
+        "abstention_reason": null,
+        "context_resolution": "complete_supported_direct_frame",
+        "relations": []
+      }
+    }
+  },
+  {
+    "id": "edge-5",
+    "text": "Café Bitcoiné rises.",
+    "parse": {
+      "parser_version": "iris-news-rules/1.3.0",
+      "offset_basis": "raw_text_unicode_codepoints",
+      "segments": [
+        {
+          "id": "s1",
+          "text": "Café Bitcoiné rises.",
+          "start": 0,
+          "end": 20,
+          "negation_cues": [],
+          "modality_cues": [],
+          "attribution_cues": []
+        }
+      ],
+      "entities": [],
+      "quantities": [],
+      "time_expressions": [],
+      "ignored_spans": [],
+      "events": [
+        {
+          "id": "e1",
+          "segment_id": "s1",
+          "event_type": "upward_movement",
+          "trigger": {
+            "text": "rises",
+            "start": 14,
+            "end": 19
+          },
+          "polarity": "affirmed",
+          "modality": "asserted",
+          "attribution_cues": [],
+          "speaker": null,
+          "actor": null,
+          "target": null,
+          "entity_mentions": [],
+          "evidence": {
+            "text": "Café Bitcoiné rises.",
+            "start": 0,
+            "end": 20
+          },
+          "needs_review": false,
+          "basis": "heuristic_rules",
+          "verified_occurrence": false
+        }
+      ],
+      "unresolved": [],
+      "sentiment_scope": {
+        "rules_version": "iris-sentiment-scope/0.1.0",
+        "basis": "development_derived_explicit_scope_rules",
+        "eligible": false,
+        "candidate": null,
+        "abstention_reason": "unsupported_scope"
+      },
+      "btc_relevance": "undetermined",
+      "needs_review": false
+    },
+    "v3": {
+      "raw_text": "Café Bitcoiné rises.",
+      "sentiment": "neutral",
+      "label_basis": "synthetic",
+      "review_reasons": [
+        "v3_scope_requires_review"
+      ],
+      "needs_review": true,
+      "semantic_parse": {
+        "parser_version": "iris-news-rules/1.3.0",
+        "offset_basis": "raw_text_unicode_codepoints",
+        "segments": [
+          {
+            "id": "s1",
+            "text": "Café Bitcoiné rises.",
+            "start": 0,
+            "end": 20,
+            "negation_cues": [],
+            "modality_cues": [],
+            "attribution_cues": []
+          }
+        ],
+        "entities": [],
+        "quantities": [],
+        "time_expressions": [],
+        "ignored_spans": [],
+        "events": [
+          {
+            "id": "e1",
+            "segment_id": "s1",
+            "event_type": "upward_movement",
+            "trigger": {
+              "text": "rises",
+              "start": 14,
+              "end": 19
+            },
+            "polarity": "affirmed",
+            "modality": "asserted",
+            "attribution_cues": [],
+            "speaker": null,
+            "actor": null,
+            "target": null,
+            "entity_mentions": [],
+            "evidence": {
+              "text": "Café Bitcoiné rises.",
+              "start": 0,
+              "end": 20
+            },
+            "needs_review": false,
+            "basis": "heuristic_rules",
+            "verified_occurrence": false
+          }
+        ],
+        "unresolved": [],
+        "sentiment_scope": {
+          "rules_version": "iris-sentiment-scope/0.1.0",
+          "basis": "development_derived_explicit_scope_rules",
+          "eligible": false,
+          "candidate": null,
+          "abstention_reason": "unsupported_scope"
+        },
+        "btc_relevance": "undetermined",
+        "needs_review": false,
+        "sentiment_scope_v3": {
+          "rules_version": "iris-sentiment-scope/0.3.0",
+          "parent_rules_version": "iris-sentiment-scope/0.1.0",
+          "basis": "bounded_proposition_relations_not_general_coreference",
+          "eligible": false,
+          "candidate": null,
+          "propositions": [],
+          "relations": [],
+          "guard_evidence": [],
+          "context_resolution": "unresolved",
+          "abstention_reason": "unsupported_context_frame"
+        }
+      },
+      "model_sentiment": "neutral",
+      "model_label_basis": "synthetic",
+      "sentiment_policy": "parser_scope_v3",
+      "probabilities_basis": "unmodified_model_only",
+      "sentiment_source": "model",
+      "sentiment_adjustment": {
+        "rules_version": "iris-sentiment-scope/0.3.0",
+        "eligible": false,
+        "changed": false,
+        "evidence": null,
+        "abstention_reason": "unsupported_context_frame",
+        "context_resolution": "unresolved",
+        "relations": []
+      }
+    }
+  },
+  {
+    "id": "edge-6",
+    "text": "JUST IN: SEC denies Bitcoin approval.",
+    "parse": {
+      "parser_version": "iris-news-rules/1.3.0",
+      "offset_basis": "raw_text_unicode_codepoints",
+      "segments": [
+        {
+          "id": "s1",
+          "text": "SEC denies Bitcoin approval.",
+          "start": 9,
+          "end": 37,
+          "negation_cues": [
+            {
+              "text": "denies",
+              "start": 13,
+              "end": 19
+            }
+          ],
+          "modality_cues": [],
+          "attribution_cues": [
+            {
+              "text": "denies",
+              "start": 13,
+              "end": 19
+            }
+          ]
+        }
+      ],
+      "entities": [
+        {
+          "text": "SEC",
+          "start": 9,
+          "end": 12,
+          "canonical": "sec",
+          "kind": "regulator",
+          "basis": "alias_dictionary"
+        },
+        {
+          "text": "Bitcoin",
+          "start": 20,
+          "end": 27,
+          "canonical": "bitcoin",
+          "kind": "asset",
+          "basis": "alias_dictionary"
+        }
+      ],
+      "quantities": [],
+      "time_expressions": [],
+      "ignored_spans": [
+        {
+          "text": "JUST IN:",
+          "start": 0,
+          "end": 8
+        }
+      ],
+      "events": [
+        {
+          "id": "e1",
+          "segment_id": "s1",
+          "event_type": "approval",
+          "trigger": {
+            "text": "approval",
+            "start": 28,
+            "end": 36
+          },
+          "polarity": "unresolved",
+          "modality": "unresolved",
+          "attribution_cues": [
+            {
+              "text": "denies",
+              "start": 13,
+              "end": 19
+            }
+          ],
+          "speaker": null,
+          "actor": null,
+          "target": null,
+          "entity_mentions": [
+            {
+              "text": "Bitcoin",
+              "start": 20,
+              "end": 27,
+              "canonical": "bitcoin",
+              "kind": "asset",
+              "basis": "alias_dictionary"
+            },
+            {
+              "text": "SEC",
+              "start": 9,
+              "end": 12,
+              "canonical": "sec",
+              "kind": "regulator",
+              "basis": "alias_dictionary"
+            }
+          ],
+          "evidence": {
+            "text": "SEC denies Bitcoin approval.",
+            "start": 9,
+            "end": 37
+          },
+          "needs_review": true,
+          "basis": "heuristic_rules",
+          "verified_occurrence": false
+        }
+      ],
+      "unresolved": [
+        {
+          "segment_id": "s1",
+          "reason": "complex_scope"
+        }
+      ],
+      "sentiment_scope": {
+        "rules_version": "iris-sentiment-scope/0.1.0",
+        "basis": "development_derived_explicit_scope_rules",
+        "eligible": false,
+        "candidate": null,
+        "abstention_reason": "denial_rumor_or_conditional_scope"
+      },
+      "btc_relevance": "explicit_mention",
+      "needs_review": true
+    },
+    "v3": {
+      "raw_text": "JUST IN: SEC denies Bitcoin approval.",
+      "sentiment": "neutral",
+      "label_basis": "synthetic",
+      "review_reasons": [
+        "v3_scope_requires_review"
+      ],
+      "needs_review": true,
+      "semantic_parse": {
+        "parser_version": "iris-news-rules/1.3.0",
+        "offset_basis": "raw_text_unicode_codepoints",
+        "segments": [
+          {
+            "id": "s1",
+            "text": "SEC denies Bitcoin approval.",
+            "start": 9,
+            "end": 37,
+            "negation_cues": [
+              {
+                "text": "denies",
+                "start": 13,
+                "end": 19
+              }
+            ],
+            "modality_cues": [],
+            "attribution_cues": [
+              {
+                "text": "denies",
+                "start": 13,
+                "end": 19
+              }
+            ]
+          }
+        ],
+        "entities": [
+          {
+            "text": "SEC",
+            "start": 9,
+            "end": 12,
+            "canonical": "sec",
+            "kind": "regulator",
+            "basis": "alias_dictionary"
+          },
+          {
+            "text": "Bitcoin",
+            "start": 20,
+            "end": 27,
+            "canonical": "bitcoin",
+            "kind": "asset",
+            "basis": "alias_dictionary"
+          }
+        ],
+        "quantities": [],
+        "time_expressions": [],
+        "ignored_spans": [
+          {
+            "text": "JUST IN:",
+            "start": 0,
+            "end": 8
+          }
+        ],
+        "events": [
+          {
+            "id": "e1",
+            "segment_id": "s1",
+            "event_type": "approval",
+            "trigger": {
+              "text": "approval",
+              "start": 28,
+              "end": 36
+            },
+            "polarity": "unresolved",
+            "modality": "unresolved",
+            "attribution_cues": [
+              {
+                "text": "denies",
+                "start": 13,
+                "end": 19
+              }
+            ],
+            "speaker": null,
+            "actor": null,
+            "target": null,
+            "entity_mentions": [
+              {
+                "text": "Bitcoin",
+                "start": 20,
+                "end": 27,
+                "canonical": "bitcoin",
+                "kind": "asset",
+                "basis": "alias_dictionary"
+              },
+              {
+                "text": "SEC",
+                "start": 9,
+                "end": 12,
+                "canonical": "sec",
+                "kind": "regulator",
+                "basis": "alias_dictionary"
+              }
+            ],
+            "evidence": {
+              "text": "SEC denies Bitcoin approval.",
+              "start": 9,
+              "end": 37
+            },
+            "needs_review": true,
+            "basis": "heuristic_rules",
+            "verified_occurrence": false
+          }
+        ],
+        "unresolved": [
+          {
+            "segment_id": "s1",
+            "reason": "complex_scope"
+          }
+        ],
+        "sentiment_scope": {
+          "rules_version": "iris-sentiment-scope/0.1.0",
+          "basis": "development_derived_explicit_scope_rules",
+          "eligible": false,
+          "candidate": null,
+          "abstention_reason": "denial_rumor_or_conditional_scope"
+        },
+        "btc_relevance": "explicit_mention",
+        "needs_review": true,
+        "sentiment_scope_v3": {
+          "rules_version": "iris-sentiment-scope/0.3.0",
+          "parent_rules_version": "iris-sentiment-scope/0.1.0",
+          "basis": "bounded_proposition_relations_not_general_coreference",
+          "eligible": false,
+          "candidate": null,
+          "propositions": [],
+          "relations": [],
+          "guard_evidence": [],
+          "context_resolution": "unresolved",
+          "abstention_reason": "denial_rumor_or_conditional_scope"
+        }
+      },
+      "model_sentiment": "neutral",
+      "model_label_basis": "synthetic",
+      "sentiment_policy": "parser_scope_v3",
+      "probabilities_basis": "unmodified_model_only",
+      "sentiment_source": "model",
+      "sentiment_adjustment": {
+        "rules_version": "iris-sentiment-scope/0.3.0",
+        "eligible": false,
+        "changed": false,
+        "evidence": null,
+        "abstention_reason": "denial_rumor_or_conditional_scope",
+        "context_resolution": "unresolved",
+        "relations": []
+      }
+    }
+  },
+  {
+    "id": "edge-url-0",
+    "text": "https://example.test/🚀 The bank supports Bitcoin adoption.",
+    "parse": {
+      "parser_version": "iris-news-rules/1.3.0",
+      "offset_basis": "raw_text_unicode_codepoints",
+      "segments": [
+        {
+          "id": "s1",
+          "text": "The bank supports Bitcoin adoption.",
+          "start": 23,
+          "end": 58,
+          "negation_cues": [],
+          "modality_cues": [],
+          "attribution_cues": []
+        }
+      ],
+      "entities": [
+        {
+          "text": "Bitcoin",
+          "start": 41,
+          "end": 48,
+          "canonical": "bitcoin",
+          "kind": "asset",
+          "basis": "alias_dictionary"
+        }
+      ],
+      "quantities": [],
+      "time_expressions": [],
+      "ignored_spans": [
+        {
+          "text": "https://example.test/🚀",
+          "start": 0,
+          "end": 22
+        }
+      ],
+      "events": [],
+      "unresolved": [
+        {
+          "segment_id": "s1",
+          "reason": "no_supported_event_trigger"
+        }
+      ],
+      "sentiment_scope": {
+        "rules_version": "iris-sentiment-scope/0.1.0",
+        "basis": "development_derived_explicit_scope_rules",
+        "eligible": true,
+        "candidate": {
+          "kind": "explicit_stance",
+          "proposed_sentiment": "positive",
+          "cue": {
+            "text": "supports",
+            "start": 32,
+            "end": 40
+          },
+          "target": {
+            "text": "Bitcoin adoption",
+            "start": 41,
+            "end": 57
+          },
+          "asset": {
+            "text": "Bitcoin",
+            "start": 41,
+            "end": 48
+          },
+          "evidence": {
+            "text": "https://example.test/🚀 The bank supports Bitcoin adoption.",
+            "start": 0,
+            "end": 58
+          },
+          "negation_scope": null,
+          "modality": "attributed_stance",
+          "verified_occurrence": false
+        },
+        "abstention_reason": null
+      },
+      "btc_relevance": "explicit_mention",
+      "needs_review": true
+    },
+    "v3": {
+      "raw_text": "https://example.test/🚀 The bank supports Bitcoin adoption.",
+      "sentiment": "positive",
+      "label_basis": "model_plus_development_scoped_rules",
+      "review_reasons": [
+        "development_parser_scope_decision"
+      ],
+      "needs_review": true,
+      "semantic_parse": {
+        "parser_version": "iris-news-rules/1.3.0",
+        "offset_basis": "raw_text_unicode_codepoints",
+        "segments": [
+          {
+            "id": "s1",
+            "text": "The bank supports Bitcoin adoption.",
+            "start": 23,
+            "end": 58,
+            "negation_cues": [],
+            "modality_cues": [],
+            "attribution_cues": []
+          }
+        ],
+        "entities": [
+          {
+            "text": "Bitcoin",
+            "start": 41,
+            "end": 48,
+            "canonical": "bitcoin",
+            "kind": "asset",
+            "basis": "alias_dictionary"
+          }
+        ],
+        "quantities": [],
+        "time_expressions": [],
+        "ignored_spans": [
+          {
+            "text": "https://example.test/🚀",
+            "start": 0,
+            "end": 22
+          }
+        ],
+        "events": [],
+        "unresolved": [
+          {
+            "segment_id": "s1",
+            "reason": "no_supported_event_trigger"
+          }
+        ],
+        "sentiment_scope": {
+          "rules_version": "iris-sentiment-scope/0.1.0",
+          "basis": "development_derived_explicit_scope_rules",
+          "eligible": true,
+          "candidate": {
+            "kind": "explicit_stance",
+            "proposed_sentiment": "positive",
+            "cue": {
+              "text": "supports",
+              "start": 32,
+              "end": 40
+            },
+            "target": {
+              "text": "Bitcoin adoption",
+              "start": 41,
+              "end": 57
+            },
+            "asset": {
+              "text": "Bitcoin",
+              "start": 41,
+              "end": 48
+            },
+            "evidence": {
+              "text": "https://example.test/🚀 The bank supports Bitcoin adoption.",
+              "start": 0,
+              "end": 58
+            },
+            "negation_scope": null,
+            "modality": "attributed_stance",
+            "verified_occurrence": false
+          },
+          "abstention_reason": null
+        },
+        "btc_relevance": "explicit_mention",
+        "needs_review": true,
+        "sentiment_scope_v3": {
+          "rules_version": "iris-sentiment-scope/0.3.0",
+          "parent_rules_version": "iris-sentiment-scope/0.1.0",
+          "basis": "bounded_proposition_relations_not_general_coreference",
+          "eligible": true,
+          "candidate": {
+            "kind": "explicit_stance",
+            "proposed_sentiment": "positive",
+            "cue": {
+              "text": "supports",
+              "start": 32,
+              "end": 40
+            },
+            "target": {
+              "text": "Bitcoin adoption",
+              "start": 41,
+              "end": 57
+            },
+            "asset": {
+              "text": "Bitcoin",
+              "start": 41,
+              "end": 48
+            },
+            "evidence": {
+              "text": "https://example.test/🚀 The bank supports Bitcoin adoption.",
+              "start": 0,
+              "end": 58
+            },
+            "negation_scope": null,
+            "modality": "attributed_stance",
+            "verified_occurrence": false
+          },
+          "propositions": [
+            {
+              "holder": {
+                "text": "The bank",
+                "start": 23,
+                "end": 31
+              },
+              "holder_resolution": "explicit_supported_frame",
+              "cue": {
+                "text": "supports",
+                "start": 32,
+                "end": 40
+              },
+              "target": {
+                "text": "Bitcoin adoption",
+                "start": 41,
+                "end": 57
+              },
+              "asset": {
+                "text": "Bitcoin",
+                "start": 41,
+                "end": 48
+              },
+              "orientation": "positive",
+              "target_key": [
+                "bitcoin",
+                "adoption"
+              ],
+              "target_resolution": "explicit_supported_frame_or_proposal_antecedent",
+              "negation_scope": null,
+              "attribution_chain": [],
+              "time": "unspecified",
+              "verified_occurrence": false
+            }
+          ],
+          "relations": [],
+          "guard_evidence": [],
+          "context_resolution": "complete_supported_direct_frame",
+          "abstention_reason": null
+        }
+      },
+      "model_sentiment": "neutral",
+      "model_label_basis": "synthetic",
+      "sentiment_policy": "parser_scope_v3",
+      "probabilities_basis": "unmodified_model_only",
+      "sentiment_source": "parser_scope",
+      "sentiment_adjustment": {
+        "rules_version": "iris-sentiment-scope/0.3.0",
+        "eligible": true,
+        "changed": true,
+        "evidence": {
+          "kind": "explicit_stance",
+          "proposed_sentiment": "positive",
+          "cue": {
+            "text": "supports",
+            "start": 32,
+            "end": 40
+          },
+          "target": {
+            "text": "Bitcoin adoption",
+            "start": 41,
+            "end": 57
+          },
+          "asset": {
+            "text": "Bitcoin",
+            "start": 41,
+            "end": 48
+          },
+          "evidence": {
+            "text": "https://example.test/🚀 The bank supports Bitcoin adoption.",
+            "start": 0,
+            "end": 58
+          },
+          "negation_scope": null,
+          "modality": "attributed_stance",
+          "verified_occurrence": false
+        },
+        "abstention_reason": null,
+        "context_resolution": "complete_supported_direct_frame",
+        "relations": []
+      }
+    }
+  },
+  {
+    "id": "edge-url-1",
+    "text": "🚀 The bank supports Bitcoin adoption.",
+    "parse": {
+      "parser_version": "iris-news-rules/1.3.0",
+      "offset_basis": "raw_text_unicode_codepoints",
+      "segments": [
+        {
+          "id": "s1",
+          "text": "🚀 The bank supports Bitcoin adoption.",
+          "start": 0,
+          "end": 37,
+          "negation_cues": [],
+          "modality_cues": [],
+          "attribution_cues": []
+        }
+      ],
+      "entities": [
+        {
+          "text": "Bitcoin",
+          "start": 20,
+          "end": 27,
+          "canonical": "bitcoin",
+          "kind": "asset",
+          "basis": "alias_dictionary"
+        }
+      ],
+      "quantities": [],
+      "time_expressions": [],
+      "ignored_spans": [],
+      "events": [],
+      "unresolved": [
+        {
+          "segment_id": "s1",
+          "reason": "no_supported_event_trigger"
+        }
+      ],
+      "sentiment_scope": {
+        "rules_version": "iris-sentiment-scope/0.1.0",
+        "basis": "development_derived_explicit_scope_rules",
+        "eligible": false,
+        "candidate": null,
+        "abstention_reason": "unsupported_scope"
+      },
+      "btc_relevance": "explicit_mention",
+      "needs_review": true
+    },
+    "v3": {
+      "raw_text": "🚀 The bank supports Bitcoin adoption.",
+      "sentiment": "neutral",
+      "label_basis": "synthetic",
+      "review_reasons": [
+        "v3_scope_requires_review"
+      ],
+      "needs_review": true,
+      "semantic_parse": {
+        "parser_version": "iris-news-rules/1.3.0",
+        "offset_basis": "raw_text_unicode_codepoints",
+        "segments": [
+          {
+            "id": "s1",
+            "text": "🚀 The bank supports Bitcoin adoption.",
+            "start": 0,
+            "end": 37,
+            "negation_cues": [],
+            "modality_cues": [],
+            "attribution_cues": []
+          }
+        ],
+        "entities": [
+          {
+            "text": "Bitcoin",
+            "start": 20,
+            "end": 27,
+            "canonical": "bitcoin",
+            "kind": "asset",
+            "basis": "alias_dictionary"
+          }
+        ],
+        "quantities": [],
+        "time_expressions": [],
+        "ignored_spans": [],
+        "events": [],
+        "unresolved": [
+          {
+            "segment_id": "s1",
+            "reason": "no_supported_event_trigger"
+          }
+        ],
+        "sentiment_scope": {
+          "rules_version": "iris-sentiment-scope/0.1.0",
+          "basis": "development_derived_explicit_scope_rules",
+          "eligible": false,
+          "candidate": null,
+          "abstention_reason": "unsupported_scope"
+        },
+        "btc_relevance": "explicit_mention",
+        "needs_review": true,
+        "sentiment_scope_v3": {
+          "rules_version": "iris-sentiment-scope/0.3.0",
+          "parent_rules_version": "iris-sentiment-scope/0.1.0",
+          "basis": "bounded_proposition_relations_not_general_coreference",
+          "eligible": false,
+          "candidate": null,
+          "propositions": [],
+          "relations": [],
+          "guard_evidence": [],
+          "context_resolution": "unresolved",
+          "abstention_reason": "unsupported_context_frame"
+        }
+      },
+      "model_sentiment": "neutral",
+      "model_label_basis": "synthetic",
+      "sentiment_policy": "parser_scope_v3",
+      "probabilities_basis": "unmodified_model_only",
+      "sentiment_source": "model",
+      "sentiment_adjustment": {
+        "rules_version": "iris-sentiment-scope/0.3.0",
+        "eligible": false,
+        "changed": false,
+        "evidence": null,
+        "abstention_reason": "unsupported_context_frame",
+        "context_resolution": "unresolved",
+        "relations": []
+      }
+    }
+  },
+  {
+    "id": "edge-url-2",
+    "text": "https://example.test/🚀 Bitcoin rises 10.50% today.",
+    "parse": {
+      "parser_version": "iris-news-rules/1.3.0",
+      "offset_basis": "raw_text_unicode_codepoints",
+      "segments": [
+        {
+          "id": "s1",
+          "text": "Bitcoin rises 10.50% today.",
+          "start": 23,
+          "end": 50,
+          "negation_cues": [],
+          "modality_cues": [],
+          "attribution_cues": []
+        }
+      ],
+      "entities": [
+        {
+          "text": "Bitcoin",
+          "start": 23,
+          "end": 30,
+          "canonical": "bitcoin",
+          "kind": "asset",
+          "basis": "alias_dictionary"
+        }
+      ],
+      "quantities": [
+        {
+          "text": "10.50%",
+          "start": 37,
+          "end": 43,
+          "value": "10.50",
+          "unit": "%",
+          "currency_symbol": null,
+          "basis": "explicit_text",
+          "event_role": null
+        }
+      ],
+      "time_expressions": [
+        {
+          "text": "today",
+          "start": 44,
+          "end": 49
+        }
+      ],
+      "ignored_spans": [
+        {
+          "text": "https://example.test/🚀",
+          "start": 0,
+          "end": 22
+        }
+      ],
+      "events": [
+        {
+          "id": "e1",
+          "segment_id": "s1",
+          "event_type": "upward_movement",
+          "trigger": {
+            "text": "rises",
+            "start": 31,
+            "end": 36
+          },
+          "polarity": "affirmed",
+          "modality": "asserted",
+          "attribution_cues": [],
+          "speaker": null,
+          "actor": null,
+          "target": null,
+          "entity_mentions": [
+            {
+              "text": "Bitcoin",
+              "start": 23,
+              "end": 30,
+              "canonical": "bitcoin",
+              "kind": "asset",
+              "basis": "alias_dictionary"
+            }
+          ],
+          "evidence": {
+            "text": "Bitcoin rises 10.50% today.",
+            "start": 23,
+            "end": 50
+          },
+          "needs_review": false,
+          "basis": "heuristic_rules",
+          "verified_occurrence": false
+        }
+      ],
+      "unresolved": [],
+      "sentiment_scope": {
+        "rules_version": "iris-sentiment-scope/0.1.0",
+        "basis": "development_derived_explicit_scope_rules",
+        "eligible": false,
+        "candidate": null,
+        "abstention_reason": "unsupported_scope"
+      },
+      "btc_relevance": "explicit_mention",
+      "needs_review": false
+    },
+    "v3": {
+      "raw_text": "https://example.test/🚀 Bitcoin rises 10.50% today.",
+      "sentiment": "neutral",
+      "label_basis": "synthetic",
+      "review_reasons": [
+        "v3_scope_requires_review"
+      ],
+      "needs_review": true,
+      "semantic_parse": {
+        "parser_version": "iris-news-rules/1.3.0",
+        "offset_basis": "raw_text_unicode_codepoints",
+        "segments": [
+          {
+            "id": "s1",
+            "text": "Bitcoin rises 10.50% today.",
+            "start": 23,
+            "end": 50,
+            "negation_cues": [],
+            "modality_cues": [],
+            "attribution_cues": []
+          }
+        ],
+        "entities": [
+          {
+            "text": "Bitcoin",
+            "start": 23,
+            "end": 30,
+            "canonical": "bitcoin",
+            "kind": "asset",
+            "basis": "alias_dictionary"
+          }
+        ],
+        "quantities": [
+          {
+            "text": "10.50%",
+            "start": 37,
+            "end": 43,
+            "value": "10.50",
+            "unit": "%",
+            "currency_symbol": null,
+            "basis": "explicit_text",
+            "event_role": null
+          }
+        ],
+        "time_expressions": [
+          {
+            "text": "today",
+            "start": 44,
+            "end": 49
+          }
+        ],
+        "ignored_spans": [
+          {
+            "text": "https://example.test/🚀",
+            "start": 0,
+            "end": 22
+          }
+        ],
+        "events": [
+          {
+            "id": "e1",
+            "segment_id": "s1",
+            "event_type": "upward_movement",
+            "trigger": {
+              "text": "rises",
+              "start": 31,
+              "end": 36
+            },
+            "polarity": "affirmed",
+            "modality": "asserted",
+            "attribution_cues": [],
+            "speaker": null,
+            "actor": null,
+            "target": null,
+            "entity_mentions": [
+              {
+                "text": "Bitcoin",
+                "start": 23,
+                "end": 30,
+                "canonical": "bitcoin",
+                "kind": "asset",
+                "basis": "alias_dictionary"
+              }
+            ],
+            "evidence": {
+              "text": "Bitcoin rises 10.50% today.",
+              "start": 23,
+              "end": 50
+            },
+            "needs_review": false,
+            "basis": "heuristic_rules",
+            "verified_occurrence": false
+          }
+        ],
+        "unresolved": [],
+        "sentiment_scope": {
+          "rules_version": "iris-sentiment-scope/0.1.0",
+          "basis": "development_derived_explicit_scope_rules",
+          "eligible": false,
+          "candidate": null,
+          "abstention_reason": "unsupported_scope"
+        },
+        "btc_relevance": "explicit_mention",
+        "needs_review": false,
+        "sentiment_scope_v3": {
+          "rules_version": "iris-sentiment-scope/0.3.0",
+          "parent_rules_version": "iris-sentiment-scope/0.1.0",
+          "basis": "bounded_proposition_relations_not_general_coreference",
+          "eligible": false,
+          "candidate": null,
+          "propositions": [],
+          "relations": [],
+          "guard_evidence": [],
+          "context_resolution": "unresolved",
+          "abstention_reason": "unsupported_context_frame"
+        }
+      },
+      "model_sentiment": "neutral",
+      "model_label_basis": "synthetic",
+      "sentiment_policy": "parser_scope_v3",
+      "probabilities_basis": "unmodified_model_only",
+      "sentiment_source": "model",
+      "sentiment_adjustment": {
+        "rules_version": "iris-sentiment-scope/0.3.0",
+        "eligible": false,
+        "changed": false,
+        "evidence": null,
+        "abstention_reason": "unsupported_context_frame",
+        "context_resolution": "unresolved",
+        "relations": []
+      }
+    }
+  }
+]

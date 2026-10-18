@@ -1,0 +1,44 @@
+{
+  "schema": "iris-sentiment-onnx/v1",
+  "release_id": "iris-sentiment-local/1.0.0",
+  "model_id": "mrm8488/distilroberta-finetuned-financial-news-sentiment-analysis@ae0eab9ad336d7d548e0efe394b07c04bcaf6e91",
+  "precision": "fp32",
+  "quantized": false,
+  "trained": false,
+  "opset": 17,
+  "max_tokens": 512,
+  "padding_id": 1,
+  "end_id": 2,
+  "labels": [
+    "negative",
+    "neutral",
+    "positive"
+  ],
+  "source_safetensors_sha256": "c0b61385e4482edd179b69042c014dcb53a79431784f34a0171f5d43b092feaa",
+  "export_versions": {
+    "torch": "2.8.0+cpu",
+    "onnx": "1.19.1"
+  },
+  "files": {
+    "config.json": {
+      "sha256": "c4128a9b546f4ea50590ca60db1e2bbadfd3726b8e1e70441be1b741a1083a72",
+      "bytes": 933
+    },
+    "model.onnx": {
+      "sha256": "2846cb6111871683f4c96a4437dd61bc2f566050df6a1a1a97f199a1f44a2ad3",
+      "bytes": 328611855
+    },
+    "special_tokens_map.json": {
+      "sha256": "378eb3bf733eb16e65792d7e3fda5b8a4631387ca04d2015199c4d4f22ae554d",
+      "bytes": 239
+    },
+    "tokenizer.json": {
+      "sha256": "6f95e8747d56797c00cb088bedbfac0a7b7d84d1d4a7503f0507c568c4ba583b",
+      "bytes": 1355932
+    },
+    "tokenizer_config.json": {
+      "sha256": "5066b57002ab15418f3472aa53a8b083878f84050e8153ba62b9d40e10651a4c",
+      "bytes": 333
+    }
+  }
+}

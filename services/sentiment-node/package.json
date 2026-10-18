@@ -1,0 +1,22 @@
+{
+  "name": "iris-sentiment-node",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Financial DistilRoBERTa ONNX FP32 + IRIS parser V3 and TF-IDF baseline",
+  "engines": {
+    "node": ">=22"
+  },
+  "exports": "./index.mjs",
+  "scripts": {
+    "start": "node node/server.mjs",
+    "test": "node --test node/tests/*.test.mjs node/parser.test.mjs",
+    "verify": "node node/verify.mjs",
+    "test:http": "node node/http-test.mjs",
+    "check": "npm test && npm run verify && npm run test:http"
+  },
+  "dependencies": {
+    "@huggingface/tokenizers": "0.2.0",
+    "onnxruntime-node": "1.30.0"
+  }
+}

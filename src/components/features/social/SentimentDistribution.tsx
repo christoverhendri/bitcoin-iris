@@ -3,6 +3,7 @@ import type { Envelope } from '@/lib/envelope';
 import type { SentimentData } from '@/lib/features/sentiment';
 import { toSentimentLabels } from '@/lib/features/sentiment/present';
 import { signTone } from '@/lib/theme/tokens';
+import { ModelProvenance } from '@/components/features/sentiment/ModelProvenance';
 
 export interface SentimentDistributionProps {
   sentiment: Envelope<SentimentData>;
@@ -23,7 +24,7 @@ export function SentimentDistribution({ sentiment }: SentimentDistributionProps)
   return (
     <PanelGrid columns="repeat(auto-fit, minmax(260px, 1fr))">
       <Panel style={{ display: 'flex', flexDirection: 'column', minHeight: 200 }}>
-        <PanelHeader title="SENTIMENT DISTRIBUTION" note="SOCIAL MENTIONS" right={<MockBadge env={sentiment} />} />
+        <PanelHeader title="SENTIMENT DISTRIBUTION" note="RSS HEADLINE TONE" right={<MockBadge env={sentiment} />} />
         <div style={{ padding: '14px 12px', flex: 1 }}>
           {/* stacked bar */}
           <div style={{ display: 'flex', height: 10, border: '1px solid var(--line2)', background: 'var(--sunk)' }}>
@@ -57,6 +58,7 @@ export function SentimentDistribution({ sentiment }: SentimentDistributionProps)
             ))}
           </div>
         </div>
+        <ModelProvenance analysis={s.analysis} />
         <SourceFootnote env={sentiment} />
       </Panel>
 
