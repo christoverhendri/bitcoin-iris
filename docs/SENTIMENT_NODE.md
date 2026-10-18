@@ -14,6 +14,8 @@ previous ZIPs and reports remain intact.
 Requires Node.js 22 or newer and npm. With the local model assets present:
 
 ```powershell
+git lfs install --local
+git lfs pull
 npm ci
 npm run dev:sentiment
 ```
@@ -23,8 +25,10 @@ worker. The launcher loads `.env.local`, binds the worker to loopback and waits
 for its backend/model health before starting Next.js. Its default worker URL is
 `http://127.0.0.1:8765`. Health and scheduler counters are at `/health`.
 
-Large weights are ignored by Git. Restore `services/sentiment-node/models/onnx-fp32/model.onnx`
-from the new Node offline bundle when using a source-only checkout. Its sibling
+The full `services/sentiment-node/models/onnx-fp32/model.onnx` file is tracked
+through Git LFS on `azan-sentiment`. Git stores a small pointer and LFS stores
+the 328,611,855-byte weight. If a clone has only the pointer, run `git lfs pull`.
+No training or conversion is needed after cloning. Its sibling
 `manifest.json` verifies all ONNX/tokenizer assets before loading. `model.node.json`
 contains the baseline's existing vocabulary, IDF and logistic coefficients;
 these are exported coefficients, not new training results.

@@ -1,6 +1,6 @@
 # IRIS Sentiment — Node.js only
 
-Opheline · 18 October 2026 · local package, no publication.
+Opheline · 18 October 2026 · Node.js model service on `azan-sentiment`.
 
 Standalone backend with Financial DistilRoBERTa ONNX FP32, IRIS Semantic Parser
 V3, the existing TF-IDF/logistic baseline, versioned TTL/LRU caching, shared
@@ -9,7 +9,9 @@ included. Installation and all provided checks use only Node.js/npm.
 
 ## Run
 
-Requires Node.js 22+ and npm. Open a terminal in this extracted directory:
+Requires Node.js 22+ and npm. For a Git checkout, first run `git lfs install --local`
+and `git lfs pull` from the repository root. The offline ZIP already includes
+the full weight. Open a terminal in this service directory:
 
 ```powershell
 npm ci
@@ -92,5 +94,6 @@ The ONNX model is FP32, opset 17, revision
 `ae0eab9ad336d7d548e0efe394b07c04bcaf6e91`. Scope version is
 `iris-sentiment-scope/0.3.0`; baseline is `tfidf-logreg-d0d85bc862b5`.
 Asset hashes are verified at startup. The upstream model card and Apache 2.0
-license are included. Large ONNX weights are ignored by Git; this offline ZIP
-contains the complete weight file. Original source releases remain separate.
+license are included. `models/onnx-fp32/model.onnx` is tracked through Git LFS;
+the offline ZIP also contains the complete weight file. Original source releases
+remain separate.

@@ -27,13 +27,16 @@ caching. Setup, serving and bundled checks use Node.js/npm. The previous
 excluded from this Node.js branch.
 
 ```powershell
+git lfs install --local
+git lfs pull
 npm ci
 npm run dev:sentiment
 ```
 
-Restore `services/sentiment-node/models/onnx-fp32/model.onnx` from the Node-only offline
-bundle first if starting from a source-only checkout; large weights are ignored
-by Git. See [Node setup, concurrency, cache and validation](docs/SENTIMENT_NODE.md).
+`services/sentiment-node/models/onnx-fp32/model.onnx` is versioned with Git LFS.
+Run `git lfs pull` after cloning if model files were not downloaded automatically.
+The worker verifies the full weight file before loading it. See
+[Node setup, concurrency, cache and validation](docs/SENTIMENT_NODE.md).
 The [previous Python integration](docs/SENTIMENT_MODEL.md) is retained for reference.
 
 Run `npm run sentiment:check` for Node unit tests, synthetic parity and concurrent

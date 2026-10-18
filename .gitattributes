@@ -4,3 +4,4 @@ services/sentiment-node/models/onnx-fp32/manifest.json text eol=lf
 # Keep code used in the pipeline fingerprint consistent across checkouts.
 services/sentiment-node/node/*.mjs text eol=lf
 services/sentiment-node/node/tests/*.mjs text eol=lf
+services/sentiment-node/models/onnx-fp32/model.onnx filter=lfs diff=lfs merge=lfs -text
