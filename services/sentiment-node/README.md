@@ -7,6 +7,17 @@ V3, the existing TF-IDF/logistic baseline, versioned TTL/LRU caching, shared
 in-flight jobs and a bounded inference queue. Model weights and tokenizer are
 included. Installation and all provided checks use only Node.js/npm.
 
+## How the model works
+
+Financial DistilRoBERTa produces three sentiment probabilities from cleaned,
+tokenized financial text. Parser V3 audits explicit scope in the original text
+and can adjust the final label while retaining those probabilities. TF-IDF +
+Logistic Regression remains an independent baseline. A shared scheduler owns
+the result cache, active jobs and bounded inference queue.
+
+See [cara kerja model, contoh keputusan, field output, dan cache](models/onnx-fp32/README.md)
+for the detailed explanation beside the ONNX weight file.
+
 ## Run
 
 Requires Node.js 22+ and npm. For a Git checkout, first run `git lfs install --local`
