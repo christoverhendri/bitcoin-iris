@@ -186,17 +186,25 @@ Donut kecil + persentase positif/netral/negatif hari terbaru dari Santiment. Det
 
 ### 1.6 LIVE INTELLIGENCE
 
-- **HEADLINE MIX** (BULLISH / NEUTRAL / BEARISH %): dari judul terbaru di 8 feed (hingga 40 per
-  feed; 16 Okt: 183 judul, angkanya tampil di panel), berapa
-  persen yang ditandai positif/netral/negatif oleh kamus kata. Murni hitungan.
+- **HEADLINE MIX** (POSITIF / NETRAL / NEGATIF %): dari **40 judul terbaru** (8 feed RSS + post
+  Watcher Guru), berapa persen yang diberi label positif/netral/negatif oleh model. Murni hitungan.
   (Dulu ada "Sentiment Score" = `0.6 × berita + 0.4 × F&G`; bobotnya karangan, **dihapus 16 Okt**.)
-- **Penilaian judul** = kamus kata (`src/lib/sources/lexicon.ts`): setiap kata "naik" (surge,
-  rally, inflow, approval, …) +1, setiap kata "turun" (crash, hack, outflow, ban, …) −1.
-  **Bukan model NLP.**
-- **Daftar berita**: 10 judul terbaru dari 8 feed (hingga 15 per feed diambil; CoinTelegraph, Decrypt, NewsBTC, CoinDesk,
-  The Block, Bitcoin Magazine, Blockworks, BeInCrypto), **diurutkan dari yang terbaru**. Tiap judul
-  diberi kategori kata kunci (lihat 5.2) dan label bull/bear dari kamus kata.
+- **Penilaian judul** = model sentimen riset Azan (`services/sentiment-node`): Financial
+  DistilRoBERTa (ONNX) + parser V3, dengan pembanding TF-IDF. Label = **nada teks**
+  positif/netral/negatif, **bukan ramalan harga BTC** — karena itu tertulis POSITIF/NEGATIF, bukan
+  BULLISH/BEARISH (18 Okt). Tiap judul menampilkan engine, label TF-IDF, dan tanda REVIEW (model
+  masih tahap riset). Kalau worker model mati, judul dinilai kamus kata
+  (`src/lib/sources/lexicon.ts`) dan tertulis **"Heuristic · model unavailable"**.
+- **Daftar berita**: judul terbaru dari 8 feed (CoinTelegraph, Decrypt, NewsBTC, CoinDesk, The Block,
+  Bitcoin Magazine, Blockworks, BeInCrypto) **plus Watcher Guru**, **diurutkan dari yang terbaru**.
+  Tiap judul diberi kategori kata kunci (lihat 5.2) dan label model.
   (Dulu ada label HIGH/MEDIUM/LOW IMPACT dari skor yang angkanya dipilih manual — **dihapus 16 Okt**.)
+- **Watcher Guru** tidak punya API/RSS yang memadai. Postnya diambil dari pratinjau publik Telegram
+  `t.me/s/WatcherGuru` oleh pipeline riset (`news_pipeline/`, dari christoverhendri/bitcoin-iris
+  branch azan-sentiment) → SQLite `worker/data/news/` → snapshot `.data/watcher-guru.json`. Job
+  worker `watcher_news` menjalankannya tiap menit. Kalau pengambilan terakhir > 10 menit lalu
+  (worker mati), post Watcher Guru tidak ditampilkan. Isinya tidak hanya kripto (juga pasar umum,
+  teknologi).
 
 ### 1.7 BTC SNAPSHOT
 
@@ -303,8 +311,8 @@ Derivatives, kartu DEPOSIT, tabel FLOW SUMMARY (dobel dengan Exchange Netflow).
 | Sel | Asal |
 |---|---|
 | FEAR & GREED | alternative.me (lihat 1.4) |
-| SENTIMENT MIX | Porsi judul positif/netral/negatif (hitungan kamus kata) |
-| NEWS TONE | Hitungan judul +/− dari daftar berita |
+| SENTIMENT MIX | Porsi judul positif/netral/negatif dari model (lihat 1.6) |
+| NEWS TONE | LEBIH BANYAK POSITIF / LEBIH BANYAK NEGATIF / SEIMBANG dari daftar berita |
 | WORLD EVENTS | Jumlah event di peta + berapa yang terbit dalam 24 jam |
 
 Sel WHALE FLOW 24H dihapus — sama dengan ringkasan 24 jam di atas Whale Wire.
@@ -316,7 +324,8 @@ Akun gratis Santiment menahan 30 hari terakhir, jadi datanya ±30 hari lalu — 
 
 ### 5.3 GLOBAL EVENT MAP dan 5.4 WHALE WIRE
 
-Peta event: lihat penjelasan kategori di bawah. Transfer on-chain hanya ditambahkan ke peta kalau
+Peta event: lihat penjelasan kategori di bawah. Label positif/netral/negatif tiap event juga dari
+model yang sama (lihat 1.6), satu panggilan per halaman. Transfer on-chain hanya ditambahkan ke peta kalau
 datanya asli. **Whale Wire** butuh Supabase + `WHALE_ALERT_API_KEY`; sampai itu ada, panelnya
 disembunyikan (tidak ada data contoh).
 

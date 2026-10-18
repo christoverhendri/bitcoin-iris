@@ -1,9 +1,9 @@
 'use client';
 
 import { useQueryState } from 'nuqs';
-import { EVENT_CATEGORIES } from '@/lib/features/geopoliticalEvents';
+import { EVENT_CATEGORIES } from '@/lib/geo/classify';
 import type { EventCategory } from '@/lib/features/geopoliticalEvents';
-import { CATEGORY_COLOR } from '@/lib/features/geopoliticalEvents';
+import { CATEGORY_COLOR } from '@/lib/features/geopoliticalEvents/present';
 
 /**
  * Category layer filter. State lives in `?cats=` (comma-joined list, or `ALL`)

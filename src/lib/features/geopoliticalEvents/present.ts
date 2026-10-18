@@ -21,17 +21,23 @@ export const CATEGORY_COLOR: Record<EventCategory, string> = {
  */
 export const MARKER_RADIUS = 4.5;
 
+/**
+ * Headline tone words. The labels come from the sentiment model (Financial
+ * DistilRoBERTa, `services/sentiment-node`), which classifies the TEXT as
+ * positive / neutral / negative and is explicitly not a BTC price forecast —
+ * so the words say POSITIF / NEGATIF, not BULLISH / BEARISH (2026-10-18).
+ */
 const SENTIMENT_LABEL: Record<GeoEvent['sentiment'], string> = {
-  positive: 'BULL',
-  negative: 'BEAR',
-  neutral: 'NEUTRAL',
+  positive: 'POSITIF',
+  negative: 'NEGATIF',
+  neutral: 'NETRAL',
 };
 
-export type SentimentWord = 'BULLISH' | 'BEARISH' | 'NEUTRAL';
+export type SentimentWord = 'POSITIF' | 'NEGATIF' | 'NETRAL';
 
 /** Event sentiment -> display word used in the detail popup and wire. */
 export function sentimentWord(s: GeoEvent['sentiment']): SentimentWord {
-  return s === 'positive' ? 'BULLISH' : s === 'negative' ? 'BEARISH' : 'NEUTRAL';
+  return s === 'positive' ? 'POSITIF' : s === 'negative' ? 'NEGATIF' : 'NETRAL';
 }
 
 /** Flattened, display-ready fields for one event row. */

@@ -49,6 +49,9 @@ worker/out/
 worker/.venv/
 worker/logs/
 worker/.env
+# Watcher.Guru news pipeline: SQLite store + snapshot the dashboard reads (job watcher_news)
+worker/data/news/
+/.data/
 __pycache__/
 *.py[cod]
 .pytest_cache/

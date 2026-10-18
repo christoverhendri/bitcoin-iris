@@ -39,7 +39,7 @@ export const MAX_AGE_SEC = {
   network: 2 * HOUR,
   /** alternative.me publishes once a day. */
   fearGreed: 2 * DAY,
-  /** Eight crypto RSS feeds: a full day with no headline means the feeds are down. */
+  /** Eight crypto RSS feeds plus Watcher.Guru posts: a full day with no headline means the feeds are down. */
   news: 1 * DAY,
   /** Daily-candle features (volatility, seasonality, distribution, confluence). */
   dailyCandles: 2 * DAY,

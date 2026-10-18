@@ -43,7 +43,7 @@ export function SentimentStrip({ fearGreed, sentiment, news, events }: Sentiment
     else if (a.sentiment === 'negative') nNeg++;
     else nNeu++;
   }
-  const newsWord = nPos > nNeg ? 'NET BULLISH' : nNeg > nPos ? 'NET BEARISH' : 'MIXED';
+  const newsWord = nPos > nNeg ? 'LEBIH BANYAK POSITIF' : nNeg > nPos ? 'LEBIH BANYAK NEGATIF' : 'SEIMBANG';
   const newsTone: Tone = nPos > nNeg ? 'up' : nNeg > nPos ? 'down' : 'txt';
 
   const ev = events.data;

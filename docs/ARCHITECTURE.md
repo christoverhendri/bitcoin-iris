@@ -8,7 +8,8 @@ Python worker  ──service_role──▶  Supabase Postgres  ──anon read�
 pandas / numpy                    service writes only                App Router, SSR
    │
    └─ worker jobs: `refresh_data` (daily, rebuilds model inputs from APIs),
-      `clf_weekly` (Monday, -> `clf_signals`), `whale_ingest` (5 min trigger).
+      `clf_weekly` (Monday, -> `clf_signals`), `whale_ingest` (5 min trigger),
+      `watcher_news` (1 min: news_pipeline -> .data/watcher-guru.json, read by Next.js).
       `whale_events` continues to be written by the Next.js route handler.
 ```
 

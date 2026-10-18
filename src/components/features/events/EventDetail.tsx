@@ -2,14 +2,16 @@
 
 import type { CSSProperties } from 'react';
 import { fmtAgo } from '@/lib/format';
-import { CATEGORY_COLOR, sentimentWord } from '@/lib/features/geopoliticalEvents';
-import type { GeoEvent, SentimentWord } from '@/lib/features/geopoliticalEvents';
+import { CATEGORY_COLOR, sentimentWord } from '@/lib/features/geopoliticalEvents/present';
+import type { GeoEvent } from '@/lib/features/geopoliticalEvents/types';
+import type { SentimentWord } from '@/lib/features/geopoliticalEvents/present';
 import type { DetailPayload } from './WorldMap';
+import { HeadlineModel } from '@/components/features/sentiment/ModelProvenance';
 
 const SENT_COLOR: Record<SentimentWord, string> = {
-  BULLISH: 'var(--up)',
-  BEARISH: 'var(--down)',
-  NEUTRAL: 'var(--mut)',
+  POSITIF: 'var(--up)',
+  NEGATIF: 'var(--down)',
+  NETRAL: 'var(--mut)',
 };
 
 export interface EventDetailProps {
@@ -74,6 +76,7 @@ export function EventDetail({ detail, onClose, onPick }: EventDetailProps) {
         <Chip label={sent} color={SENT_COLOR[sent]} />
         <Chip label={e.category.replace('_', ' ')} color={CATEGORY_COLOR[e.category]} />
       </div>
+      <HeadlineModel assessment={e.sentimentAssessment} />
       <div style={dimLine}>
         {e.place} · {e.lat.toFixed(2)}, {e.lon.toFixed(2)}
       </div>

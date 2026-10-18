@@ -1,3 +1,4 @@
+import type { SentimentAssessment } from '@/lib/sentiment/types';
 import type { EventCategory } from '@/lib/geo/classify';
 
 export type { EventCategory };
@@ -10,6 +11,8 @@ export interface GeoEvent {
   publishedAt: number; // ms epoch
   category: EventCategory;
   sentiment: 'positive' | 'negative' | 'neutral';
+  /** Which engine produced `sentiment` (model / baseline / labelled keyword fallback). */
+  sentimentAssessment?: SentimentAssessment;
   lat: number;
   lon: number;
   iso2: string;

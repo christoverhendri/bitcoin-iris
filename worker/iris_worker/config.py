@@ -84,5 +84,6 @@ CLF_CRON = get_str("CLF_CRON", "30 0 * * 1")
 SOCIAL_CRON = get_str("SOCIAL_CRON", "20 0 * * *")
 # whale ingest: panggil route Next /api/ingest/whale (butuh IRIS_APP_URL + CRON_SECRET).
 WHALE_CRON = get_str("WHALE_CRON", "*/5 * * * *")
+WATCHER_CRON = get_str("WATCHER_CRON", "* * * * *")
 IRIS_APP_URL = get_str("IRIS_APP_URL")
 CRON_SECRET = get_str("CRON_SECRET")

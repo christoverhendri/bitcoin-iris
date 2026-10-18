@@ -11,7 +11,7 @@ import {
   type ZoomTransform,
 } from 'd3-zoom';
 import { fmtAgo } from '@/lib/format';
-import { CATEGORY_COLOR, MARKER_RADIUS } from '@/lib/features/geopoliticalEvents';
+import { CATEGORY_COLOR, MARKER_RADIUS } from '@/lib/features/geopoliticalEvents/present';
 import type { EventCategory, GeoEvent } from '@/lib/features/geopoliticalEvents';
 import { WORLD_FEATURES, makeProjection, spherePath } from '@/lib/geo/projection';
 

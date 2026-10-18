@@ -12,7 +12,7 @@ export interface NewsWireProps {
 }
 
 function sentimentLabel(s: NewsArticle['sentiment']): string {
-  return s === 'positive' ? 'BULL' : s === 'negative' ? 'BEAR' : 'NEUTRAL';
+  return s === 'positive' ? 'POSITIF' : s === 'negative' ? 'NEGATIF' : 'NETRAL';
 }
 
 function sentimentTone(s: NewsArticle['sentiment']): Tone {
@@ -21,8 +21,8 @@ function sentimentTone(s: NewsArticle['sentiment']): Tone {
 
 const FILTERS: { key: NewsFilter; label: string }[] = [
   { key: 'all', label: 'ALL' },
-  { key: 'bullish', label: 'BULLISH' },
-  { key: 'bearish', label: 'BEARISH' },
+  { key: 'bullish', label: 'POSITIF' },
+  { key: 'bearish', label: 'NEGATIF' },
 ];
 
 export function NewsWire({ news, filter }: NewsWireProps) {
@@ -42,7 +42,7 @@ export function NewsWire({ news, filter }: NewsWireProps) {
     <Panel style={{ display: 'flex', flexDirection: 'column', minHeight: 300 }}>
       <PanelHeader
         title="NEWS WIRE"
-        note={`${bullish} BULL · ${bearish} BEAR · ${neutral} NEUTRAL`}
+        note={`${bullish} POSITIF · ${bearish} NEGATIF · ${neutral} NETRAL`}
         right={<MockBadge env={news} />}
       />
 

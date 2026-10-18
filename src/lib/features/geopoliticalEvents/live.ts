@@ -22,7 +22,7 @@
  */
 import { fetchFeeds, getCryptoNews, type RssItem } from '@/lib/sources/rss';
 import { INSTITUTION_FEEDS, SOURCE_PIN, WORLD_FEEDS } from '@/lib/sources/worldFeeds';
-import { scoreHeadline } from '@/lib/sources/lexicon';
+import { analyzeHeadlines } from '@/lib/sentiment/client';
 import { classify } from '@/lib/geo/classify';
 import { geocode } from '@/lib/geo/gazetteer';
 import { hashString, utcDay } from '@/lib/rng';
@@ -77,7 +77,8 @@ export async function fetchGeopoliticalEvents({ limit = 60 }: GeoEventsArgs) {
     if (!hit) continue;
 
     const category = classify(it.title);
-    const sentiment = scoreHeadline(it.title);
+    // Placeholder until the model labels the final list below.
+    const sentiment = 'neutral' as const;
 
     const key = normHeadline(it.title);
     const id = `ev-${hashString(`${key}|${it.source}`).toString(36)}`;
@@ -99,11 +100,21 @@ export async function fetchGeopoliticalEvents({ limit = 60 }: GeoEventsArgs) {
     if (!byHeadline.has(key)) byHeadline.set(key, event);
   }
 
-  const data = [...byHeadline.values()]
+  const picked = [...byHeadline.values()]
     .sort((a, b) => b.publishedAt - a.publishedAt)
     .slice(0, limit);
 
-  if (data.length === 0) return null;
+  if (picked.length === 0) return null;
+
+  // Every headline on the map is labelled by the same sentiment model as the
+  // news panels (one batched worker call; a down worker falls back per headline
+  // to the keyword lexicon, labelled "Heuristic · model unavailable").
+  const assessments = await analyzeHeadlines(picked.map((e) => e.headline));
+  const data: GeoEvent[] = picked.map((e, i) => ({
+    ...e,
+    sentiment: assessments[i].label,
+    sentimentAssessment: assessments[i],
+  }));
 
   const newest = Math.max(...data.map((e) => e.publishedAt));
   return {

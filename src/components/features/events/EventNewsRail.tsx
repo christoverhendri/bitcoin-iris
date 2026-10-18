@@ -3,7 +3,7 @@
 import { useMemo, useState, type CSSProperties } from 'react';
 import { Tag } from '@/components/primitives';
 import type { Tone } from '@/lib/theme/tokens';
-import { CATEGORY_COLOR, toEventRow } from '@/lib/features/geopoliticalEvents';
+import { CATEGORY_COLOR, toEventRow } from '@/lib/features/geopoliticalEvents/present';
 import type { EventCategory, GeoEvent } from '@/lib/features/geopoliticalEvents';
 import type { NewsArticle } from '@/lib/features/news';
 import { newsCategoryColor, newsSentimentWord } from '@/lib/features/news/present';

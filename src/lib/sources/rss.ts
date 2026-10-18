@@ -56,6 +56,8 @@ export const FEEDS: FeedDef[] = [
   { source: 'Blockworks', url: 'https://blockworks.co/feed' },
   { source: 'BeInCrypto', url: 'https://beincrypto.com/feed/' },
 ];
+// Watcher.Guru is not an RSS feed here: its Telegram posts come from the news
+// pipeline snapshot (`./watcherGuru.ts`), merged in `@/lib/sentiment/news`.
 
 export function unwrap(s: string): string {
   return s

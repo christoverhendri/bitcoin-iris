@@ -51,6 +51,7 @@ tercatat `ok: false` di `refresh_report.json`.
 | `clf_weekly` | `CLF_CRON` | `30 0 * * 1` | Senin 07:30 |
 | `social_sentiment` | `SOCIAL_CRON` | `20 0 * * *` | tiap hari 07:20 (butuh `SANTIMENT_API_KEY`) |
 | `whale_ingest` | `WHALE_CRON` | `*/5 * * * *` | tiap 5 menit (butuh `IRIS_APP_URL` + `CRON_SECRET`) |
+| `watcher_news` | `WATCHER_CRON` | `* * * * *` | tiap menit: Telegram Watcher Guru → `news_pipeline` → `.data/watcher-guru.json` |
 
 Cron memakai konvensi standar (1 = Senin, 0/7 = Minggu). Saat daemon start, job yang
 terlewat (laptop mati) langsung dikejar.

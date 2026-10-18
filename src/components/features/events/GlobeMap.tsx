@@ -11,7 +11,7 @@ import {
 } from 'react';
 import { geoOrthographic, geoPath, geoGraticule10, geoDistance } from 'd3-geo';
 import { fmtAgo } from '@/lib/format';
-import { CATEGORY_COLOR, MARKER_RADIUS } from '@/lib/features/geopoliticalEvents';
+import { CATEGORY_COLOR, MARKER_RADIUS } from '@/lib/features/geopoliticalEvents/present';
 import type { GeoEvent } from '@/lib/features/geopoliticalEvents';
 import { WORLD_FEATURES } from '@/lib/geo/projection';
 import type { WorldMapProps } from './WorldMap';

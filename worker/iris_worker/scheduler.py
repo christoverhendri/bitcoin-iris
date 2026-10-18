@@ -9,6 +9,7 @@ Daemon APScheduler untuk semua job worker (semua jadwal dalam UTC):
 | clf_weekly   | CLF_CRON      | 30 0 * * 1     | Senin 07:30      | refresh (kalau belum segar) lalu prediksi -> clf_signals / out/ |
 | social_sentiment | SOCIAL_CRON | 20 0 * * *   | tiap hari 07:20  | proporsi sentimen sosial BTC dari Santiment -> social_sentiment_daily / out/ (hanya kalau SANTIMENT_API_KEY di-set) |
 | whale_ingest | WHALE_CRON    | */5 * * * *    | tiap 5 menit     | POST {IRIS_APP_URL}/api/ingest/whale (hanya kalau IRIS_APP_URL + CRON_SECRET di-set) |
+| watcher_news | WATCHER_CRON  | * * * * *      | tiap menit       | Telegram Watcher.Guru -> news_pipeline (SQLite) -> .data/watcher-guru.json untuk dashboard |
 
 Catch-up saat start (bisa dimatikan dengan --no-catch-up): laptop yang mati pada
 jam jadwal tidak boleh membuat data tertinggal, jadi saat daemon menyala ia
@@ -18,7 +19,7 @@ belum ada sinyal untuk minggu berjalan, dan social_sentiment kalau belum diambil
 Penggunaan CLI:
     python -m iris_worker.scheduler                   # daemon
     python -m iris_worker.scheduler --once all        # refresh + weekly sekali lalu keluar
-    python -m iris_worker.scheduler --once refresh|weekly|social|whale
+    python -m iris_worker.scheduler --once refresh|weekly|social|whale|watcher
 """
 import argparse
 import json
@@ -36,6 +37,7 @@ from iris_worker.jobs import whale_ingest
 from iris_worker.jobs.clf_weekly import WeekNotClosedError, run_clf_weekly
 from iris_worker.jobs.refresh_data import run_refresh
 from iris_worker.jobs.social_sentiment import run_social_sentiment
+from iris_worker.jobs.watcher_news import run_watcher_news
 
 
 def parse_cron(cron_expr: str) -> CronTrigger:
@@ -176,6 +178,15 @@ def job_whale():
         _stamp(f"whale_ingest GAGAL: {e}")
 
 
+def job_watcher():
+    # Quiet on success (runs every minute); the pipeline's own back-off handles
+    # repeated failures, so a failure is logged once per attempt and skipped.
+    try:
+        run_watcher_news()
+    except Exception as e:
+        _stamp(f"watcher_news GAGAL: {e}")
+
+
 def catch_up(dry_run: bool = False):
     if not data_is_fresh():
         _stamp(f"catch-up: data as_of={data_as_of()} < {last_closed_day().date()} -> refresh")
@@ -190,7 +201,7 @@ def catch_up(dry_run: bool = False):
 
 def main():
     parser = argparse.ArgumentParser(description="IRIS Worker Scheduler")
-    parser.add_argument("--once", choices=["refresh", "weekly", "social", "whale", "all"],
+    parser.add_argument("--once", choices=["refresh", "weekly", "social", "whale", "watcher", "all"],
                         help="Jalankan job sekali lalu keluar.")
     parser.add_argument("--dry-run", action="store_true", help="clf_weekly tanpa menulis apa pun.")
     parser.add_argument("--no-catch-up", action="store_true",
@@ -212,6 +223,8 @@ def main():
             run_social_sentiment(dry_run=args.dry_run)
         if args.once == "whale":
             whale_ingest.run_whale_ingest()
+        if args.once == "watcher":
+            print(run_watcher_news())
         return
 
     global _SCHED
@@ -234,8 +247,12 @@ def main():
     else:
         _stamp("whale_ingest dilewati: IRIS_APP_URL / CRON_SECRET belum di-set")
 
+    sched.add_job(job_watcher, parse_cron(config.WATCHER_CRON), id="watcher_news",
+                  name="Watcher.Guru news pipeline", misfire_grace_time=60)
+
     if not args.no_catch_up:
         catch_up(dry_run=args.dry_run)
+        job_watcher()
 
     _stamp("Scheduler aktif (UTC):")
     for j in sched.get_jobs():

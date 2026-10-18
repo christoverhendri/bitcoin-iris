@@ -6,3 +6,6 @@ requests>=2.31.0
 pytrends>=4.9.2
 pytest>=8.0.0
 python-dotenv>=1.0.0
+# news_pipeline (Watcher.Guru), pinned as in christoverhendri/bitcoin-iris requirements.txt
+beautifulsoup4==4.13.5
+truststore==0.10.4

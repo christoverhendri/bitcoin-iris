@@ -16,10 +16,11 @@ export function getNewsSentimentColor(sentiment: string): string {
   return 'var(--mut)';
 }
 
+/** Headline tone from the sentiment model — text tone, not a price call. */
 export function newsSentimentWord(sentiment: NewsArticle['sentiment']): string {
-  if (sentiment === 'positive') return 'BULLISH';
-  if (sentiment === 'negative') return 'BEARISH';
-  return 'NEUTRAL';
+  if (sentiment === 'positive') return 'POSITIF';
+  if (sentiment === 'negative') return 'NEGATIF';
+  return 'NETRAL';
 }
 
 export function newsCategoryColor(article: NewsArticle): string {

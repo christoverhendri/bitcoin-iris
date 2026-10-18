@@ -3,6 +3,7 @@ import fixture from './fixtures/worker.json';
 
 vi.mock('server-only', () => ({}));
 vi.mock('@/lib/sources/rss', () => ({ getCryptoNews: vi.fn() }));
+vi.mock('@/lib/sources/watcherGuru', () => ({ getWatcherGuruNews: vi.fn(async () => []) }));
 vi.mock('@/lib/sources/alternativeme', () => ({ getFearGreed: vi.fn() }));
 
 beforeEach(async () => {
