@@ -1,4 +1,5 @@
-"""Monte Carlo price simulation — Python port of ``src/lib/quant/fhs.ts``.
+"""Monte Carlo price simulation — Python port of ``src/lib/quant/fhs.ts`` (that TypeScript
+original was removed with the Distribution tab on 2026-10-19; this is now the only implementation).
 
 Engines
 -------

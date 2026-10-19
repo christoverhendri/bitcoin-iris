@@ -20,5 +20,4 @@ export type {
   MonthlyBacktest,
   BacktestHorizon,
   BacktestMethod,
-  TrackRecordRow,
 } from './types';

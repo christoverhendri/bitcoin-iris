@@ -24,7 +24,9 @@ const nextConfig: NextConfig = {
       { source: "/market", destination: "/overview", permanent: false },
       { source: "/market/:path*", destination: "/overview", permanent: false },
       { source: "/quant/volatility", destination: "/quant/seasonality", permanent: false },
-      { source: "/forecast/calibration", destination: "/forecast/distribution", permanent: false },
+      // Distribution and Calibration removed 2026-10-19 (same engine as the 30-day tab, which is stored and validated).
+      { source: "/forecast/calibration", destination: "/forecast/30d", permanent: false },
+      { source: "/forecast/distribution", destination: "/forecast/30d", permanent: false },
       // On-Chain sub-tabs. /chain/derivatives -> long-short also rescues browsers
       // that cached the old permanent /chain/positioning -> /chain/derivatives.
       { source: "/chain/positioning", destination: "/chain/long-short", permanent: false },

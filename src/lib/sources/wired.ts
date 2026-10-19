@@ -18,7 +18,6 @@ const BASE: SourceKey[] = [
   'rss', // news / events -> crypto RSS feeds
   'internal_quant', // indicators, levels, volatility, seasonality -> computed from real candles
   'internal_forecast', // weekly direction signal -> computed internally
-  'internal_distribution', // multi-horizon FHS price distribution -> computed internally
   'internal_confluence', // confluence engine -> computed internally
   'onchain_provider', // chain supply / activity -> keyless blockchain.info
   'mempool_space', // network conditions -> keyless mempool.space (+ Blockchair extras)

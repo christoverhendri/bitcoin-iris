@@ -1,6 +1,7 @@
-"""GARCH(1,1) volatility filter — Python port of ``src/lib/quant/garch.ts``.
+"""GARCH(1,1) volatility filter — Python port of ``src/lib/quant/garch.ts`` (the TypeScript
+original was removed with the Distribution tab on 2026-10-19; this is now the only implementation).
 
-Same estimator as the web app so the worker and the distribution page agree:
+Same estimator the web app used, so earlier results stay comparable:
 
 * Gaussian maximum likelihood with **variance targeting**: ``omega`` is pinned
   to ``sigma_LR^2 * (1 - alpha - beta)`` so the process reverts to the sample's

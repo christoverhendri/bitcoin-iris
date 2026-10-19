@@ -2,11 +2,13 @@ import { LiveOnly } from '@/components/primitives';
 import { getWeeklyForecast } from '@/lib/features/weeklyForecast';
 import { DirectionCard } from '@/components/features/weekly/DirectionCard';
 import { DriverBreakdown } from '@/components/features/weekly/DriverBreakdown';
+import { getWeeklyForward } from '@/lib/features/weeklyForward';
+import { WeeklyForwardPanel } from '@/components/features/forward/WeeklyForwardPanel';
 
 export const revalidate = 30;
 
 export default async function WeeklyForecastPage() {
-  const [weeklyForecast] = await Promise.all([getWeeklyForecast({ symbol: 'BTC-USD' })]);
+  const [weeklyForecast, weeklyForward] = await Promise.all([getWeeklyForecast({ symbol: 'BTC-USD' }), getWeeklyForward({})]);
 
   return (
     <div
@@ -23,6 +25,9 @@ export default async function WeeklyForecastPage() {
       </LiveOnly>
       <LiveOnly env={weeklyForecast} title="DRIVER BREAKDOWN">
         <DriverBreakdown forecast={weeklyForecast} />
+      </LiveOnly>
+      <LiveOnly env={weeklyForward} title="FORWARD VALIDATION">
+        <WeeklyForwardPanel fw={weeklyForward} />
       </LiveOnly>
     </div>
   );

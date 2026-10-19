@@ -20,7 +20,10 @@ belum ada sinyal untuk minggu berjalan, dan social_sentiment kalau belum diambil
 Penggunaan CLI:
     python -m iris_worker.scheduler                   # daemon
     python -m iris_worker.scheduler --once all        # refresh + weekly sekali lalu keluar
-    python -m iris_worker.scheduler --once refresh|weekly|social|whale|watcher|monthly
+    python -m iris_worker.scheduler --once refresh|weekly|social|whale|watcher|monthly|forward
+
+Forward validation: setelah clf_weekly, sinyal minggu-minggu lalu yang 7 harinya sudah lewat
+dinilai (iris_worker.forward_validation); run bulanan dinilai di D+7/14/28 oleh job monthly.
 """
 import argparse
 import json
@@ -40,6 +43,7 @@ from iris_worker.jobs.refresh_data import run_refresh
 from iris_worker.jobs.social_sentiment import run_social_sentiment
 from iris_worker.jobs.watcher_news import run_watcher_news
 from iris_worker.jobs.monthly_forecast import OUT_DIR as MONTHLY_OUT, run_monthly_forecast
+from iris_worker.forward_validation import run_forward_validation
 
 
 def parse_cron(cron_expr: str) -> CronTrigger:
@@ -156,12 +160,22 @@ def job_weekly(dry_run: bool = False, attempt: int = 0):
         if not data_is_fresh():
             run_refresh()
         run_clf_weekly(dry_run=dry_run, require_as_of=week_start_sunday().date())
+        if not dry_run:
+            job_forward()
     except WeekNotClosedError as e:
         _stamp(f"clf_weekly ditunda: {e}")
         _retry(job_weekly, "clf_weekly", attempt, dry_run=dry_run)
     except Exception as e:
         _stamp(f"clf_weekly GAGAL: {e}")
         traceback.print_exc()
+
+
+def job_forward():
+    """Score published weekly signals whose 7 days have closed (forward validation)."""
+    try:
+        _stamp(run_forward_validation())
+    except Exception as e:
+        _stamp(f"forward_validation GAGAL: {e}")
 
 
 def job_social():
@@ -222,7 +236,7 @@ def catch_up(dry_run: bool = False):
 
 def main():
     parser = argparse.ArgumentParser(description="IRIS Worker Scheduler")
-    parser.add_argument("--once", choices=["refresh", "weekly", "social", "whale", "watcher", "monthly", "all"],
+    parser.add_argument("--once", choices=["refresh", "weekly", "social", "whale", "watcher", "monthly", "forward", "all"],
                         help="Jalankan job sekali lalu keluar.")
     parser.add_argument("--dry-run", action="store_true", help="clf_weekly tanpa menulis apa pun.")
     parser.add_argument("--no-catch-up", action="store_true",
@@ -248,6 +262,8 @@ def main():
             print(run_watcher_news())
         if args.once == "monthly":
             print(run_monthly_forecast())
+        if args.once == "forward":
+            print(run_forward_validation())
         return
 
     global _SCHED

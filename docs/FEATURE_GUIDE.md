@@ -457,17 +457,22 @@ dihitung saat halaman dibuka. Metode dan alasan: [DECISIONS §16](DECISIONS.md).
 Contoh 19 Okt (as-of 18 Okt, harga Coinbase $82.007): D+30 SANGAT RENDAH $65.280 · TENGAH $81.986 ·
 SANGAT TINGGI $102.321.
 
-### 7.2 DISTRIBUTION — `/forecast/distribution`
+### FORWARD VALIDATION (panel di Weekly dan Monthly)
 
-- Di atas: kartu **PRAKIRAAN MINGGUAN** (label + peluang sinyal benar) supaya prakiraan mingguan
-  terlihat tanpa pindah tab.
-- **PRICE DISTRIBUTION:** harga aktual + kerucut simulasi (4.000 jalur, FHS + GARCH). Pita gelap =
-  50% hasil, pita terang = 90%. Hover: tanggal + harga (aktual) atau tengah/kisaran (simulasi).
-- **KISARAN HARGA PER JANGKA WAKTU:** kolom dengan bahasa sederhana — SANGAT RENDAH (P5), RENDAH
-  (P25), TENGAH (P50), TINGGI (P75), SANGAT TINGGI (P95), GERAK UMUM, LEBAR 90%.
+Penilaian prakiraan yang sudah terbit, tanpa prediksi ulang ([DECISIONS §17](DECISIONS.md)).
+- **Weekly:** tiap sinyal tutup minggu dinilai 7 hari kemudian dengan aturan label training (gerak
+  kecil tidak dihitung): jumlah tepat, kisaran wajar 90%, pembanding "selalu naik", dan tabel per minggu.
+- **Monthly:** seri tidak tumpang tindih per jangka (7 hari = semua run, 14 = tiap run kedua, 28 = tiap
+  run keempat): berapa kali harga sungguhan masuk kisaran 80% dibanding yang wajar kalau model benar.
+- Panel menulis **BELUM** sampai sampel cukup (26 minggu / 12 jendela). Sinyal pertama: 18 Okt 2026,
+  dinilai mulai 25 Okt.
 
-Dihapus: tab Calibration, OUTCOME DENSITY, PROBABILITY ABOVE, MODEL STATE, kolom WINDOWS, dan
-kotak harga di bawah fan chart (sama dengan baris tabel).
+### DISTRIBUTION — dihapus 19 Okt
+
+Tab Distribution (simulasi FHS + GARCH yang dihitung di dashboard saat halaman dibuka, jangka 1W–1Y,
+dengan tombol HORIZON) dihapus: tab Monthly menjawab pertanyaan yang sama dengan mesin yang sama,
+tapi gejolak awal dari DVOL, run disimpan, diuji mundur, dan dinilai forward. `/forecast/distribution`
+dan `/forecast/calibration` diarahkan ke `/forecast/30d`.
 
 ---
 

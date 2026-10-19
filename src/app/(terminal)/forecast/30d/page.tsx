@@ -3,6 +3,7 @@ import { getMonthlyForecast } from '@/lib/features/monthlyForecast';
 import { MonthlyFan } from '@/components/features/monthly/MonthlyFan';
 import { MonthlyRange } from '@/components/features/monthly/MonthlyRange';
 import { MonthlyAccuracy } from '@/components/features/monthly/MonthlyAccuracy';
+import { MonthlyForwardPanel } from '@/components/features/forward/MonthlyForwardPanel';
 
 /**
  * Timothy's 30-day Monte Carlo (motmots/iris-monthly-forecast). Nothing is
@@ -12,7 +13,7 @@ import { MonthlyAccuracy } from '@/components/features/monthly/MonthlyAccuracy';
 export const revalidate = 30;
 
 export default async function MonthlyForecastPage() {
-  const fc = await getMonthlyForecast({ trackRecordRuns: 8 });
+  const fc = await getMonthlyForecast({});
 
   return (
     <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px', minWidth: 0 }}>
@@ -20,6 +21,7 @@ export default async function MonthlyForecastPage() {
         <MonthlyFan fc={fc} />
         <MonthlyRange fc={fc} />
         <MonthlyAccuracy fc={fc} />
+        <MonthlyForwardPanel fc={fc} />
       </LiveOnly>
     </div>
   );

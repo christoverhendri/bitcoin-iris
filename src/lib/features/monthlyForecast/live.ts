@@ -3,8 +3,8 @@
  *
  * Nothing is computed here. The Python worker (`worker/iris_worker/monthly/`)
  * runs the simulation and the backtest once a week on a schedule and writes one
- * row per run; this file reads the newest row plus a few earlier ones for the
- * track record. Supabase (`monthly_forecast_runs`) first; without Supabase, the
+ * row per run; this file reads the newest row plus every run's scored outcomes
+ * for the forward-validation series. Supabase (`monthly_forecast_runs`) first; without Supabase, the
  * JSON files a local `--dry-run` writes to `MONTHLY_LOCAL_DIR` (same row shape).
  * Unconfigured or empty resolves to `null` and the page hides its panels.
  *
@@ -12,6 +12,7 @@
  * so a schedule that stops shows as STALE after `MAX_AGE_SEC.monthlyForecast`.
  */
 import { asRow, getSupabase } from '@/lib/supabase/server';
+import { monthlyForward, type HorizonOutcome, type MonthlyRunOutcome } from '@/lib/forward/stats';
 import type {
   BacktestHorizon,
   DailyBand,
@@ -19,7 +20,6 @@ import type {
   MonthlyForecastArgs,
   MonthlyForecastData,
   ProbabilityRow,
-  TrackRecordRow,
 } from './types';
 
 interface RunRow {
@@ -41,8 +41,6 @@ interface RunRow {
   realized: Record<string, unknown> | null;
   is_synthetic: boolean;
 }
-
-type TrackRow = Pick<RunRow, 'id' | 'as_of' | 'spot' | 'bands' | 'realized'>;
 
 const LATEST_COLUMNS =
   'id, run_at, as_of, spot, horizon_days, n_paths, method, price_source, sample_days, history_start, model, bands, paths, history, backtest, realized, is_synthetic';
@@ -128,25 +126,6 @@ function toBacktest(b: Record<string, unknown> | null): MonthlyBacktest | null {
   };
 }
 
-function toTrack(r: TrackRow): TrackRecordRow {
-  const end = r.bands[r.bands.length - 1];
-  const z = r.realized ?? {};
-  return {
-    asOf: r.as_of,
-    spot: num(r.spot),
-    p10End: num(end?.p10),
-    p50End: num(end?.p50),
-    p90End: num(end?.p90),
-    daysTotal: num(z.days_total, r.bands.length - 1),
-    daysObserved: num(z.days_observed),
-    complete: Boolean(z.complete),
-    insideP10P90: numOrNull(z.inside_p10_p90),
-    insideP5P95: numOrNull(z.inside_p5_p95),
-    lastClose: numOrNull(z.last_close),
-    lastBucket: typeof z.last_bucket === 'string' ? z.last_bucket : null,
-  };
-}
-
 /** Local mode: `monthly_forecast_<as-of>.json` files, newest first. */
 async function readLocalRuns(limit: number): Promise<RunRow[] | null> {
   const dir = process.env.MONTHLY_LOCAL_DIR;
@@ -172,13 +151,23 @@ async function readLocalRuns(limit: number): Promise<RunRow[] | null> {
 
 const endOfDay = (isoDate: string) => new Date(Date.parse(`${isoDate}T00:00:00Z`) + 86_400_000).toISOString();
 
-export async function fetchMonthlyForecast({ trackRecordRuns = 8 }: MonthlyForecastArgs) {
+/** Every run's per-horizon outcomes (`realized.at_h`, scored by later runs) for the forward series. */
+function toOutcome(r: Pick<RunRow, 'as_of' | 'realized'>): MonthlyRunOutcome {
+  const atH = (r.realized?.at_h ?? {}) as Record<string, HorizonOutcome | undefined>;
+  return { asOf: r.as_of, atH };
+}
+
+/** Upper bound on runs read for the forward series (10 years of weekly runs). */
+const MAX_RUNS = 520;
+
+export async function fetchMonthlyForecast(_args: MonthlyForecastArgs) {
+  void _args;
   const db = getSupabase();
   if (!db) {
-    const runs = await readLocalRuns(1 + Math.min(Math.max(0, trackRecordRuns), 26));
-    const [latest, ...prev] = runs ?? [];
+    const runs = (await readLocalRuns(MAX_RUNS)) ?? [];
+    const latest = runs[0];
     if (!latest || !Array.isArray(latest.bands) || latest.bands.length < 2) return null;
-    return { data: toData(latest, prev), asOf: endOfDay(latest.as_of), synthetic: latest.is_synthetic };
+    return { data: toData(latest, runs.map(toOutcome)), asOf: endOfDay(latest.as_of), synthetic: latest.is_synthetic };
   }
 
   const { data, error } = await db
@@ -191,18 +180,17 @@ export async function fetchMonthlyForecast({ trackRecordRuns = 8 }: MonthlyForec
   const latest = data?.[0] ? asRow<RunRow>(data[0]) : null;
   if (!latest || !Array.isArray(latest.bands) || latest.bands.length < 2) return null;
 
-  const { data: prev, error: prevError } = await db
+  // The forward series is a garnish on the page; losing it must not cost the chart.
+  const { data: all, error: allError } = await db
     .from('monthly_forecast_runs')
-    .select('id, as_of, spot, bands, realized')
-    .lt('as_of', latest.as_of)
-    .order('as_of', { ascending: false })
-    .limit(Math.min(Math.max(0, trackRecordRuns), 26));
-  // The track record is a garnish on the page; losing it must not cost the chart.
-  const trackRows = prevError ? [] : (prev ?? []).map(asRow<TrackRow>);
-  return { data: toData(latest, trackRows), asOf: endOfDay(latest.as_of), synthetic: latest.is_synthetic };
+    .select('as_of, realized')
+    .order('as_of', { ascending: true })
+    .limit(MAX_RUNS);
+  const outcomes = allError ? [] : (all ?? []).map((r) => toOutcome(asRow<Pick<RunRow, 'as_of' | 'realized'>>(r)));
+  return { data: toData(latest, outcomes), asOf: endOfDay(latest.as_of), synthetic: latest.is_synthetic };
 }
 
-function toData(latest: RunRow, trackRows: TrackRow[]): MonthlyForecastData {
+function toData(latest: RunRow, outcomes: MonthlyRunOutcome[]): MonthlyForecastData {
   const result: MonthlyForecastData = {
     runId: latest.id,
     runAt: latest.run_at,
@@ -229,7 +217,7 @@ function toData(latest: RunRow, trackRows: TrackRow[]): MonthlyForecastData {
     history: Array.isArray(latest.history) ? latest.history : [],
     model: toModel(latest.model ?? {}),
     backtest: toBacktest(latest.backtest),
-    trackRecord: trackRows.filter((r) => Array.isArray(r.bands) && r.bands.length > 1).map(toTrack),
+    forward: monthlyForward(outcomes),
   };
   return result;
 }

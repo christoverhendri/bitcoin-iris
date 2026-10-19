@@ -1,3 +1,4 @@
+import { monthlyForward } from '@/lib/forward/stats';
 import type { MonthlyForecastArgs, MonthlyForecastData } from './types';
 
 /**
@@ -41,6 +42,6 @@ export function mockMonthlyForecast(_args: MonthlyForecastArgs): MonthlyForecast
       vrpFactor: null,
     },
     backtest: null,
-    trackRecord: [],
+    forward: monthlyForward([]),
   };
 }

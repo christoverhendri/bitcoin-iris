@@ -869,3 +869,39 @@ Penyesuaian ke aturan dashboard ini (bukan perubahan model):
   tampil dari uji: cakupan kisaran 80% per horizon dan galat median vs "harga tetap", satu baris.
 - `asOf` = akhir hari close terakhir (bukan jam run); STALE setelah 9 hari (satu Senin terlewat).
 
+## 17. Forward validation (19 Okt 2026)
+
+Menilai prakiraan yang **sudah terbit** terhadap kejadian sesudahnya, dengan aturan yang dikunci
+sebelum minggu pertama dinilai. Kode: `worker/iris_worker/forward_validation.py`,
+`worker/iris_worker/monthly/forward.py`, `src/lib/forward/stats.ts`.
+
+| Aturan | Isi |
+|---|---|
+| Tidak ada prediksi ulang | Prakiraan yang terbit tidak pernah diubah, ditimpa, atau dihapus karena meleset; hanya kolom hasil (`realized`) yang ditambahkan. Meleset jauh = data, bukan alasan mengganti. Pergantian model tercatat sebagai versi baru (`model_created_utc`), prakiraan versi lama tetap dinilai. |
+| Seri weekly | Hanya sinyal **tutup minggu** (as-of hari Minggu); run pengembangan di hari lain tetap di riwayat tapi tidak dihitung. Seri mulai dari sinyal tutup minggu pertama (otomatis: 18 Okt 2026). Jendela 7 hari tidak tumpang tindih. |
+| Nilai weekly | Aturan label **sama dengan training** (`make_label`): NAIK/TURUN berarti kalau return log 7 hari melewati ±0,5 × gejolak mingguan; gerak kecil (NOISE) tidak dihitung — sama dengan rekam jejak di data uji. Pembanding: "selalu BULL" pada minggu yang sama. Interval Wilson 90%. Data: close yang sama dengan input model (`btc_master_2.csv`). |
+| Seri monthly | Run terbit tiap minggu (30 hari, tumpang tindih). Untuk jangka h dipilih run yang berjarak ≥ h hari dari run terpilih sebelumnya (greedy, dari yang tertua): D+7 semua run, D+14 tiap run kedua, D+28 tiap run keempat. Minggu yang terlewat menggeser seri, tidak membuat jendela tumpang tindih. |
+| Nilai monthly | Harga sungguhan di D+h masuk kisaran 80% (P10–P90) dan 90% (P5–P95), posisi dalam kisaran, selisih terhadap tengah. "Wajar kalau model benar" = rentang tengah 90% binomial(n, 0,8). Dinilai oleh run berikutnya (`realized.at_h`) dari close sumber yang sama dengan model (Coinbase). |
+| Kapan boleh disimpulkan | Weekly ≥ 26 minggu berlabel, monthly ≥ 12 jendela per jangka. Sebelum itu panel menulis BELUM. |
+| Jadwal | Weekly dinilai setelah `clf_weekly` (scheduler lokal dan langkah `forward validation` di `model-worker.yml`); monthly di dalam job `monthly`. Supabase: kolom `clf_signals.realized` (migrasi 0009); lokal: `out/clf_signals_history.jsonl` dan file `monthly_forecast_*.json`. |
+
+Tabel "prakiraan minggu-minggu sebelumnya" milik Timothy (bagian hari di dalam kisaran, dari run
+yang tumpang tindih) diganti seri tidak tumpang tindih ini di halaman; datanya tetap tersimpan di
+`realized`.
+
+## 18. Tab Distribution dihapus (19 Okt 2026)
+
+Distribution menjalankan FHS + GARCH di TypeScript setiap halaman dibuka (4.000 jalur, 1W–1Y). Sejak
+§16 tab Monthly menjalankan mesin yang sama di worker Timothy dengan gejolak awal dari DVOL, run yang
+disimpan, uji mundur bebas kebocoran, dan forward validation (§17). Dua jawaban untuk pertanyaan yang
+sama — dan di jangka 1M angkanya berbeda karena gejolak awalnya beda (GARCH ±40%/thn vs DVOL × VRP
+±31%/thn) — membingungkan, dan versi on-request tidak bisa dinilai belakangan karena berubah tiap dibuka.
+
+Dihapus bersama kodenya: `/forecast/distribution`, `src/lib/features/priceDistribution/`,
+`src/components/features/distribution/`, `WeeklyMiniCard`, tombol HORIZON (`?h=`, konstanta
+`FORECAST_HORIZONS`), `src/lib/features/forecastCalibration/` (sudah tanpa halaman sejak tab
+Calibration dihapus 18 Okt), serta `src/lib/quant/fhs.ts` dan `garch.ts` yang hanya dipakai keduanya —
+implementasi FHS/GARCH kini hanya versi Python di `worker/iris_worker/monthly/`. Sumber
+`internal_distribution` dihapus dari katalog (migrasi 0010). URL lama diarahkan (307) ke `/forecast/30d`.
+Jangka di atas 30 hari (3M–1Y) tidak lagi ditampilkan.
+

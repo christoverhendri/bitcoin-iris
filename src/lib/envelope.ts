@@ -29,7 +29,6 @@ export type SourceKey =
   | 'internal_monthly'
   | 'internal_quant'
   | 'internal_forecast'
-  | 'internal_distribution'
   | 'internal_macro_regime'
   | 'internal_confluence';
 

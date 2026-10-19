@@ -67,6 +67,11 @@ jobs:
         if: github.event.schedule == '30 0 * * 1' || github.event.schedule == '30 3 * * 1' || inputs.job == 'weekly'
         run: python -m iris_worker.jobs.clf_weekly --refresh --require-week-close
 
+      # Forward validation: nilai sinyal minggu lalu (7 hari sudah lewat) ke clf_signals.realized.
+      - name: forward validation
+        if: github.event.schedule == '30 0 * * 1' || github.event.schedule == '30 3 * * 1' || inputs.job == 'weekly'
+        run: python -m iris_worker.forward_validation
+
       - uses: actions/upload-artifact@v4
         if: always()
         with:

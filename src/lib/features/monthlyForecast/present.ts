@@ -6,7 +6,7 @@
  */
 import type { BacktestHorizon, BacktestMethod, DailyBand, MonthlyForecastData } from './types';
 
-/** Percentile columns, named as on the Distribution page. */
+/** Percentile columns in plain words (Forecast curation, 2026-10-18). */
 export const RANGE_COLS: { key: 'p5' | 'p25' | 'p50' | 'p75' | 'p95'; label: string; title: string }[] = [
   { key: 'p5', label: 'SANGAT RENDAH', title: 'Hanya 5 dari 100 jalur simulasi berakhir di bawah harga ini' },
   { key: 'p25', label: 'RENDAH', title: '25 dari 100 jalur berakhir di bawah harga ini' },
@@ -43,9 +43,6 @@ export function shippedScores(d: MonthlyForecastData): { h: BacktestHorizon; m: 
 }
 
 export type Tone = 'up' | 'amber' | 'down';
-
-/** One run's share of days inside P10–P90: holding is never "too good"; only falling short warns. */
-export const runInsideTone = (share: number): Tone => (share >= 0.8 ? 'up' : share >= 0.5 ? 'amber' : 'down');
 
 /** Aggregate coverage: within 5 points of nominal reads as calibrated, 5–10 a warning. */
 export function coverageTone(empirical: number, nominalPct: number): Tone {

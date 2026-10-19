@@ -1,3 +1,5 @@
+import type { MonthlyForward } from '@/lib/forward/stats';
+
 /**
  * The monthly forecast as the Python worker writes it to
  * `public.monthly_forecast_runs` (see `worker/iris_worker/monthly/forecast.py`), reshaped
@@ -103,23 +105,6 @@ export interface MonthlyBacktest {
   dvolUsed: boolean;
 }
 
-/** One earlier run scored against what price actually did. */
-export interface TrackRecordRow {
-  asOf: string;
-  spot: number;
-  p10End: number;
-  p50End: number;
-  p90End: number;
-  daysTotal: number;
-  daysObserved: number;
-  complete: boolean;
-  /** Share of observed days inside P10–P90 (0–1); null before any day passed. */
-  insideP10P90: number | null;
-  insideP5P95: number | null;
-  lastClose: number | null;
-  lastBucket: string | null;
-}
-
 export interface MonthlyForecastData {
   runId: string;
   runAt: string;
@@ -137,11 +122,8 @@ export interface MonthlyForecastData {
   history: ClosePoint[];
   model: MonthlyModelState;
   backtest: MonthlyBacktest | null;
-  /** Previous runs, newest first, excluding the current one. */
-  trackRecord: TrackRecordRow[];
+  /** Forward validation: non-overlapping series at D+7 / D+14 / D+28 over every stored run. */
+  forward: MonthlyForward;
 }
 
-export interface MonthlyForecastArgs {
-  /** How many earlier runs to score in the track record. */
-  trackRecordRuns?: number;
-}
+export type MonthlyForecastArgs = Record<string, never>;

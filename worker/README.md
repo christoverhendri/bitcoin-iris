@@ -103,3 +103,11 @@ Dashboard lokal tanpa Supabase: `MONTHLY_LOCAL_DIR=worker/out` di `.env.local` r
 Riset (tidak dipakai saat run, hanya untuk mereproduksi keputusan): `research/benchmark_xgb_vs_baselines.py`,
 `research/improve_monthly.py`, `research/dvol_monthly.py` (`pip install -r research/requirements.txt`).
 
+## Forward validation
+
+`python -m iris_worker.forward_validation` menilai sinyal weekly tutup minggu yang 7 harinya sudah
+lewat (aturan label training) → `out/clf_signals_history.jsonl` dan, dengan Supabase,
+`clf_signals.realized` (migrasi 0009). Otomatis setelah `clf_weekly` (daemon dan `model-worker.yml`);
+manual: `python -m iris_worker.scheduler --once forward`. Run bulanan dinilai di D+7/14/28 oleh job
+`monthly` (`realized.at_h`). Aturan lengkap: `docs/DECISIONS.md` §17.
+

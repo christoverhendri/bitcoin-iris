@@ -31,6 +31,12 @@ from .fhs import recalibrate, simulate
 from .prices import load_daily
 from .supabase_rest import Supabase
 from .tracking import score_run
+from .forward import score_horizons
+
+
+def realized(bands: list[dict], actual: dict[str, float]) -> dict:
+    """Timothy's `score_run` plus the per-horizon outcomes (IRIS-Terminal forward validation)."""
+    return {**score_run(bands, actual), "at_h": score_horizons(bands, actual)}
 
 SOURCE_KEY = "internal_monthly"
 TABLE = "monthly_forecast_runs"
@@ -152,18 +158,19 @@ def build_run(series, horizon: int, n_paths: int, backtest: bool, backtest_paths
         "history": [{"date": d, "close": _r(c)} for d, c in
                     zip(series.dates[-history_days:], series.closes[-history_days:])],
         "backtest": bt,
-        "realized": score_run(bands, {}),
+        "realized": realized(bands, {}),
         "is_synthetic": False,
         "worker_version": __version__,
     }
 
 
 def score_previous(db: Supabase, series, as_of: str) -> int:
+    # 12 runs back covers every window still open (30 days) plus the D+28 outcome.
     prev = db.select(TABLE, {"select": "id,bands", "as_of": f"lt.{as_of}",
                              "order": "as_of.desc", "limit": "12"})
     actual = dict(zip(series.dates, series.closes))
     for row in prev:
-        db.patch(TABLE, {"id": row["id"]}, {"realized": score_run(row["bands"], actual)})
+        db.patch(TABLE, {"id": row["id"]}, {"realized": realized(row["bands"], actual)})
     return len(prev)
 
 
@@ -179,7 +186,7 @@ def score_previous_files(out_dir: str, series, as_of: str, keep: int = 12) -> in
         p = os.path.join(out_dir, name)
         with open(p, encoding="utf-8") as fh:
             row = json.load(fh)
-        row["realized"] = score_run(row["bands"], actual)
+        row["realized"] = realized(row["bands"], actual)
         with open(p, "w", encoding="utf-8") as fh:
             json.dump(row, fh, indent=1)
     return len(names[-keep:])

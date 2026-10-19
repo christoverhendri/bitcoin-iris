@@ -1,12 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
-  FORECAST_HORIZONS,
-  HORIZON_SPEC,
   SECTIONS,
   TIMEFRAMES,
   TIMEFRAME_SPEC,
   defaultSubHref,
-  resolveHorizon,
   resolveTimeframe,
   subHref,
 } from './nav';
@@ -58,11 +55,9 @@ describe('forecast section', () => {
     expect(defaultSubHref(forecast)).toBe('/forecast/weekly');
   });
 
-  it('offers the 30-day forecast on a new slug (the old one was a cached 308) and no calibration tab', () => {
+  it('offers weekly and the 30-day forecast (new slug: the old one was a cached 308); distribution and calibration are gone', () => {
     const slugs = forecast.subs.map((s) => s.slug);
-    expect(slugs).toEqual(['weekly', '30d', 'distribution']);
-    expect(slugs).not.toContain('monthly');
-    expect(slugs).not.toContain('calibration');
+    expect(slugs).toEqual(['weekly', '30d']);
   });
 
   it('keeps the weekly slug behind the WEEKLY FORECAST label', () => {
@@ -86,31 +81,16 @@ describe('curated sections (2026-10-18)', () => {
   });
 });
 
-describe('timeframe and horizon are separate vocabularies', () => {
+describe('timeframe', () => {
   it('resolves a valid timeframe and falls back otherwise', () => {
     expect(resolveTimeframe('1M')).toBe('1M');
     expect(resolveTimeframe('nonsense')).toBe('1Y');
     expect(resolveTimeframe(null)).toBe('1Y');
   });
 
-  it('resolves a valid horizon and falls back otherwise', () => {
-    expect(resolveHorizon('6M')).toBe('6M');
-    expect(resolveHorizon('nonsense')).toBe('1M');
-    expect(resolveHorizon(undefined)).toBe('1M');
-  });
 
-  it('specs every member of both lists', () => {
+  it('specs every timeframe', () => {
     for (const t of TIMEFRAMES) expect(TIMEFRAME_SPEC[t]).toBeDefined();
-    for (const h of FORECAST_HORIZONS) {
-      expect(HORIZON_SPEC[h].days).toBeGreaterThan(0);
-      expect(HORIZON_SPEC[h].label.length).toBeGreaterThan(0);
-    }
   });
 
-  it('orders horizons ascending, which the term-structure table relies on', () => {
-    const days = FORECAST_HORIZONS.map((h) => HORIZON_SPEC[h].days);
-    for (let i = 1; i < days.length; i += 1) {
-      expect(days[i]).toBeGreaterThan(days[i - 1]);
-    }
-  });
 });

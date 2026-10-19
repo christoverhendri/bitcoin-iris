@@ -41,7 +41,7 @@ export const MAX_AGE_SEC = {
   fearGreed: 2 * DAY,
   /** Eight crypto RSS feeds plus Watcher.Guru posts: a full day with no headline means the feeds are down. */
   news: 1 * DAY,
-  /** Daily-candle features (volatility, seasonality, distribution, confluence). */
+  /** Daily-candle features (volatility, confluence). */
   dailyCandles: 2 * DAY,
   /** Macro calendar: its `asOf` is the latest release that happened; CPI/NFP are monthly, so 40 days = the schedule stopped updating. */
   macroCalendar: 40 * DAY,

@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { coverageTone, nextScheduledRun, runInsideTone, ladderRows, shippedMethod } from './present';
+import { coverageTone, nextScheduledRun, ladderRows, shippedMethod } from './present';
 
 /**
  * The live reader is exercised against a hand-built PostgREST double, shaped
@@ -74,6 +74,7 @@ const previous = {
     inside_p5_p95: 1,
     last_close: 66000,
     last_bucket: 'p90-p95',
+    at_h: { '7': { date: '2026-08-21', close: 66000, inside80: false, inside90: true, bucket: 'p90-p95', abs_err_median: 0.1 } },
   },
 };
 
@@ -102,15 +103,18 @@ describe('fetchMonthlyForecast', () => {
   it('maps a worker row into the UI shape (Supabase)', async () => {
     supabaseOn = true;
     const { fetchMonthlyForecast } = await import('./live');
-    const res = await fetchMonthlyForecast({ trackRecordRuns: 4 });
+    const res = await fetchMonthlyForecast({});
     const d = res!.data;
     expect(d.spot).toBeCloseTo(63551.88);
     expect(d.bands).toHaveLength(3);
     expect(d.model.volSource).toBe('garch'); // fixture has no DVOL: the fallback
     expect(d.model.dvolPct).toBeNull();
     expect(d.backtest?.byYear[0].coverage).toBeCloseTo(0.94);
-    expect(d.trackRecord).toHaveLength(1);
-    expect(d.trackRecord[0]).toMatchObject({ asOf: '2026-08-14', complete: true, insideP10P90: 0.5, lastBucket: 'p90-p95' });
+    // The forward series reads every stored run's per-horizon outcomes.
+    expect(d.forward.runs).toBe(1);
+    expect(d.forward.horizons.map((h) => h.h)).toEqual([7, 14, 28]);
+    expect(d.forward.horizons[0].scored).toBe(1);
+    expect(d.forward.horizons[0].inside80).toBe(0);
     expect(res!.synthetic).toBe(false);
     // Dated by the as-of close (end of that day), not by when the job ran.
     expect(res!.asOf).toBe('2026-08-22T00:00:00.000Z');
@@ -124,9 +128,10 @@ describe('fetchMonthlyForecast', () => {
     writeFileSync(join(dir, 'notes.txt'), 'ignored');
     vi.stubEnv('MONTHLY_LOCAL_DIR', dir);
     const { fetchMonthlyForecast } = await import('./live');
-    const res = await fetchMonthlyForecast({ trackRecordRuns: 4 });
+    const res = await fetchMonthlyForecast({});
     expect(res!.data.asOf).toBe('2026-08-21');
-    expect(res!.data.trackRecord.map((r) => r.asOf)).toEqual(['2026-08-14']);
+    expect(res!.data.forward.start).toBe('2026-08-14');
+    expect(res!.data.forward.runs).toBe(2);
     vi.stubEnv('MONTHLY_LOCAL_DIR', join(dir, 'missing'));
     expect(await fetchMonthlyForecast({})).toBeNull();
     vi.unstubAllEnvs();
@@ -144,12 +149,6 @@ describe('present helpers', () => {
     expect(shippedMethod('fhs_dvol')).toBe('fhs_dvol');
     expect(shippedMethod('fhs')).toBe('fhs');
     expect(shippedMethod('fhs_dvol_cal')).toBe('fhs_cal');
-  });
-
-  it('never flags a single run for holding too well', () => {
-    expect(runInsideTone(1)).toBe('up');
-    expect(runInsideTone(0.6)).toBe('amber');
-    expect(runInsideTone(0.2)).toBe('down');
   });
 
   it('schedules the next run for the following Monday', () => {

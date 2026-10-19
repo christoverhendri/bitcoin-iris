@@ -68,7 +68,6 @@ values
   ('etf_flows', 'Spot ETF flows (bitbo.io)', 'market', false, true, 'Keyless, but scraped rather than an API: bitbo.io publishes the issuer table as server-rendered HTML. A layout change fails shape validation and lands here by design — there is nothing to configure. See src/lib/sources/etfFlows.ts.'),
   ('internal_quant', 'Quant pipeline', 'quant', false, true, null),
   ('internal_forecast', 'Forecast pipeline', 'forecast', false, true, null),
-  ('internal_distribution', 'Price distribution engine', 'forecast', false, true, null),
   ('internal_monthly', 'Monthly Monte Carlo worker', 'forecast', false, true, 'Written weekly by the Python worker (iris_worker.monthly). With Supabase: apply supabase/migrations/0008_monthly_forecast.sql, add SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY as GitHub Actions secrets and run the "Monthly forecast" workflow once. Locally: set MONTHLY_LOCAL_DIR=worker/out and run python -m iris_worker.scheduler --once monthly.'),
   ('alternative_me', 'Fear & Greed (alternative.me)', 'sentiment', false, true, null),
   ('santiment', 'Santiment (social sentiment)', 'sentiment', true, true, 'Register at app.santiment.net and set SANTIMENT_API_KEY in worker/.env; the daily social_sentiment job writes social_sentiment_daily. The free plan withholds the latest 30 days.'),

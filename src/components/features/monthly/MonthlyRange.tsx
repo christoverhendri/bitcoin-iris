@@ -5,7 +5,7 @@ import { RANGE_COLS, fmtSignedPct, ladderRows, pctVsSpot } from '@/lib/features/
 import { fmtDay } from '@/lib/dates';
 import { usd as fmtUsd } from '@/lib/features/halvingCycle/present';
 
-/** The simulated range read off at D+1 / 7 / 14 / 21 / 30, with the same plain names as the Distribution page. */
+/** The simulated range read off at D+1 / 7 / 14 / 21 / 30, in plain words (SANGAT RENDAH … SANGAT TINGGI). */
 export function MonthlyRange({ fc }: { fc: Envelope<MonthlyForecastData> }) {
   const d = fc.data;
   return (
