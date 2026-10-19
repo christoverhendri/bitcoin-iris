@@ -1,10 +1,12 @@
 /**
- * Live confluence score — a transparent blend of five layers, each mapped to a
+ * Live confluence score — a transparent blend of four layers, each mapped to a
  * 0-100 scale where 50 is neutral. Computed from real keyless sources:
  * Coinbase/Kraken candles (technical), alternative.me Fear & Greed + RSS news
- * tone (sentiment / news), and Yahoo Finance for the macro layer. ONCHAIN is
- * still held at neutral 50 until an on-chain trend is wired here, and its weight
- * is cut accordingly — a layer that cannot move should not carry influence.
+ * tone (sentiment / news), and Yahoo Finance for the macro layer.
+ *
+ * The ONCHAIN layer was removed on 2026-10-19 (IRIS_koreksi_auto_compute.md §4):
+ * it was a constant 50 shown as if measured. What, if anything, replaces it
+ * (e.g. a score from the power-law corridor percentile) is for the team to decide.
  */
 import { getCandles as coinbaseCandles } from '@/lib/sources/coinbase';
 import { getCandles as krakenCandles } from '@/lib/sources/kraken';
@@ -18,18 +20,17 @@ import type { ConfluenceData, ConfluenceArgs } from './types';
 
 /**
  * Arbitrary internal weights — how much each layer contributes to the overall
- * score. They sum to 1.0. Not fitted; a documented heuristic blend.
- *
- * MACRO went 0.10 -> 0.20 when it stopped being a constant. ONCHAIN went
- * 0.12 -> 0.06 for the opposite reason: it is still hardcoded 50, and a layer
- * that never moves should not be allowed to dilute the ones that do.
+ * score. Not fitted; a documented heuristic blend. The relative sizes are the
+ * old ones (TECH 0.34 : 0.20 each); they are renormalised to sum to 1.0 after
+ * ONCHAIN (0.06) was removed.
  */
+const RELATIVE = { TECHNICAL: 0.34, SENTIMENT: 0.2, NEWS: 0.2, MACRO: 0.2 } as const;
+const RELATIVE_SUM = Object.values(RELATIVE).reduce((a, b) => a + b, 0);
 export const WEIGHTS = {
-  TECHNICAL: 0.34,
-  SENTIMENT: 0.2,
-  NEWS: 0.2,
-  MACRO: 0.2,
-  ONCHAIN: 0.06,
+  TECHNICAL: RELATIVE.TECHNICAL / RELATIVE_SUM,
+  SENTIMENT: RELATIVE.SENTIMENT / RELATIVE_SUM,
+  NEWS: RELATIVE.NEWS / RELATIVE_SUM,
+  MACRO: RELATIVE.MACRO / RELATIVE_SUM,
 } as const;
 
 const clamp = (x: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, x));
@@ -148,9 +149,6 @@ export async function fetchConfluence({ symbol = 'BTC' }: ConfluenceArgs) {
   const fngVal = fng && fng.length ? clamp(fng[0].value, 0, 100) : null;
   const SENTIMENT = fngVal === null ? NEWS : clamp(0.5 * fngVal + 0.5 * NEWS, 0, 100);
 
-  // --- ONCHAIN: neutral until an on-chain trend is wired here -----------
-  const ONCHAIN = 50;
-
   // --- MACRO: dollar, vol complex and equities, from keyless Yahoo -------
   // Wrapped so a Yahoo outage degrades this layer to neutral rather than taking
   // the whole confluence page down. It could not 500 before and must not start.
@@ -177,14 +175,13 @@ export async function fetchConfluence({ symbol = 'BTC' }: ConfluenceArgs) {
     WEIGHTS.TECHNICAL * TECHNICAL +
       WEIGHTS.SENTIMENT * SENTIMENT +
       WEIGHTS.NEWS * NEWS +
-      WEIGHTS.ONCHAIN * ONCHAIN +
       WEIGHTS.MACRO * MACRO,
     0,
     100,
   );
 
   const data: ConfluenceData = {
-    layers: { MACRO, ONCHAIN, SENTIMENT, TECHNICAL, NEWS },
+    layers: { MACRO, SENTIMENT, TECHNICAL, NEWS },
     scores: {
       overall,
       bullish: overall,

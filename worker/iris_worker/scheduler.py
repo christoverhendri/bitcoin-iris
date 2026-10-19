@@ -10,6 +10,7 @@ Daemon APScheduler untuk semua job worker (semua jadwal dalam UTC):
 | social_sentiment | SOCIAL_CRON | 20 0 * * *   | tiap hari 07:20  | proporsi sentimen sosial BTC dari Santiment -> social_sentiment_daily / out/ (hanya kalau SANTIMENT_API_KEY di-set) |
 | whale_ingest | WHALE_CRON    | */5 * * * *    | tiap 5 menit     | POST {IRIS_APP_URL}/api/ingest/whale (hanya kalau IRIS_APP_URL + CRON_SECRET di-set) |
 | watcher_news | WATCHER_CRON  | * * * * *      | tiap menit       | Telegram Watcher.Guru -> news_pipeline (SQLite) -> .data/watcher-guru.json untuk dashboard |
+| monthly      | MONTHLY_CRON  | 20 0 * * 1     | Senin 07:20      | Monte Carlo 30 hari (iris_worker.monthly, Timothy) -> Supabase, atau worker/out/*.json tanpa Supabase |
 
 Catch-up saat start (bisa dimatikan dengan --no-catch-up): laptop yang mati pada
 jam jadwal tidak boleh membuat data tertinggal, jadi saat daemon menyala ia
@@ -19,7 +20,7 @@ belum ada sinyal untuk minggu berjalan, dan social_sentiment kalau belum diambil
 Penggunaan CLI:
     python -m iris_worker.scheduler                   # daemon
     python -m iris_worker.scheduler --once all        # refresh + weekly sekali lalu keluar
-    python -m iris_worker.scheduler --once refresh|weekly|social|whale|watcher
+    python -m iris_worker.scheduler --once refresh|weekly|social|whale|watcher|monthly
 """
 import argparse
 import json
@@ -38,6 +39,7 @@ from iris_worker.jobs.clf_weekly import WeekNotClosedError, run_clf_weekly
 from iris_worker.jobs.refresh_data import run_refresh
 from iris_worker.jobs.social_sentiment import run_social_sentiment
 from iris_worker.jobs.watcher_news import run_watcher_news
+from iris_worker.jobs.monthly_forecast import OUT_DIR as MONTHLY_OUT, run_monthly_forecast
 
 
 def parse_cron(cron_expr: str) -> CronTrigger:
@@ -187,6 +189,22 @@ def job_watcher():
         _stamp(f"watcher_news GAGAL: {e}")
 
 
+def job_monthly():
+    try:
+        _stamp(run_monthly_forecast())
+    except Exception as e:
+        _stamp(f"monthly_forecast GAGAL: {e}")
+
+
+def monthly_is_current() -> bool:
+    """Local mode only: a forecast file exists for this week (as-of >= last Sunday).
+    With Supabase the run is also scheduled on GitHub Actions; no catch-up is attempted."""
+    if config.SUPABASE_URL and config.SUPABASE_SERVICE_ROLE_KEY:
+        return True
+    names = sorted(p.name for p in MONTHLY_OUT.glob("monthly_forecast_*.json"))
+    return bool(names) and names[-1][len("monthly_forecast_"):][:10] >= str(week_start_sunday().date())
+
+
 def catch_up(dry_run: bool = False):
     if not data_is_fresh():
         _stamp(f"catch-up: data as_of={data_as_of()} < {last_closed_day().date()} -> refresh")
@@ -197,11 +215,14 @@ def catch_up(dry_run: bool = False):
     if config.SANTIMENT_API_KEY and not social_fetched_today():
         _stamp("catch-up: sentimen sosial belum diambil hari ini -> social_sentiment")
         job_social()
+    if not dry_run and not monthly_is_current():
+        _stamp("catch-up: prakiraan bulanan minggu ini belum ada -> monthly_forecast")
+        job_monthly()
 
 
 def main():
     parser = argparse.ArgumentParser(description="IRIS Worker Scheduler")
-    parser.add_argument("--once", choices=["refresh", "weekly", "social", "whale", "watcher", "all"],
+    parser.add_argument("--once", choices=["refresh", "weekly", "social", "whale", "watcher", "monthly", "all"],
                         help="Jalankan job sekali lalu keluar.")
     parser.add_argument("--dry-run", action="store_true", help="clf_weekly tanpa menulis apa pun.")
     parser.add_argument("--no-catch-up", action="store_true",
@@ -225,6 +246,8 @@ def main():
             whale_ingest.run_whale_ingest()
         if args.once == "watcher":
             print(run_watcher_news())
+        if args.once == "monthly":
+            print(run_monthly_forecast())
         return
 
     global _SCHED
@@ -249,6 +272,8 @@ def main():
 
     sched.add_job(job_watcher, parse_cron(config.WATCHER_CRON), id="watcher_news",
                   name="Watcher.Guru news pipeline", misfire_grace_time=60)
+    sched.add_job(job_monthly, parse_cron(config.MONTHLY_CRON), id="monthly_forecast",
+                  name="Monthly Monte Carlo forecast", misfire_grace_time=3600)
 
     if not args.no_catch_up:
         catch_up(dry_run=args.dry_run)

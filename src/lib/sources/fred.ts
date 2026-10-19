@@ -78,3 +78,21 @@ export async function getLatestAndZScore(
 
   return { latest, z, asOf };
 }
+
+/** FRED release ids (identifiers of the API, not data): Consumer Price Index, Employment Situation (NFP). */
+export const FRED_RELEASE = { CPI: 10, NFP: 50 } as const;
+
+/**
+ * Scheduled publication dates of a FRED release from `fromIso` on, oldest first —
+ * including future dates the agency has announced (`include_release_dates_with_no_data`).
+ * Docs: https://fred.stlouisfed.org/docs/api/fred/release_dates.html
+ */
+export async function getReleaseDates(releaseId: number, fromIso: string): Promise<string[]> {
+  const url =
+    `https://api.stlouisfed.org/fred/release/dates?release_id=${releaseId}&api_key=${key()}` +
+    `&file_type=json&include_release_dates_with_no_data=true&sort_order=asc&realtime_start=${fromIso}&limit=50`;
+  const j = await fetchJson<{ release_dates?: { date: string }[] }>(url, { revalidate: 21_600 });
+  const dates = (j?.release_dates ?? []).map((d) => d.date).filter((d) => /^\d{4}-\d{2}-\d{2}$/.test(d) && d >= fromIso);
+  if (dates.length === 0) throw new Error(`fred release ${releaseId}: no dates`);
+  return dates;
+}

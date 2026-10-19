@@ -43,8 +43,14 @@ export const MAX_AGE_SEC = {
   news: 1 * DAY,
   /** Daily-candle features (volatility, seasonality, distribution, confluence). */
   dailyCandles: 2 * DAY,
+  /** Macro calendar: its `asOf` is the latest release that happened; CPI/NFP are monthly, so 40 days = the schedule stopped updating. */
+  macroCalendar: 40 * DAY,
+  /** Coin Metrics daily close (halving cycle, power-law): newest day older than 3 days = stale. */
+  dailyClose: 3 * DAY,
   /** Walk-forward calibration runs on daily history. */
   calibration: 3 * DAY,
+  /** Monthly Monte Carlo runs weekly (Monday): a week plus two days of slack. */
+  monthlyForecast: 9 * DAY,
   /** Weekly signal: matches the 9-day STALE marker in weeklyForecast/transform.ts. */
   weeklyForecast: 9 * DAY,
   /** Santiment's free plan withholds 30 days by design; 3 more = the job stopped. */

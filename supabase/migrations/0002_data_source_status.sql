@@ -69,6 +69,7 @@ values
   ('internal_quant', 'Quant pipeline', 'quant', false, true, null),
   ('internal_forecast', 'Forecast pipeline', 'forecast', false, true, null),
   ('internal_distribution', 'Price distribution engine', 'forecast', false, true, null),
+  ('internal_monthly', 'Monthly Monte Carlo worker', 'forecast', false, true, 'Written weekly by the Python worker (iris_worker.monthly). With Supabase: apply supabase/migrations/0008_monthly_forecast.sql, add SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY as GitHub Actions secrets and run the "Monthly forecast" workflow once. Locally: set MONTHLY_LOCAL_DIR=worker/out and run python -m iris_worker.scheduler --once monthly.'),
   ('alternative_me', 'Fear & Greed (alternative.me)', 'sentiment', false, true, null),
   ('santiment', 'Santiment (social sentiment)', 'sentiment', true, true, 'Register at app.santiment.net and set SANTIMENT_API_KEY in worker/.env; the daily social_sentiment job writes social_sentiment_daily. The free plan withholds the latest 30 days.'),
   ('fred', 'FRED', 'macro', true, true, 'Register a free FRED API key and set FRED_API_KEY in worker/.env.'),
@@ -79,6 +80,7 @@ values
   ('onchain_provider', 'On-chain metrics', 'onchain', true, true, 'No free provider covers these metrics. Requires a paid on-chain data subscription.'),
   ('arkham', 'Arkham Intelligence', 'onchain', true, true, 'Apply for API access at docs.intel.arkm.com. Scraping the site is not an option.'),
   ('mempool_space', 'mempool.space', 'onchain', false, true, null),
+  ('coinmetrics', 'Coin Metrics (daily close since 2010)', 'quant', false, true, 'Keyless Community API; falls back to blockchain.com market-price. If both are unreachable from this network the halving-cycle and power-law pages hide their panels.'),
   ('whale_alert', 'Whale Alert', 'onchain', true, true, 'Register a free tier key at whale-alert.io, set WHALE_ALERT_API_KEY, and point a 5-minute cron at /api/ingest/whale.'),
   ('internal_confluence', 'Confluence engine', 'research', false, true, null)
 on conflict (source_key) do update set

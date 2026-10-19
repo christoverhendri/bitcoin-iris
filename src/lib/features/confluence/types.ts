@@ -1,4 +1,4 @@
-export type ConfluenceLayer = 'MACRO' | 'ONCHAIN' | 'SENTIMENT' | 'TECHNICAL' | 'NEWS';
+export type ConfluenceLayer = 'MACRO' | 'SENTIMENT' | 'TECHNICAL' | 'NEWS';
 
 export interface ConfluenceData {
   layers: Record<ConfluenceLayer, number>;

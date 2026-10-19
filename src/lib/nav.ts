@@ -50,11 +50,16 @@ export const SECTIONS: Section[] = [
     key: 'quant',
     label: 'Quantitative',
     title: 'QUANTITATIVE',
-    blurb: 'Seasonality',
+    blurb: 'Seasonality · cycle · power-law',
     group: 'Market',
     icon: 'M4 20V8M10 20V4M16 20v-9M22 20v-5',
     // VOLATILITY removed in the 2026-10-18 curation; /quant/volatility redirects here.
-    subs: [{ slug: 'seasonality', label: 'SEASONALITY' }],
+    // HALVING CYCLE and POWER-LAW added 2026-10-19 (research/BTC_Halving_Cycle_PowerLaw.ipynb).
+    subs: [
+      { slug: 'seasonality', label: 'SEASONALITY' },
+      { slug: 'cycle', label: 'HALVING CYCLE' },
+      { slug: 'corridor', label: 'POWER-LAW' },
+    ],
   },
   {
     key: 'chain',
@@ -100,7 +105,7 @@ export const SECTIONS: Section[] = [
     key: 'forecast',
     label: 'Forecast',
     title: 'FORECAST',
-    blurb: 'Weekly forecast · distribution',
+    blurb: 'Weekly forecast · 30-day Monte Carlo · distribution',
     group: 'Model',
     icon: 'M3 12h4l3-8 4 16 3-8h4',
     // Ordered deliberately: `subs[0]` is where a first-time visitor lands, and
@@ -116,6 +121,8 @@ export const SECTIONS: Section[] = [
       // Curation 2026-10-18: the weekly model leads the section; CALIBRATION was
       // removed (redirects to distribution).
       { slug: 'weekly', label: 'WEEKLY FORECAST' },
+      // Timothy's 30-day Monte Carlo (2026-10-19). New slug, see next.config.ts.
+      { slug: '30d', label: 'MONTHLY FORECAST' },
       { slug: 'distribution', label: 'DISTRIBUTION' },
     ],
   },

@@ -6,12 +6,12 @@ import type { SeasonalityCell, SeasonalityArgs } from './types';
 
 export const getSeasonality = defineFeature<SeasonalityArgs, SeasonalityCell[]>({
   key: 'seasonality',
-  source: 'internal_quant',
+  source: 'coinmetrics',
   live: fetchSeasonality,
   mock: mockSeasonality,
-  maxAgeSec: MAX_AGE_SEC.dailyCandles,
+  maxAgeSec: MAX_AGE_SEC.dailyClose,
 });
 
 export type { SeasonalityCell, SeasonalityArgs };
 export { toSeasonalityLabel, getSeasonalityColor } from './present';
-export { monthlyBullOdds } from './stats';
+export { monthlySummary } from './stats';

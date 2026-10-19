@@ -26,6 +26,7 @@ export const SOURCES: SourceDef[] = [
   { key: 'internal_quant', displayName: 'Quant pipeline', category: 'quant', requiresKey: false, enabled: true, unlockNote: null },
   { key: 'internal_forecast', displayName: 'Forecast pipeline', category: 'forecast', requiresKey: false, enabled: true, unlockNote: null },
   { key: 'internal_distribution', displayName: 'Price distribution engine', category: 'forecast', requiresKey: false, enabled: true, unlockNote: null },
+  { key: 'internal_monthly', displayName: 'Monthly Monte Carlo worker', category: 'forecast', requiresKey: false, enabled: true, unlockNote: 'Written weekly by the Python worker (iris_worker.monthly). With Supabase: apply supabase/migrations/0008_monthly_forecast.sql, add SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY as GitHub Actions secrets and run the "Monthly forecast" workflow once. Locally: set MONTHLY_LOCAL_DIR=worker/out and run python -m iris_worker.scheduler --once monthly.' },
   { key: 'alternative_me', displayName: 'Fear & Greed (alternative.me)', category: 'sentiment', requiresKey: false, enabled: true, unlockNote: null },
   { key: 'santiment', displayName: 'Santiment (social sentiment)', category: 'sentiment', requiresKey: true, enabled: true, unlockNote: 'Register at app.santiment.net and set SANTIMENT_API_KEY in worker/.env; the daily social_sentiment job writes social_sentiment_daily. The free plan withholds the latest 30 days.' },
   { key: 'fred', displayName: 'FRED', category: 'macro', requiresKey: true, enabled: true, unlockNote: 'Register a free FRED API key and set FRED_API_KEY in worker/.env.' },
@@ -36,6 +37,7 @@ export const SOURCES: SourceDef[] = [
   { key: 'onchain_provider', displayName: 'On-chain metrics', category: 'onchain', requiresKey: true, enabled: true, unlockNote: 'No free provider covers these metrics. Requires a paid on-chain data subscription.' },
   { key: 'arkham', displayName: 'Arkham Intelligence', category: 'onchain', requiresKey: true, enabled: true, unlockNote: 'Apply for API access at docs.intel.arkm.com. Scraping the site is not an option.' },
   { key: 'mempool_space', displayName: 'mempool.space', category: 'onchain', requiresKey: false, enabled: true, unlockNote: null },
+  { key: 'coinmetrics', displayName: 'Coin Metrics (daily close since 2010)', category: 'quant', requiresKey: false, enabled: true, unlockNote: 'Keyless Community API; falls back to blockchain.com market-price. If both are unreachable from this network the halving-cycle and power-law pages hide their panels.' },
   { key: 'whale_alert', displayName: 'Whale Alert', category: 'onchain', requiresKey: true, enabled: true, unlockNote: 'Register a free tier key at whale-alert.io, set WHALE_ALERT_API_KEY, and point a 5-minute cron at /api/ingest/whale.' },
   { key: 'internal_confluence', displayName: 'Confluence engine', category: 'research', requiresKey: false, enabled: true, unlockNote: null },
 ];

@@ -58,8 +58,9 @@ describe('forecast section', () => {
     expect(defaultSubHref(forecast)).toBe('/forecast/weekly');
   });
 
-  it('no longer offers the removed monthly or calibration tabs', () => {
+  it('offers the 30-day forecast on a new slug (the old one was a cached 308) and no calibration tab', () => {
     const slugs = forecast.subs.map((s) => s.slug);
+    expect(slugs).toEqual(['weekly', '30d', 'distribution']);
     expect(slugs).not.toContain('monthly');
     expect(slugs).not.toContain('calibration');
   });
@@ -75,7 +76,8 @@ describe('curated sections (2026-10-18)', () => {
   it('drops the Market section and Volatility', () => {
     expect(SECTIONS.map((s) => s.key)).not.toContain('market');
     const quant = SECTIONS.find((s) => s.key === 'quant')!;
-    expect(quant.subs.map((s) => s.slug)).toEqual(['seasonality']);
+    // HALVING CYCLE and POWER-LAW added 2026-10-19.
+    expect(quant.subs.map((s) => s.slug)).toEqual(['seasonality', 'cycle', 'corridor']);
   });
 
   it('splits On-Chain into ETF, long/short and wallets', () => {

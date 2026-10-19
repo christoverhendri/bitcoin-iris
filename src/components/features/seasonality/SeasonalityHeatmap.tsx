@@ -3,7 +3,7 @@ import { Panel, PanelHeader, Tag, MockBadge, SourceFootnote } from '@/components
 import type { Envelope } from '@/lib/envelope';
 import type { SeasonalityCell } from '@/lib/features/seasonality';
 import { toSeasonalityLabel } from '@/lib/features/seasonality/present';
-import { monthlyBullOdds } from '@/lib/features/seasonality';
+import { monthlySummary } from '@/lib/features/seasonality';
 import { fmtPct, MONTHS } from '@/lib/format';
 
 export interface SeasonalityHeatmapProps {
@@ -20,14 +20,10 @@ export function SeasonalityHeatmap({ seasonality }: SeasonalityHeatmapProps) {
   const years = Array.from(new Set(cells.map((c) => c.year))).sort((a, b) => a - b);
   const byKey = new Map(cells.map((c) => [`${c.year}-${c.month}`, c]));
 
-  // Averages and odds use completed months only; the running month is shown with a *.
-  const monthAvg = MONTHS.map((_, i) => {
-    const m = i + 1;
-    const vals = cells.filter((c) => c.month === m && !c.partial).map((c) => c.returnPct);
-    return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
-  });
-  const odds = monthlyBullOdds(cells);
-  const hasPartial = cells.some((c) => c.partial);
+  // Summary rows use completed months only; the running month is marked BERJALAN.
+  const summary = monthlySummary(cells);
+  const monthAvg = summary.map((s) => s.mean ?? 0);
+  const running = cells.find((c) => c.partial);
 
   let bestIdx = 0;
   let worstIdx = 0;
@@ -52,10 +48,10 @@ export function SeasonalityHeatmap({ seasonality }: SeasonalityHeatmapProps) {
         }
       />
       <p style={{ margin: 0, padding: '10px 12px 0', fontSize: 11.5, lineHeight: 1.55, color: 'var(--mut)' }}>
-        Tiap kotak = kenaikan atau penurunan BTC selama satu bulan (dari harga awal bulan ke harga akhir
-        bulan). Hijau = naik, merah = turun. Baris <b>PELUANG NAIK</b> menghitung berapa tahun bulan itu
-        ditutup naik dibagi jumlah tahunnya — mis. 7/11 berarti 7 dari 11 tahun naik. Ini catatan
-        sejarah, bukan jaminan: tiap bulan hanya punya sekitar 11–12 contoh.
+        Tiap kotak = kenaikan atau penurunan BTC selama satu bulan: harga penutupan terakhir bulan itu dibanding penutupan
+        terakhir bulan sebelumnya. Hijau = naik, merah = turun. Kotak bergaris = bulan <b>BERJALAN</b> (sampai data
+        terakhir), belum dihitung di baris ringkasan. Baris <b>% TAHUN NAIK</b> = berapa tahun bulan itu ditutup naik dibagi
+        jumlah tahunnya — catatan sejarah, bukan jaminan.
       </p>
       <div style={{ padding: '12px', overflowX: 'auto', minWidth: 0 }}>
         <div style={{ display: 'grid', gridTemplateColumns: gridCols, gap: '1px', background: 'var(--line)', border: '1px solid var(--line)', minWidth: 640 }}>
@@ -72,12 +68,29 @@ export function SeasonalityHeatmap({ seasonality }: SeasonalityHeatmapProps) {
                 if (!cell) return <DataCell key={i} />;
                 const { tone, alpha } = tint(cell.returnPct);
                 return (
-                  <DataCell key={i} title={`${MONTHS[i]} ${y}: ${fmtPct(cell.returnPct)}${cell.partial ? ' (bulan berjalan)' : ''}`}>
+                  <DataCell key={i} running={cell.partial} title={`${MONTHS[i]} ${y}: ${fmtPct(cell.returnPct)}${cell.partial ? ' · BERJALAN (sampai data terakhir)' : ''}`}>
                     <span aria-hidden style={{ position: 'absolute', inset: 0, background: tone, opacity: alpha }} />
-                    <span style={{ position: 'relative', color: 'var(--txt)' }}>
-                      {toSeasonalityLabel(cell)}
-                      {cell.partial ? '*' : ''}
-                    </span>
+                    <span style={{ position: 'relative', color: 'var(--txt)' }}>{toSeasonalityLabel(cell)}</span>
+                    {cell.partial ? (
+                      <span style={{ position: 'relative', display: 'block', fontSize: 7, letterSpacing: '.1em', color: 'var(--txt)' }}>BERJALAN</span>
+                    ) : null}
+                  </DataCell>
+                );
+              })}
+            </Row>
+          ))}
+
+          {(['mean', 'median'] as const).map((k) => (
+            <Row key={k}>
+              <HeadCell>{k === 'mean' ? 'RATA-RATA' : 'MEDIAN'}</HeadCell>
+              {summary.map((s) => {
+                const v = s[k];
+                if (v === null) return <DataCell key={s.month} strong>—</DataCell>;
+                const { tone, alpha } = tint(v);
+                return (
+                  <DataCell key={s.month} strong>
+                    <span aria-hidden style={{ position: 'absolute', inset: 0, background: tone, opacity: alpha }} />
+                    <span style={{ position: 'relative', color: 'var(--txt)' }}>{fmtPct(v)}</span>
                   </DataCell>
                 );
               })}
@@ -85,40 +98,23 @@ export function SeasonalityHeatmap({ seasonality }: SeasonalityHeatmapProps) {
           ))}
 
           <Row>
-            <HeadCell>AVG</HeadCell>
-            {monthAvg.map((v, i) => {
-              const { tone, alpha } = tint(v);
-              return (
-                <DataCell key={i} strong>
-                  <span aria-hidden style={{ position: 'absolute', inset: 0, background: tone, opacity: alpha }} />
-                  <span style={{ position: 'relative', color: 'var(--txt)' }}>{fmtPct(v)}</span>
-                </DataCell>
-              );
-            })}
-          </Row>
-
-          <Row>
-            <HeadCell>PELUANG NAIK</HeadCell>
-            {odds.map((o) => (
-              <DataCell
-                key={o.month}
-                strong
-                title={`${MONTHS[o.month - 1]}: naik di ${o.bull} dari ${o.total} tahun`}
-              >
-                <span style={{ display: 'block', color: o.pct === null || o.pct === 50 ? 'var(--mut)' : o.pct > 50 ? 'var(--up)' : 'var(--down)' }}>
-                  {o.pct === null ? '—' : `${Math.round(o.pct)}%`}
+            <HeadCell>% TAHUN NAIK</HeadCell>
+            {summary.map((s) => (
+              <DataCell key={s.month} strong title={`${MONTHS[s.month - 1]}: naik di ${s.up} dari ${s.n} tahun`}>
+                <span style={{ display: 'block', color: s.pctUp === null || s.pctUp === 50 ? 'var(--mut)' : s.pctUp > 50 ? 'var(--up)' : 'var(--down)' }}>
+                  {s.pctUp === null ? '—' : `${Math.round(s.pctUp)}%`}
                 </span>
                 <span style={{ display: 'block', fontSize: 8, fontWeight: 400, color: 'var(--dim)' }}>
-                  {o.bull}/{o.total}
+                  {s.up}/{s.n} tahun
                 </span>
               </DataCell>
             ))}
           </Row>
         </div>
       </div>
-      {hasPartial ? (
+      {running ? (
         <div style={{ padding: '0 12px 8px', fontSize: 10.5, color: 'var(--dim)' }}>
-          * bulan yang masih berjalan — belum dihitung di rata-rata dan peluang.
+          BERJALAN = {MONTHS[running.month - 1]} {running.year} sampai data terakhir; masuk ringkasan begitu bulan berikutnya dimulai.
         </div>
       ) : null}
       <SourceFootnote env={seasonality} />
@@ -149,12 +145,14 @@ function HeadCell({ children }: { children?: ReactNode }) {
   );
 }
 
-function DataCell({ children, strong, title }: { children?: ReactNode; strong?: boolean; title?: string }) {
+function DataCell({ children, strong, title, running }: { children?: ReactNode; strong?: boolean; title?: string; running?: boolean }) {
   return (
     <div
       title={title}
       style={{
         position: 'relative',
+        outline: running ? '1px dashed var(--txt)' : undefined,
+        outlineOffset: -2,
         background: 'var(--panel)',
         padding: '7px 4px',
         textAlign: 'center',

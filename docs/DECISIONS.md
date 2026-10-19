@@ -178,7 +178,7 @@ MacroCrossAsset + Universal XGBoost models), while retaining the heuristic rule 
 
 The `RULE-BASED PLACEHOLDER` badge renders only when `method === 'rule'`.
 
-### Monthly forecast — REMOVED
+### Monthly forecast — REMOVED (reinstated 2026-10-19 as Timothy's stored weekly run, see §16)
 
 `/forecast/monthly`, `src/lib/features/monthlyForecast/`, `src/components/features/monthly/`
 and `src/lib/quant/montecarlo.ts` were deleted once `/forecast/distribution` shipped. Recorded
@@ -791,3 +791,81 @@ menyajikan respons cache terakhir saat revalidasi gagal, sehingga tidak ada fall
 Bug lain yang diperbaiki saat itu: tanggal harian CoinGecko bergeser satu hari (korelasi BTC ±0),
 batas kesegaran FRED kuartalan 200 → 270 hari, kolom 1D Macro Markets (dulu ±1 tahun), satuan
 taker flow ("$" → BTC), dan teks mining pool / subset yang salah.
+
+## 14. Halving cycle & power-law corridor (19 Okt 2026)
+
+> Bagian tampilan di bawah (skenario harga, peluang bottom, uji mundur, uji zona, episode) **dicabut
+> di §15** — tetap di notebook. Definisi top 60%, distribusi t, dan power-law walk-forward tetap.
+
+Dua sub-tab baru di Quantitative, dari notebook riset `research/BTC_Halving_Cycle_PowerLaw.ipynb`
+(prompt: `IRIS_quant_cycle_powerlaw_prompt.md`). Semua dihitung ulang di TypeScript
+(`src/lib/quant/cycle.ts`, `powerLaw.ts`, `studentT.ts`) dari harga harian Coin Metrics
+(cadangan: blockchain.com); output notebook hanya dipakai sebagai fixture uji parity
+(`src/lib/quant/__fixtures__/cycle/`, dibuat ulang dengan `research/nb_fixtures.py` pada data
+beku 18 Okt 2026, tinggi blok 972.106).
+
+| Keputusan | Alasan |
+|---|---|
+| **Top siklus = puncak yang diikuti turun ≥60%** sebelum ada puncak baru (bukan "close tertinggi antar halving") | Harga menembus top 2021 pada Maret 2024, sebelum halving; definisi antar-halving akan salah memilih Maret 2024. Top siklus berjalan dianggap terkonfirmasi setelah turun ≥40%; bottom-nya hanya "terendah sejauh ini" dan tidak masuk statistik. |
+| **Interval = distribusi t**, df = n−1, skala = sd·√(1+1/n) | Siklus lengkap baru 3. Dengan n = 3 pengali 95% adalah 4,30, bukan 1,96 — interval lebar itulah jawaban jujurnya (sama dengan posterior predictive Bayes, prior non-informatif). Tanpa ML: 3 titik selalu bisa di-fit sempurna tanpa arti. |
+| **Uji mundur** (tebak tiap siklus hanya dari siklus sebelumnya) tampil di halaman | Satu-satunya cek apakah proyeksi tanggal layak dipercaya. Rata-rata meleset: cara A 35 hari, B 102, C 4, bottom 30. |
+| **Skenario harga, bukan satu target** | Kelipatan dan drawdown hanya 3–4 titik; interval t-nya tidak bermakna (mis. kelipatan 80%: −11 s/d 26×). |
+| **Power-law walk-forward**: fit ulang tiap awal bulan hanya dengan data sebelumnya; persentil = bagian residual masa lalu ≤ residual hari ini | Rainbow chart biasa di-fit pada seluruh data dan digeser setelah kejadian (hindsight). Eksponen b sendiri bergeser (2014: 6,54 → kini 5,64). Pita di grafik memakai fit terbaru dan diberi catatan; semua uji memakai persentil walk-forward. |
+| Pita quantile-regression seluruh data (notebook §2.1) **tidak dipakai** | Notebook sendiri menyebutnya hindsight, hanya untuk gambar. |
+| Rata-rata meleset dibulatkan **half-to-even** | Sama dengan `pandas.round(0)` (4,5 → 4), supaya angka di layar sama dengan notebook. |
+| Halving berikutnya dari tinggi blok **hari ini** × 9,6 / 9,85 / 10,0 menit | Tinggi blok = kondisi sekarang. Tanpa tinggi blok (mempool.space dan blockchain.info gagal) tanggal halving dan top cara B tidak ditampilkan — tidak ditebak. |
+
+Yang menyimpang dari prompt, mengikuti aturan yang lebih baru (§13): panel tanpa data asli
+**disembunyikan** (`LiveOnly`), bukan ditampilkan sebagai MOCK; blurb `Seasonality · cycle ·
+power-law` (Volatility sudah dihapus); revalidate halaman 30 detik seperti tab lain (nilai layout
+yang berlaku), sedangkan seri Coin Metrics sendiri di-cache 1 hari; seri chart di-downsample
+mingguan seluruhnya (±770 titik) supaya data hover tetap kecil.
+
+## 15. Website tanpa konten statis (19 Okt 2026)
+
+Koreksi `IRIS_koreksi_auto_compute.md` (menimpa prompt §14 bila bertentangan). Website di-deploy dan
+harus berjalan sendiri: tidak ada angka, tanggal, atau tabel yang perlu diperbarui manual.
+
+| Aturan | Penerapan |
+|---|---|
+| Semua angka dihitung saat render | Halving Cycle, Power-Law, Seasonality dihitung dari close Coin Metrics + data blok tiap revalidate. "Hari ini" = data terakhir (harga) atau jam server UTC (hitung mundur, penanda jendela). |
+| Yang boleh ditulis di kode | Fakta protokol (genesis, 210.000 blok, 10 menit) dan parameter metode — semua di `src/lib/quant/config.ts`, ditampilkan di tooltip METODOLOGI. Satu pengecualian teruji: tanggal 4 halving historis sebagai cadangan, dicek terhadap timestamp blok (`halvings.test.ts`). |
+| Tanggal halving dari blockchain | Timestamp blok di tiap kelipatan 210.000 (mempool.space → blockchain.info → cadangan). Halving masa depan tidak pernah ditulis; halving ke-5 masuk sendiri saat blok 1.050.000 lahir. |
+| Estimasi halving | Tengah = rata-rata waktu blok epoch sekarang; rentang = min/max dari itu, rata-rata epoch halving terakhir, dan 10 menit. |
+| **Bottom terkonfirmasi = naik ≥ +100% tanpa low lebih rendah** | Supaya bottom bisa diakui tanpa menunggu ATH baru (biasanya ±2 tahun kemudian). Untuk siklus 2013/2017/2021 hasilnya sama dengan notebook; low baru memindahkan bottom dan me-reset konfirmasi. Status siklus (`MENUNGGU TOP` / `TOP SEMENTARA` / `BOTTOM TERKONFIRMASI` / `SIKLUS SELESAI`) menentukan apa yang diproyeksikan; proyeksi berantai memakai Monte Carlo deterministik (seed tetap, 20.000 sampel). Diuji dengan simulasi waktu T1–T6 (`cycle.test.ts`). |
+| **Hasil riset tidak tampil** | Peluang bottom per bulan, skenario harga, thesis populer, tabel uji mundur, kelipatan/drawdown, uji per zona, episode sentuh pita, persentil di top/bottom, dan pita di tanggal proyeksi dihapus dari website (kodenya juga). Alasannya: semuanya ekstrapolasi dari 3–4 titik atau uji historis yang pantasnya dibaca di notebook, bukan angka yang bergerak tiap hari. Uji mundur tetap dihitung, hanya rata-rata melesetnya yang tampil di keterangan. |
+| Seasonality | Dari Coin Metrics (sejak 2010), close-to-close bulanan, bulan berjalan bertanda BERJALAN dan di luar ringkasan; pergantian bulan otomatis. |
+| Confluence ONCHAIN = 50 | Dihapus, bobot sisanya dinormalisasi ulang (perbandingan lama). Pengganti (mis. persentil power-law) diputuskan tim. |
+| Kalender makro | Marker statis "FOMC / CPI" sudah dihapus 16 Okt. Diganti panel **JADWAL MAKRO AS** di `/macro/data`: FOMC dari kalender federalreserve.gov (parser gagal-keras + fixture HTML), CPI & NFP dari FRED `release/dates`. Ditaruh di halaman Macro, bukan di peta event, karena peta hanya berisi berita yang sudah terjadi; jadwal masa depan di sana akan tercampur urutan "terbaru". |
+| Penjaga otomatis | `src/no-static-dates.test.ts` gagal kalau ada literal tanggal di kode runtime di luar allowlist beralasan; ESLint `no-restricted-imports` melarang `__fixtures__` di kode non-test. |
+| Refresh tanpa pengunjung | `POST /api/revalidate` (Bearer `CRON_SECRET`, tertutup kalau secret kosong) memanggil `revalidatePath` untuk halaman Quant; panggil dari cron harian 00:30 UTC. |
+
+## 16. Prakiraan 30 hari — model Timothy (19 Okt 2026)
+
+Diambil dari `motmots/iris-monthly-forecast` (fork IRIS-Terminal milik Timothy; hanya commit
+setelah snapshot impor yang dipakai). Alasan metodologinya ditulis lengkap oleh Timothy dan dikutip
+di sini secara ringkas — repo itu sumber aslinya.
+
+| Bagian | Isi |
+|---|---|
+| Model | FHS (Filtered Historical Simulation) atas residual GARCH(1,1), **drift dibuang**, 10.000 jalur, 30 hari. Gejolak awal tiap jalur = DVOL Deribit × faktor VRP walk-forward (realised/implied pada jendela 30 hari yang sudah selesai); kalau DVOL gagal → GARCH. |
+| Kenapa bukan ML | XGBoost quantile (harga, teknikal, FRED, on-chain) tidak mengalahkan kuantil historis konstan pada pinball loss, dan medianya menebak arah 30 hari lebih jarang dari "selalu naik". Volatilitas bisa diprediksi, arah tidak. (`worker/research/benchmark_xgb_vs_baselines.py`) |
+| Kenapa DVOL | Satu-satunya kandidat yang lolos uji pra-registrasi (pilih di validasi 2021–22, uji sekali di 2023–26): pinball −1,2…−1,5% di 7/14/30 hari, arah konsisten tapi **tidak signifikan 5%** (DM p 0,21 / 0,26 / 0,09). Rekalibrasi conformal dan 8 perbaikan berbasis harga dicoba dan ditolak. |
+| Bebas kebocoran | `test_backtest_has_no_lookahead` menulis ulang masa depan dan menuntut skor asal-asal sebelumnya identik. |
+| Jadwal | Senin 00:20 UTC: GitHub Actions (`.github/workflows/monthly-forecast.yml`, dari Timothy) **dan** job `monthly` di scheduler lokal. Baris dikunci tanggal as-of, jadi dua jalur tidak menggandakan data. |
+| Simpan | Supabase `monthly_forecast_runs` (migrasi `0008`, = `0003` milik Timothy, dinomori ulang karena `0003` di sini sudah `clf_signals`). Tanpa Supabase: `--dry-run` menulis `worker/out/monthly_forecast_<as-of>.json` dan memberi skor ulang file sebelumnya (tambahan di sini: `score_previous_files`); web membacanya lewat `MONTHLY_LOCAL_DIR`. |
+| Track record | Tiap run memberi skor 12 run sebelumnya terhadap close sungguhan — tidak bisa disetel setelah kejadian. |
+
+Penyesuaian ke aturan dashboard ini (bukan perubahan model):
+- Kode Python Timothy disalin **tanpa diubah** ke subpaket `worker/iris_worker/monthly/` (impornya
+  relatif), kecuali `forecast.py` (= `monthly.py`-nya) yang ditambah skor ulang file lokal. Perintah
+  tetap `python -m iris_worker.monthly`.
+- Halaman di slug baru **`/forecast/30d`**: redirect lama `/forecast/monthly → distribution` dulu
+  permanen (308) dan tersimpan di browser; `/forecast/monthly` sekarang 307 ke `/forecast/30d`.
+- Tampilan mengikuti kurasi Forecast (18 Okt) dan koreksi auto-compute (§15): bahasa Indonesia
+  sederhana, nama persentil SANGAT RENDAH…SANGAT TINGGI, hover tanggal + nilai, panel disembunyikan
+  kalau belum ada run. **Tidak ditampilkan:** panel model state (GARCH α/β), tabel peluang di atas
+  harga, tabel perbandingan engine/per tahun/PIT — tetap di output worker dan repo Timothy. Yang
+  tampil dari uji: cakupan kisaran 80% per horizon dan galat median vs "harga tetap", satu baris.
+- `asOf` = akhir hari close terakhir (bukan jam run); STALE setelah 9 hari (satu Senin terlewat).
+

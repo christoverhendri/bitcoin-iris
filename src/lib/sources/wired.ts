@@ -25,6 +25,7 @@ const BASE: SourceKey[] = [
   'positioning', // long/short ratios, taker flow, Coinbase premium -> Binance + Coinbase
   'etf_flows', // US spot ETF daily net flows -> bitbo.io, scraped and shape-validated
   'yfinance', // global markets + confluence MACRO layer -> keyless Yahoo chart API
+  'coinmetrics', // halving cycle + power-law corridor -> keyless Coin Metrics (blockchain.com fallback)
 ];
 
 /**
@@ -40,6 +41,9 @@ export const WIRED_SOURCES: readonly SourceKey[] = [
   ...BASE,
   ...(process.env.FRED_API_KEY ? (['fred'] as const) : []),
   ...(process.env.WHALE_ALERT_API_KEY ? (['whale_alert'] as const) : []),
+  // Database- or file-backed: rows exist only once the worker has run, so a
+  // configured store is the proxy. A stalled schedule shows as a STALE `asOf`.
+  ...(process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.MONTHLY_LOCAL_DIR ? (['internal_monthly'] as const) : []),
 ];
 
 export const WIRED_SOURCE_COUNT = WIRED_SOURCES.length;

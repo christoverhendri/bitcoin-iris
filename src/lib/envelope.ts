@@ -25,6 +25,8 @@ export type SourceKey =
   | 'whale_alert'
   | 'onchain_provider'
   | 'mempool_space'
+  | 'coinmetrics'
+  | 'internal_monthly'
   | 'internal_quant'
   | 'internal_forecast'
   | 'internal_distribution'

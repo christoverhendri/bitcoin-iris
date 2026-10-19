@@ -1,0 +1,9 @@
+{
+  "_note": "Recorded 2026-10-19 from mempool.space /api/block-height/{h} and /api/block/{hash}; blockchain.info /block-height/840000 returned the same time.",
+  "blocks": [
+    { "height": 210000, "hash": "000000000000048b95347e83192f69cf0366076336c639f9b7228e9ba171342e", "timestamp": 1354116278 },
+    { "height": 420000, "hash": "000000000000000002cce816c0ab2c5c269cb081896b7dcb34b8422d6b74ffa1", "timestamp": 1468082773 },
+    { "height": 630000, "hash": "000000000000000000024bead8df69990852c202db0e0097c1a12ea637d7e96d", "timestamp": 1589225023 },
+    { "height": 840000, "hash": "0000000000000000000320283a032748cef8227873ff4872689bf23f1cda83a5", "timestamp": 1713571767 }
+  ]
+}

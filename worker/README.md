@@ -51,6 +51,7 @@ tercatat `ok: false` di `refresh_report.json`.
 | `clf_weekly` | `CLF_CRON` | `30 0 * * 1` | Senin 07:30 |
 | `social_sentiment` | `SOCIAL_CRON` | `20 0 * * *` | tiap hari 07:20 (butuh `SANTIMENT_API_KEY`) |
 | `whale_ingest` | `WHALE_CRON` | `*/5 * * * *` | tiap 5 menit (butuh `IRIS_APP_URL` + `CRON_SECRET`) |
+| `monthly_forecast` | `MONTHLY_CRON` | `20 0 * * 1` | Senin 07:20: Monte Carlo 30 hari (Timothy) → Supabase atau `worker/out/*.json` |
 | `watcher_news` | `WATCHER_CRON` | `* * * * *` | tiap menit: Telegram Watcher Guru → `news_pipeline` → `.data/watcher-guru.json` |
 
 Cron memakai konvensi standar (1 = Senin, 0/7 = Minggu). Saat daemon start, job yang
@@ -77,3 +78,28 @@ Produksi: `.github/workflows/model-worker.yml` (GitHub Actions, secrets `SUPABAS
 
 Dashboard lokal tanpa Supabase: set `CLF_LOCAL_SIGNAL_FILE=worker/out/clf_signal_latest.json`
 di `.env.local` root; panel Weekly membaca file itu.
+
+## Prakiraan 30 hari — `iris_worker.monthly` (model Timothy)
+
+Disalin dari `motmots/iris-monthly-forecast` ke `iris_worker/monthly/` (FHS + GARCH, start vol
+DVOL × VRP, 10.000 jalur, backtest bebas kebocoran, track record). Lihat `docs/DECISIONS.md` §16.
+
+```bash
+python -m iris_worker.monthly --dry-run          # tanpa Supabase: worker/out/monthly_forecast_<as-of>.json
+python -m iris_worker.monthly                    # dengan SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY
+python -m iris_worker.scheduler --once monthly   # sama seperti job terjadwal (pilih --dry-run sendiri)
+python -m pytest -q tests/test_monthly.py
+```
+
+Flag: `--horizon 30`, `--paths 10000`, `--lines 24`, `--no-backtest`, `--backtest-paths 1000`,
+`--calibrate` (mati secara default: menaikkan pinball), `--dvol-csv FILE`, `--no-dvol`, `--out out`.
+
+Jadwal: job `monthly` (`MONTHLY_CRON`, default `20 0 * * 1`) di daemon ini, dan
+`.github/workflows/monthly-forecast.yml` di GitHub Actions (secrets `SUPABASE_URL`,
+`SUPABASE_SERVICE_ROLE_KEY`; tanpa secrets jalan `--dry-run` dan menyimpan JSON sebagai artifact).
+Supabase: terapkan `supabase/migrations/0008_monthly_forecast.sql` sekali.
+Dashboard lokal tanpa Supabase: `MONTHLY_LOCAL_DIR=worker/out` di `.env.local` root.
+
+Riset (tidak dipakai saat run, hanya untuk mereproduksi keputusan): `research/benchmark_xgb_vs_baselines.py`,
+`research/improve_monthly.py`, `research/dvol_monthly.py` (`pip install -r research/requirements.txt`).
+

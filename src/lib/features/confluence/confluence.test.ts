@@ -15,9 +15,10 @@ describe('WEIGHTS', () => {
     expect(total).toBeCloseTo(1, 10);
   });
 
-  it('gives the still-stubbed ONCHAIN layer the least influence', () => {
-    const min = Math.min(...Object.values(WEIGHTS));
-    expect(WEIGHTS.ONCHAIN).toBe(min);
+  it('has no constant ONCHAIN layer and keeps the old relative sizes', () => {
+    expect(Object.keys(WEIGHTS).sort()).toEqual(['MACRO', 'NEWS', 'SENTIMENT', 'TECHNICAL']);
+    expect(WEIGHTS.TECHNICAL / WEIGHTS.MACRO).toBeCloseTo(0.34 / 0.2, 12);
+    expect(WEIGHTS.SENTIMENT).toBeCloseTo(WEIGHTS.NEWS, 12);
   });
 });
 

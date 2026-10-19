@@ -134,18 +134,23 @@ job mingguan **tidak menerbitkan** sinyal sebelum candle Minggu tersedia.
 
 ### 1.2 CONFLUENCE — contoh: **47.0/100**
 
-**Asal angka:** skor gabungan internal dari **5 lapisan bukti**, masing-masing 0–100 (50 = netral),
+**Asal angka:** skor gabungan internal dari **4 lapisan bukti**, masing-masing 0–100 (50 = netral),
 dengan **bobot tetap yang dipilih manual** (tidak di-fit ke data):
 
 | Lapisan | Bobot | Cara hitung |
 |---|---|---|
-| TECHNICAL | 0.34 | Rata-rata 4 sub-skor dari candle harian (300 hari): RSI(14) apa adanya; MACD hist `50 + clamp((macd−signal)/harga × 2000) × 50`; jarak EMA21−EMA50 (gap 5% = mentok); jarak harga ke tengah Bollinger(20) (5% = mentok) |
-| SENTIMENT | 0.20 | `0.5 × Fear&Greed + 0.5 × NEWS` |
-| NEWS | 0.20 | Judul RSS (hingga 20 per feed × 8 feed) dinilai kata kunci: `50 + (positif − negatif)/total × 50` |
-| MACRO | 0.20 | Dari Yahoo: DXY (z-score 1 tahun, dibalik — dolar kuat = negatif), VIX (15→+1, 20→+0.5, 25→0, 35→−0.5, 45→−1), S&P 500 30 hari (+10% = mentok). Rata-rata sinyal → skala 0–100 |
-| ONCHAIN | 0.06 | **Selalu 50** (belum disambungkan). Bobotnya sengaja kecil |
+| TECHNICAL | 0.34 → 0.362 | Rata-rata 4 sub-skor dari candle harian (300 hari): RSI(14) apa adanya; MACD hist `50 + clamp((macd−signal)/harga × 2000) × 50`; jarak EMA21−EMA50 (gap 5% = mentok); jarak harga ke tengah Bollinger(20) (5% = mentok) |
+| SENTIMENT | 0.20 → 0.213 | `0.5 × Fear&Greed + 0.5 × NEWS` |
+| NEWS | 0.20 → 0.213 | Judul RSS (hingga 20 per feed × 8 feed) dinilai kata kunci: `50 + (positif − negatif)/total × 50` |
+| MACRO | 0.20 → 0.213 | Dari Yahoo: DXY (z-score 1 tahun, dibalik — dolar kuat = negatif), VIX (15→+1, 20→+0.5, 25→0, 35→−0.5, 45→−1), S&P 500 30 hari (+10% = mentok). Rata-rata sinyal → skala 0–100 |
 
-`overall = 0.34·TECH + 0.20·SENT + 0.20·NEWS + 0.20·MACRO + 0.06·ONCHAIN`
+ONCHAIN (bobot 0.06, **selalu 50**) **dihapus 19 Okt**: konstanta yang tampil seolah diukur. Bobot
+sisanya dinormalisasi ulang dengan perbandingan lama (0.34 : 0.20 : 0.20 : 0.20, dibagi 0.94).
+Penggantinya (mis. skor dari persentil power-law) diputuskan tim.
+
+`overall = (0.34·TECH + 0.20·SENT + 0.20·NEWS + 0.20·MACRO) ÷ 0.94`
+
+Contoh lama di bawah memakai rumus sebelum 19 Okt:
 
 **Contoh (16 Okt, sebelum tab Research dihapus):** TECH 40.1, SENT 54.6, NEWS 46.2, MACRO 50, ONCHAIN 50
 → `0.34×40.1 + 0.2×54.6 + 0.2×46.2 + 0.2×50 + 0.06×50 = 46.8` ✓.
@@ -239,20 +244,63 @@ Overview. Link lama `/market/...` diarahkan ke `/overview`.
 
 ---
 
-## 3. QUANTITATIVE — `/quant/seasonality`
+## 3. QUANTITATIVE — `/quant/seasonality`, `/quant/cycle`, `/quant/corridor`
 
 Sub-tab Volatility dihapus (link lama diarahkan ke Seasonality).
 
-### 3.1 MONTHLY RETURN HEATMAP
+### 3.1 MONTHLY RETURN HEATMAP — `/quant/seasonality`
 
-- **Sumber:** bar bulanan Yahoo BTC-USD sejak awal datanya (bulan penuh pertama **Okt 2014**,
-  ±12 tahun).
-- **Isi kotak:** `(close bulan − open bulan) ÷ open × 100`. Hijau = naik, merah = turun. Bulan
-  yang masih berjalan ditandai `*` dan tidak dihitung di rata-rata maupun peluang.
-- **AVG:** rata-rata return bulan itu di semua tahun yang sudah selesai.
-- **PELUANG NAIK:** `jumlah tahun bulan itu ditutup naik ÷ jumlah tahun` — mis. `9/12 = 75%`.
-  Murni hitungan sejarah, tanpa model. Tiap bulan hanya punya ±11–12 contoh, jadi ini catatan,
-  bukan jaminan. 50% tepat ditampilkan abu-abu (sama dengan lempar koin).
+- **Sumber:** close harian **Coin Metrics** sejak 18 Jul 2010 (seri yang sama dengan Halving Cycle,
+  satu fetch bersama, di-cache 1 hari). Sel pertama Agustus 2010.
+- **Isi kotak (UTC):** `close terakhir bulan m ÷ close terakhir bulan sebelumnya − 1` — gerak hari
+  pertama ikut terhitung. Hijau = naik, merah = turun.
+- **BERJALAN:** bulan yang memuat data terakhir (month-to-date), kotak bergaris, **tidak** masuk
+  ringkasan. Begitu ada close tanggal 1 bulan baru, sel bulan baru muncul sebagai BERJALAN dan bulan
+  sebelumnya jadi final — tanpa edit kode.
+- **Ringkasan per bulan kalender** (tanpa bulan berjalan): RATA-RATA, MEDIAN, **% TAHUN NAIK**
+  (`tahun naik ÷ jumlah tahun`, mis. `7/11`). Catatan sejarah, bukan jaminan.
+
+### 3.2 HALVING CYCLE — `/quant/cycle`
+
+Semua dihitung ulang tiap render dari close harian Coin Metrics (cadangan blockchain.com) dan data
+blok; tidak ada tanggal yang diketik. Metode: [DECISIONS §14–15](DECISIONS.md); definisi juga di
+tooltip **METODOLOGI**.
+
+- **Tanggal halving** = timestamp blok di tiap kelipatan 210.000 (mempool.space, cadangan
+  blockchain.info, terakhir daftar historis yang diuji). Saat blok 1.050.000 lahir, siklus 5 terbuka
+  sendiri dan target berikutnya pindah ke 1.260.000.
+- **Status siklus berjalan:** `MENUNGGU TOP` (belum ada top) → `TOP SEMENTARA` (puncak siklus, harga
+  sudah ≥40% di bawahnya) → `BOTTOM TERKONFIRMASI` (bottom sudah naik ≥ +100% tanpa low lebih rendah) →
+  `SIKLUS SELESAI` (top final: turun ≥60% lalu ditembus lagi).
+
+| Panel | Isi |
+|---|---|
+| KPI | Status · hari sejak halving · top (final/sementara) & harga sekarang vs top · bottom (terkonfirmasi atau "terendah sejauh ini", naik berapa dari bottom) · perkiraan sesuai status (tanggal tengah + 80%, plus cek silang) · halving berikutnya (tanggal, hitung mundur, rentang) |
+| Perkiraan per status | MENUNGGU TOP: top = halving + jeda halving→top; bottom = rantai halving + jeda + jarak top→bottom (Monte Carlo deterministik 20.000 sampel). TOP SEMENTARA: bottom = top + jarak top→bottom; top berikutnya = halving berikutnya + jeda (cek silang top + jarak top→top). Bottom terkonfirmasi / selesai: top berikutnya (cek silang bottom + jarak bottom→top) |
+| Penanda | `LEWAT JENDELA PROYEKSI` kalau hari ini melewati batas atas 80% dan kejadiannya belum terkonfirmasi; `DI LUAR POLA HISTORIS` kalau lewat batas atas 95% |
+| Keterangan | "Berdasarkan {n} siklus selesai · rentang 80% · uji mundur: rata-rata meleset {x} hari" — n dan x dihitung |
+| Halving berikutnya | `sisa blok × menit per blok`; tengah = rata-rata waktu blok epoch sekarang (mempool `timeAvg`); rentang = min/max dari itu, rata-rata epoch halving terakhir, dan 10 menit |
+| PETA SIKLUS | Close mingguan (log) sejak 2012, garis halving dari blok, top/bottom (penuh = pasti, kosong = sementara), area 80% perkiraan yang aktif. Hover: tanggal + harga |
+| BERAPA LAMA TIAP FASE | Halving→top, top→bottom, top→top, bottom→top: nilai per siklus, rata-rata, rentang 80%. Baris bertambah sendiri saat siklus berikutnya selesai |
+
+Contoh 19 Okt 2026: TOP SEMENTARA; bottom ±19 Okt 2026 (80%: 29 Agu – 10 Des 2026); top siklus 5
+±11 Agu 2029; halving ±4 Apr 2028 (waktu blok 9,87 menit). Tidak ditampilkan (tetap di notebook
+`research/`): peluang bottom per bulan, skenario harga, thesis populer, tabel uji mundur, kelipatan &
+drawdown.
+
+### 3.3 POWER-LAW — `/quant/corridor`
+
+`log10(harga) = a + b·log10(hari sejak genesis)`, di-fit ulang otomatis tiap awal bulan hanya dengan
+data sebelumnya. **Persentil** = berapa persen selisih masa lalu ≤ selisih hari ini (0 = paling
+murah, 100 = paling mahal). Zona: batas 10 / 30 / 70 / 90.
+
+| Panel | Isi |
+|---|---|
+| POSISI HARGA | Persentil hari ini + zona (meteran), tangga harga pita P5…P95 hari ini dengan close terakhir di dalamnya, eksponen b terbaru dan pergeserannya (2014 6,54 → sekarang 5,64) |
+| KORIDOR POWER-LAW | Harga di pita dari fit terbaru (pita masa lalu memakai pengetahuan sekarang) + persentil walk-forward dengan garis 10/30/70/90. Hover: tanggal, harga, persentil, pita |
+
+Tidak ditampilkan (riset, di notebook): uji per zona, episode sentuh pita, persentil di top/bottom,
+pita di tanggal proyeksi.
 
 ---
 
@@ -357,6 +405,13 @@ Jendela pembanding = 2 tahun untuk tiap frekuensi (24 data bulanan, 8 data kuart
 Penjaga kesegaran: bulanan 120 hari, kuartalan **270 hari** (dulu 200 — kedaluwarsa 18 Okt
 sebelum GDP Q3 rilis, sehingga panel sempat MOCK).
 
+**JADWAL MAKRO AS** (19 Okt): 6 rilis terdekat — FOMC (dari halaman kalender federalreserve.gov,
+parser gagal-keras, diuji dengan salinan halaman), CPI dan NFP (FRED `release/dates` dengan
+`include_release_dates_with_no_data=true`, release id 10 dan 50), dengan hitung mundur hari.
+Sumber yang gagal disebut di panel dan jadwalnya tidak ditampilkan; semua gagal → panel
+disembunyikan. Tidak ada tanggal manual. (Marker "FOMC / CPI" statis di peta event sudah dihapus
+16 Okt; peta tetap hanya berita.)
+
 ### 6.2 REGIME — `/macro/regime`
 
 Fase ekonomi dari pertumbuhan × inflasi inti, masing-masing dibanding 2 tahun terakhir. Kalau
@@ -387,6 +442,20 @@ Kolom CORR dan Z 1Y serta strip z-score dihapus. Tanggal BTC dari CoinGecko diko
 | FORWARD RETURN RANGE | Pita volatilitas 1σ 7 hari, **bukan prediksi arah** (dulu tertulis dua kali) |
 
 Skor P(naik) bukan peluang — belum dikalibrasi; peluangnya adalah track record.
+
+### 7.2 MONTHLY FORECAST — `/forecast/30d` (model Timothy)
+
+Monte Carlo 30 hari dari worker Python Timothy, dibuat **seminggu sekali** (Senin 00:20 UTC), tidak
+dihitung saat halaman dibuka. Metode dan alasan: [DECISIONS §16](DECISIONS.md).
+
+| Panel | Isi |
+|---|---|
+| PRAKIRAAN 30 HARI · MONTE CARLO | 120 close terakhir + kisaran 50/80/90% tiap hari D+1…D+30 dan ±24 jalur simulasi nyata (dipilih dari terendah ke tertinggi). Drift dibuang → garis tengah ≈ harga sekarang: **kisaran, bukan arah**. Hover: tanggal, harga atau kisaran hari itu |
+| KISARAN HARGA PER HARI | D+1 / 7 / 14 / 21 / 30: SANGAT RENDAH (P5), RENDAH (P25), TENGAH (P50), TINGGI (P75), SANGAT TINGGI (P95), dengan % dari harga as-of |
+| SEBERAPA BISA DIPERCAYA | Uji mundur tanpa kebocoran: berapa persen harga sungguhan masuk kisaran 80% (19 Okt: 80% / 82% / 80% di 7 / 14 / 30 hari); galat median 30 hari 11,8% = sama dengan tebakan "harga tetap" (model tidak menebak arah). Lalu tabel prakiraan minggu-minggu sebelumnya vs harga sungguhan (terisi mulai minggu kedua). Sumber gejolak awal: DVOL Deribit × faktor VRP (19 Okt: 38,8% × 0,80 = 31,2%/tahun) |
+
+Contoh 19 Okt (as-of 18 Okt, harga Coinbase $82.007): D+30 SANGAT RENDAH $65.280 · TENGAH $81.986 ·
+SANGAT TINGGI $102.321.
 
 ### 7.2 DISTRIBUTION — `/forecast/distribution`
 
@@ -419,7 +488,7 @@ Ditemukan saat menelusuri kode dan dicek di dashboard. **Belum diperbaiki.**
 | 2 | File yang sama | **ATR (VOL %)** sebenarnya `(atas − bawah)/tengah` = lebar Bollinger | Label salah; ATR asli tidak dihitung |
 | 3 | ~~`signal_rule.json` (model mingguan)~~ | ~~Ambang 0.23/0.70 karangan~~ — **selesai 17 Okt**: dihapus, ambang kini `avg_threshold` 0.06 dari export notebook | — |
 | 4 | Label berita (kategori, bullish/bearish) | Aturan kata kunci dipertahankan (rule-based), tapi pencocokannya per potongan huruf: "Hard**war**e" dan "Fed's **War**sh" → GEOPOLITICS, "P**red**ict" → bearish, "Central **ban**k" → bearish + REGULATION. Label bull/bear nanti diganti model researcher | Label bisa salah sampai pencocokan diubah ke per kata utuh |
-| 5 | ONCHAIN confluence | Konstanta 50, belum disambungkan ke data on-chain | 6% skor tidak bergerak |
+| 5 | ~~ONCHAIN confluence~~ | ~~Konstanta 50~~ — **selesai 19 Okt**: lapisan dihapus, bobot dinormalisasi ulang | — |
 | 6 | ~~`StatusFooter.tsx`~~ | ~~Hydration mismatch "2s ago"~~ — **selesai 18 Okt**: SYNC menampilkan `DIRECT*`, umur diformat terhadap waktu render server | — |
 | 7 | Data training notebook (FRED) | **Lookahead**: GDP ditempatkan di awal kuartal + 30 hari (GDP Q2 sudah ada 1 Mei, rilis ~30 Jul), M2 di tanggal observasi (~7 minggu sebelum rilis). Diverifikasi 17 Okt dari tanggal perubahan nilai di `btc_master_2.csv` | Model dilatih dengan GDP/M2 satu periode lebih baru dari yang tersedia saat itu → metrik test bisa sedikit terlalu optimis; live tidak bisa meniru. Perbaiki di notebook dengan lag rilis |
 

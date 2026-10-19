@@ -1,4 +1,4 @@
-import { seeded, pick } from '@/lib/rng';
+import { seeded } from '@/lib/rng';
 import type { SeasonalityCell, SeasonalityArgs } from './types';
 
 export function mockSeasonality({ symbol = 'BTC', years = 7 }: SeasonalityArgs): SeasonalityCell[] {

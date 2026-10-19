@@ -5,17 +5,15 @@ export function mockConfluence({ symbol = 'BTC' }: ConfluenceArgs): ConfluenceDa
   const r = seeded(`confluence_${symbol}`);
   
   const macro = 60 + r() * 20;
-  const onchain = 65 + r() * 20;
   const sentiment = 55 + r() * 25;
   const technical = 70 + r() * 15;
   const news = 50 + r() * 30;
   
-  const overall = (macro + onchain + sentiment + technical + news) / 5;
+  const overall = (macro + sentiment + technical + news) / 4;
   
   return {
     layers: {
       MACRO: macro,
-      ONCHAIN: onchain,
       SENTIMENT: sentiment,
       TECHNICAL: technical,
       NEWS: news,

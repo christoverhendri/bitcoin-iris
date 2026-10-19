@@ -116,14 +116,3 @@ export async function getStats24h(symbol = 'BTC-USD'): Promise<CoinbaseStats> {
     asOf: new Date(day[day.length - 1].ts * 1000).toISOString(),
   };
 }
-
-/**
- * Monthly BTC bars over Yahoo's whole history (BTC-USD starts 2014-09-17, so the
- * first full month is 2014-10), oldest first. Yahoo appends the live, still
- * running month as an extra bar stamped "now"; callers group by calendar month.
- */
-export async function getMonthlyCandles(symbol = 'BTC-USD'): Promise<Candle[]> {
-  const rows = await rawCandles(symbol, '1mo', 'max', 3600);
-  if (rows.length < 24) throw new Error(`yahoo: ${symbol} returned ${rows.length} monthly bars`);
-  return rows;
-}
