@@ -1,10 +1,10 @@
 import type { ReactNode } from 'react';
 import { DataTable } from '@/components/primitives';
 
-/** DataTable in the terminal's mono type (the table class sets no size of its own). */
+/** DataTable at the terminal's body size (the table class sets no size of its own). */
 export function QTable({ children }: { children: ReactNode }) {
   return (
-    <div style={{ fontFamily: 'var(--mono)', fontSize: 10.5 }}>
+    <div style={{ position: 'relative', zIndex: 4, padding: '0 14px', fontSize: 14 }}>
       <DataTable>{children}</DataTable>
     </div>
   );
@@ -13,28 +13,19 @@ export function QTable({ children }: { children: ReactNode }) {
 /** `METODOLOGI` chip; the note (built from `src/lib/quant/config.ts`) shows on hover. */
 export function MethodTag({ note }: { note: string }) {
   return (
-    <span
-      title={note}
-      className="iris-micro"
-      style={{
-        fontFamily: 'var(--mono)',
-        fontSize: 8.5,
-        letterSpacing: '.14em',
-        color: 'var(--mut)',
-        border: '1px dashed var(--line2)',
-        padding: '3px 8px',
-        cursor: 'help',
-        whiteSpace: 'nowrap',
-      }}
-    >
-      METODOLOGI
+    <span title={note} className="chip" style={{ color: 'var(--mut)', cursor: 'help' }}>
+      Metodologi
     </span>
   );
 }
 
 /** The 1–2 sentence plain-language note under a panel header. */
 export function Explain({ children }: { children: ReactNode }) {
-  return <p style={{ margin: 0, padding: '10px 12px 0', fontSize: 11.5, lineHeight: 1.55, color: 'var(--mut)' }}>{children}</p>;
+  return (
+    <p style={{ position: 'relative', zIndex: 4, margin: 0, padding: '4px 26px 0', fontSize: 15, lineHeight: 1.55, color: '#e9ddd2' }}>
+      {children}
+    </p>
+  );
 }
 
 /** Day number -> epoch ms. */
@@ -71,7 +62,5 @@ export function yearTicks(d0: number, d1: number, step = 2): { day: number; year
 }
 
 export const microText = {
-  fontFamily: 'var(--mono)',
-  fontSize: 8,
-  letterSpacing: '0.1em',
+  fontSize: 13,
 } as const;

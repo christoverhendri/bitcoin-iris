@@ -1,7 +1,18 @@
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { type Tone, toneVar } from '@/lib/theme/tokens';
+import { softCase } from '@/lib/softCase';
 
-/** `LABEL ......... VALUE` — the snapshot / metric list row. */
+/**
+ * Bar fills: the accent for "up", a warm brown for "down", so the two differ
+ * in lightness inside the one Ember colour family.
+ */
+function barFill(t: Tone): string {
+  if (t === 'up') return 'var(--accent)';
+  if (t === 'down') return '#8a5e40';
+  return toneVar(t);
+}
+
+/** `Label ......... Value`: the snapshot / metric list row. */
 export function KeyValueRow({
   label,
   value,
@@ -16,33 +27,21 @@ export function KeyValueRow({
 }) {
   return (
     <div
+      className="kv-row"
       style={{
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'baseline',
-        gap: 10,
-        padding: '7px 12px',
-        borderBottom: '1px solid var(--line)',
+        gap: 12,
+        padding: '11px 12px',
+        margin: '0 14px',
       }}
     >
-      <span
-        className="iris-micro"
-        style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--mut)', letterSpacing: '.06em' }}
-      >
-        {label}
-      </span>
+      <span className="t-label">{softCase(label)}</span>
       <span style={{ textAlign: 'right' }}>
-        <span
-          className="iris-micro"
-          style={{ fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 700, color: toneVar(tone) }}
-        >
-          {value}
-        </span>
+        <span style={{ fontSize: 14, fontWeight: 600, color: toneVar(tone) }}>{value}</span>
         {sub ? (
-          <span
-            className="iris-micro"
-            style={{ display: 'block', fontFamily: 'var(--mono)', fontSize: 8.5, color: 'var(--dim)' }}
-          >
+          <span className="t-caption" style={{ display: 'block' }}>
             {sub}
           </span>
         ) : null}
@@ -51,42 +50,32 @@ export function KeyValueRow({
   );
 }
 
-/** Small labelled figure used in the 5-tile technical strips. */
+/** Small labelled figure used in the technical strips. */
 export function StatTile({
   label,
   value,
   tone = 'txt',
   detail,
+  inset,
 }: {
   label: string;
   value: string;
   tone?: Tone;
   detail?: string;
+  /** Darker, for use inside another card. */
+  inset?: boolean;
 }) {
   return (
-    <div style={{ background: 'var(--panel)', padding: '11px 14px', minWidth: 0 }}>
+    <div className={inset ? 'iris-inset' : 'iris-card'} style={{ padding: '14px 16px', minWidth: 0 }}>
+      <div className="t-label">{softCase(label)}</div>
       <div
-        className="iris-micro"
-        style={{ fontFamily: 'var(--mono)', fontSize: 9, letterSpacing: '.14em', color: 'var(--mut)' }}
-      >
-        {label}
-      </div>
-      <div
-        style={{
-          fontFamily: 'var(--mono)',
-          fontWeight: 700,
-          fontSize: 16,
-          color: toneVar(tone),
-          marginTop: 5,
-        }}
+        className="t-title"
+        style={{ fontSize: 22, color: toneVar(tone), marginTop: 6 }}
       >
         {value}
       </div>
       {detail ? (
-        <div
-          className="iris-micro"
-          style={{ fontFamily: 'var(--mono)', fontSize: 9, color: 'var(--dim)', marginTop: 2 }}
-        >
+        <div className="t-caption" style={{ marginTop: 3 }}>
           {detail}
         </div>
       ) : null}
@@ -94,7 +83,7 @@ export function StatTile({
   );
 }
 
-/** Big KPI card with a progress bar — the four cards on Overview. */
+/** Big KPI card with an optional progress bar. */
 export function KpiCard({
   label,
   value,
@@ -102,6 +91,7 @@ export function KpiCard({
   detail,
   pct,
   right,
+  bare,
 }: {
   label: string;
   value: string;
@@ -110,56 +100,40 @@ export function KpiCard({
   /** 0-100. Omit to hide the bar. */
   pct?: number;
   right?: ReactNode;
+  /** Render without its own card, for use inside another card. */
+  bare?: boolean;
 }) {
   return (
-    <div style={{ background: 'var(--panel)', padding: '11px 14px', minWidth: 0 }}>
-      <div
-        style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}
-      >
-        <span
-          className="iris-micro"
-          style={{ fontFamily: 'var(--mono)', fontSize: 9, letterSpacing: '.14em', color: 'var(--mut)' }}
-        >
-          {label}
-        </span>
+    <div className={bare ? undefined : 'iris-card'} style={{ padding: '18px 20px', minWidth: 0 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+        <span className="t-label">{softCase(label)}</span>
         {right}
       </div>
       <div
-        style={{
-          fontFamily: 'var(--font-heading)',
-          fontWeight: 800,
-          fontSize: 22,
-          color: toneVar(tone),
-          marginTop: 6,
-          lineHeight: 1.1,
-        }}
+        className="t-display"
+        style={{ fontSize: 32, color: toneVar(tone), marginTop: 10 }}
       >
         {value}
       </div>
       {detail ? (
-        <div
-          className="iris-micro"
-          style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--mut)', marginTop: 2 }}
-        >
-          {detail}
-        </div>
+        <div style={{ fontSize: 13, color: 'var(--mut)', marginTop: 6, lineHeight: 1.45 }}>{detail}</div>
       ) : null}
-      {pct == null ? null : <ProgressBar pct={pct} tone={tone} style={{ marginTop: 9 }} />}
+      {pct == null ? null : <ProgressBar pct={pct} tone={tone} style={{ marginTop: 14 }} />}
     </div>
   );
 }
 
-/** 4px sunk track, 2px fill, no radius. */
+/** A rounded track with a soft fill. */
 export function ProgressBar({
   pct,
   tone = 'up',
-  height = 4,
+  height = 6,
   style,
 }: {
   pct: number;
   tone?: Tone;
   height?: number;
-  style?: React.CSSProperties;
+  style?: CSSProperties;
 }) {
   const clamped = Math.max(0, Math.min(100, pct));
   return (
@@ -170,25 +144,33 @@ export function ProgressBar({
       aria-valuemax={100}
       style={{
         height,
-        background: 'var(--sunk)',
-        border: '1px solid var(--line2)',
+        borderRadius: height,
+        background: 'var(--line)',
+        overflow: 'hidden',
         ...style,
       }}
     >
-      <div style={{ height: height - 2, width: `${clamped}%`, background: toneVar(tone) }} />
+      <div
+        style={{
+          height: '100%',
+          width: `${clamped}%`,
+          borderRadius: height,
+          background: barFill(tone === 'txt' ? 'mut' : tone),
+        }}
+      />
     </div>
   );
 }
 
 /**
- * A bar that grows left or right from a centre zero-line — monthly seasonality
+ * A bar that grows left or right from a centre zero-line: monthly seasonality
  * averages, lag correlations, exchange netflow summaries.
  */
 export function DivergingBar({
   value,
   max,
   tone,
-  height = 6,
+  height = 8,
 }: {
   value: number;
   /** Absolute value that fills half the track. */
@@ -200,7 +182,15 @@ export function DivergingBar({
   const half = frac * 50;
   const t: Tone = tone ?? (value >= 0 ? 'up' : 'down');
   return (
-    <div style={{ position: 'relative', height, background: 'var(--sunk)', border: '1px solid var(--line2)' }}>
+    <div
+      style={{
+        position: 'relative',
+        height,
+        borderRadius: height,
+        background: 'var(--line)',
+        overflow: 'hidden',
+      }}
+    >
       <span
         style={{
           position: 'absolute',
@@ -208,7 +198,7 @@ export function DivergingBar({
           top: 0,
           bottom: 0,
           width: 1,
-          background: 'var(--line2)',
+          background: 'var(--stroke-strong)',
         }}
       />
       <span
@@ -216,7 +206,7 @@ export function DivergingBar({
           position: 'absolute',
           top: 0,
           bottom: 0,
-          background: toneVar(t),
+          background: barFill(t),
           ...(value >= 0
             ? { left: '50%', width: `${half}%` }
             : { right: '50%', width: `${half}%` }),
@@ -230,20 +220,15 @@ export function DivergingBar({
 export function Tag({ label, tone = 'mut' }: { label: string; tone?: Tone }) {
   return (
     <span
-      className="iris-micro"
+      className="chip"
       style={{
-        fontFamily: 'var(--mono)',
-        fontSize: 8.5,
-        letterSpacing: '.14em',
         color: toneVar(tone),
-        border: `1px solid color-mix(in srgb, ${toneVar(tone)} 40%, transparent)`,
-        padding: '3px 8px',
+        background: `color-mix(in srgb, ${toneVar(tone)} 12%, transparent)`,
+        borderColor: `color-mix(in srgb, ${toneVar(tone)} 28%, transparent)`,
         whiteSpace: 'nowrap',
-        lineHeight: 1,
-        display: 'inline-block',
       }}
     >
-      {label}
+      {softCase(label)}
     </span>
   );
 }

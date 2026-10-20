@@ -124,9 +124,36 @@ export async function getFeedHealth(): Promise<FeedHealth> {
   };
 }
 
+/**
+ * Without a model registry (no Supabase), the model actually serving the
+ * weekly panel is the one that wrote the worker's local signal file. Reporting
+ * "v0-placeholder" while that trained model is live would understate it.
+ */
+async function localSignalModel(): Promise<{ name: string; version: string; isPlaceholder: boolean } | null> {
+  const file = process.env.CLF_LOCAL_SIGNAL_FILE;
+  if (!file) return null;
+  try {
+    const { readFile } = await import('node:fs/promises');
+    const row = JSON.parse(await readFile(file, 'utf8')) as {
+      model_name?: string;
+      model_created_utc?: string;
+      is_synthetic?: boolean;
+    };
+    if (typeof row.model_name !== 'string') return null;
+    return {
+      name: row.model_name,
+      version: `clf_7d · ${(row.model_created_utc ?? '').slice(0, 10) || 'unknown'}`,
+      isPlaceholder: row.is_synthetic === true,
+    };
+  } catch {
+    return null;
+  }
+}
+
 async function getActiveModel(): Promise<{ name: string; version: string; isPlaceholder: boolean }> {
-  const fallback = { name: 'weekly_regime', version: 'v0-placeholder', isPlaceholder: true };
+  const placeholder = { name: 'weekly_regime', version: 'v0-placeholder', isPlaceholder: true };
   const sb = getSupabase();
+  const fallback = sb ? placeholder : ((await localSignalModel()) ?? placeholder);
   if (!sb) return fallback;
   try {
     const { data, error } = await sb

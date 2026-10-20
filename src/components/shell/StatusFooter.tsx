@@ -24,57 +24,56 @@ export interface FeedHealth {
 }
 
 /**
- * The pinned rail footer: `FEEDS 4/17 · MODEL v0.9.2 · SYNC 2m ago`.
- * Everything here is read from `data_source_status` and `model_registry`, so it
- * cannot claim a feed is live while the panel above it shows placeholder data.
+ * The page footer: how many data feeds are alive, which model version is
+ * running, when the data last synced, and the disclaimer. Everything here is
+ * read from `data_source_status` and `model_registry`, so it cannot claim a
+ * feed is live while the panel above it shows placeholder data.
  */
 export function StatusFooter({ health, now }: { health: FeedHealth; now?: number }) {
   const allLive = health.live === health.enabled && health.enabled > 0;
   const someLive = health.live > 0;
-  const feedsTone = allLive ? 'var(--up)' : someLive ? 'var(--amber)' : 'var(--dim)';
 
   return (
-    <div
-      className="iris-micro"
+    <footer
       style={{
-        borderTop: '1px solid var(--line)',
-        padding: '9px 13px',
-        fontFamily: 'var(--mono)',
-        fontSize: 8.5,
-        letterSpacing: '.14em',
-        display: 'grid',
-        gap: 4,
+        display: 'flex',
+        flexWrap: 'wrap',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        gap: 12,
+        padding: '28px 0 36px',
+        fontSize: 13,
+        color: 'var(--dim)',
       }}
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
-        <span style={{ color: 'var(--dim)' }}>FEEDS</span>
-        <span style={{ color: feedsTone }}>
-          {health.live}/{health.enabled}
+      <span style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--mut)' }}>
+          <span
+            className={allLive ? 'iris-pulse' : undefined}
+            style={{
+              width: 7,
+              height: 7,
+              borderRadius: '50%',
+              background: someLive ? 'var(--accent)' : 'var(--dim)',
+            }}
+          />
+          {health.live} of {health.enabled} feeds live
         </span>
-      </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
-        <span style={{ color: 'var(--dim)' }}>MODEL</span>
-        <span
-          style={{ color: health.modelIsPlaceholder ? 'var(--amber)' : 'var(--txt)' }}
-          title={health.modelIsPlaceholder ? 'Rule-based placeholder, not a trained model' : undefined}
-        >
-          {health.modelVersion}
+        <span title={health.modelIsPlaceholder ? 'Rule-based placeholder, not a trained model' : health.modelName}>
+          Model {health.modelVersion}
         </span>
-      </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
-        <span style={{ color: 'var(--dim)' }}>SYNC</span>
         <span
-          style={{ color: 'var(--mut)' }}
           title={
             health.syncFromDirectFetch
-              ? 'No ingestion job reports for the live feeds yet: they are fetched directly on render. There is no sync time to show — each panel footer shows its own data age, and a STALE badge when that age is too old.'
+              ? 'No ingestion job reports for the live feeds yet: they are fetched directly on render. Each panel footer shows its own data age, and a STALE badge when that age is too old.'
               : 'Newest success reported by an ingestion job.'
           }
         >
-          {/* Never the render time dressed up as an age (spec §8: no "0s ago" from render time). */}
-          {health.syncFromDirectFetch ? 'DIRECT*' : fmtAgo(health.lastSyncAt, now ?? health.renderedAt)}
+          {/* Never the render time dressed up as an age. */}
+          Sync {health.syncFromDirectFetch ? 'direct on render' : fmtAgo(health.lastSyncAt, now ?? health.renderedAt)}
         </span>
-      </div>
-    </div>
+      </span>
+      <span>For research only. Not financial advice. IRIS BTC © {new Date(health.renderedAt).getUTCFullYear()}</span>
+    </footer>
   );
 }

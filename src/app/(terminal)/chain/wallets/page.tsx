@@ -1,40 +1,36 @@
 import { LiveOnly } from '@/components/primitives';
 import { getChainFlows } from '@/lib/features/chainFlows';
-import { ExchangeReservePanel } from '@/components/features/flows/ExchangeReservePanel';
-import { NetflowChart } from '@/components/features/flows/NetflowChart';
+import { ExchangeRadar, LargeTransfers, NetflowCard, ReserveHero } from '@/components/features/onchain/OnChainCards';
 import { FlowRadar } from '@/components/features/flows/FlowRadar';
 
-export const revalidate = 30;
+export const revalidate = 60;
 
-/**
- * Exchange wallets and transfers (curation 2026-10-18). Each number appears
- * once: cold/hot lives only in the reserve bar, in/out/net only in the netflow
- * chart; the duplicate SUPPLY split and FLOW SUMMARY table were removed.
- */
+/** The tracked exchange addresses: what they hold, what moved in and out, and every large transfer. */
 export default async function WalletsPage() {
   const flows = await getChainFlows({ symbol: 'BTC' });
 
   return (
-    <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12, minWidth: 0 }}>
-      <p style={{ margin: 0, fontSize: 11.5, lineHeight: 1.55, color: 'var(--mut)' }}>
-        Saldo dan transfer besar dari 15 alamat bursa yang dilacak (sampel, bukan seluruh dompet
-        bursa). Cold = simpanan jangka panjang, hot = dompet operasional yang siap dipakai. BTC yang
-        masuk ke bursa biasanya disiapkan untuk dijual; yang keluar biasanya untuk disimpan.
-      </p>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, minWidth: 0 }}>
-        <div style={{ flex: '1 1 380px', minWidth: 0 }}>
-          <LiveOnly env={flows} title="EXCHANGE RESERVE">
-            <ExchangeReservePanel flows={flows} />
-          </LiveOnly>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20, minWidth: 0 }}>
+      <LiveOnly env={flows} title="EXCHANGE RESERVE">
+        <section className="ember-split" aria-label="Reserves and net flow">
+          <div className="main rise" style={{ ['--i' as string]: 2 }}>
+            <ReserveHero flows={flows} />
+          </div>
+          <div className="side rise" style={{ ['--i' as string]: 3 }}>
+            <NetflowCard flows={flows} />
+          </div>
+        </section>
+        <section className="ember-split" aria-label="By exchange">
+          <div className="main rise" style={{ ['--i' as string]: 4 }}>
+            <ExchangeRadar flows={flows} />
+          </div>
+          <div className="side rise" style={{ ['--i' as string]: 5 }}>
+            <LargeTransfers flows={flows} limit={5} />
+          </div>
+        </section>
+        <div className="rise" style={{ ['--i' as string]: 6 }}>
+          <FlowRadar flows={flows} />
         </div>
-        <div style={{ flex: '1 1 380px', minWidth: 0 }}>
-          <LiveOnly env={flows} title="EXCHANGE NETFLOW">
-            <NetflowChart flows={flows} />
-          </LiveOnly>
-        </div>
-      </div>
-      <LiveOnly env={flows} title="FLOW RADAR">
-        <FlowRadar flows={flows} />
       </LiveOnly>
     </div>
   );

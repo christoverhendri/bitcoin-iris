@@ -26,30 +26,18 @@ export function TimeframePills() {
   if (!section || section.key !== 'overview') return null;
 
   return (
-    <div role="group" aria-label="Timeframe" style={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
-      {TIMEFRAMES.map((t) => {
-        const active = t === tf;
-        return (
-          <button
-            key={t}
-            type="button"
-            className="pill-btn iris-micro"
-            aria-pressed={active}
-            onClick={() => setTf(t)}
-            style={{
-              fontFamily: 'var(--mono)',
-              fontSize: 9,
-              letterSpacing: '.12em',
-              padding: '5px 8px',
-              border: '1px solid var(--line2)',
-              background: active ? '#1b2430' : 'transparent',
-              color: active ? 'var(--txt)' : 'var(--mut)',
-            }}
-          >
-            {t}
-          </button>
-        );
-      })}
+    <div role="group" aria-label="Timeframe" className="seg">
+      {TIMEFRAMES.map((t) => (
+        <button
+          key={t}
+          type="button"
+          className="seg-btn"
+          aria-pressed={t === tf}
+          onClick={() => setTf(t)}
+        >
+          {t}
+        </button>
+      ))}
     </div>
   );
 }

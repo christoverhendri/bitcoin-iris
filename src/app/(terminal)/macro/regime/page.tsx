@@ -21,7 +21,7 @@ export default async function MacroRegimePage({
   const macro = await getMacroCountry({ countries: [country] });
 
   return (
-    <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12, minWidth: 0 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20, minWidth: 0 }}>
       <LiveOnly env={macro} title="FASE EKONOMI">
         <RegimeQuadrant macro={macro} country={country} countryLabel={label} />
       </LiveOnly>

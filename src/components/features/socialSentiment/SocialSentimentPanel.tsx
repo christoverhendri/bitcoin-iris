@@ -1,11 +1,9 @@
-import type { CSSProperties } from 'react';
+import { softCase } from '@/lib/softCase';
 import { Panel, PanelHeader, MockBadge, SourceFootnote } from '@/components/primitives';
 import type { Envelope } from '@/lib/envelope';
 import {
   BUCKETS,
-  BUCKET_COLOR,
   BUCKET_LABEL,
-  donutArcs,
   fmtShare,
   netTilt,
   type SocialSentimentData,
@@ -15,116 +13,61 @@ import {
 /**
  * BTC social sentiment from Santiment: what share of posts on Twitter, Reddit,
  * Telegram and 4chan its classifier labels positive / neutral / negative.
- *
- * Two marks, two jobs:
- *   - a donut for the newest day — part-to-whole at a glance, three slices.
- *     (The 30-day diverging bar chart was removed in the 2026-10-18 curation.)
- *
- * Every slice and column carries a text label or a tooltip; colour is never the
- * only way to tell positive from negative.
+ * Shown as the net tilt (positive minus negative), its daily line, and the
+ * three shares written out, so colour is never the only carrier.
  */
-
-const mono: CSSProperties = { fontFamily: 'var(--mono)' };
-
-function Donut({ day, size }: { day: SocialSentimentDay; size: number }) {
-  const r = size / 2;
-  const arcs = donutArcs(day, r, r, r - 1, r * 0.62);
-  return (
-    <svg
-      viewBox={`0 0 ${size} ${size}`}
-      width={size}
-      height={size}
-      role="img"
-      aria-label={BUCKETS.map((b) => `${BUCKET_LABEL[b]} ${fmtShare(day[b])}`).join(', ')}
-      style={{ flexShrink: 0, display: 'block' }}
-    >
-      {arcs.map((a) => (
-        <path key={a.bucket} d={a.d} fill={BUCKET_COLOR[a.bucket]}>
-          <title>{`${BUCKET_LABEL[a.bucket]} ${fmtShare(a.share)} · ${day.date}`}</title>
-        </path>
-      ))}
-    </svg>
-  );
-}
-
-function Legend({ day, dense }: { day: SocialSentimentDay; dense?: boolean }) {
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: dense ? 2 : 6, minWidth: 0 }}>
-      {BUCKETS.map((b) => (
-        <div key={b} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ width: 8, height: 8, borderRadius: 2, background: BUCKET_COLOR[b], flexShrink: 0 }} />
-          <span style={{ ...mono, fontSize: dense ? 9 : 10, color: 'var(--mut)', letterSpacing: '.1em', minWidth: 62 }}>
-            {BUCKET_LABEL[b]}
-          </span>
-          <span style={{ ...mono, fontSize: dense ? 11 : 13, fontWeight: 700, color: 'var(--txt)' }}>
-            {fmtShare(day[b])}
-          </span>
-        </div>
-      ))}
-    </div>
-  );
-}
 
 function lagNote(d: SocialSentimentData) {
   return `DATA AS OF ${d.latest.date} · ${d.lagDays} DAYS BEHIND`;
 }
 
-/** Full panel for the Sentiment page. */
-export function SocialSentimentPanel({ social }: { social: Envelope<SocialSentimentData> }) {
+/** Net tilt per day, as an SVG path over `w x h` (positive up). */
+function tiltPath(history: SocialSentimentDay[], w: number, h: number) {
+  const vals = history.map((d) => netTilt(d));
+  const m = Math.max(5, ...vals.map((v) => Math.abs(v)));
+  const pts = vals.map((v, i) => [vals.length > 1 ? (i / (vals.length - 1)) * w : w / 2, h / 2 - (v / m) * (h / 2 - 4)]);
+  const line = pts.map((p, i) => `${i ? 'L' : 'M'}${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join(' ');
+  return { line, area: pts.length ? `${line} L${w} ${h / 2} L0 ${h / 2} Z` : '' };
+}
+
+/** Compact card for the Overview row: the net tilt, its 30-day line and the three shares. */
+export function SocialSentimentCard({ social }: { social: Envelope<SocialSentimentData> }) {
   const d = social.data;
   const tilt = netTilt(d.latest);
+  const { line, area } = tiltPath(d.history, 300, 80);
   return (
-    <Panel>
-      <PanelHeader
-        title="SOCIAL SENTIMENT · BTC"
-        note={`Santiment · ${d.sources.join(', ')}`}
-        right={<MockBadge env={social} />}
-      />
-      <div style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 18, flexWrap: 'wrap' }}>
-          <Donut day={d.latest} size={124} />
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minWidth: 0 }}>
-            <Legend day={d.latest} />
-            <div style={{ ...mono, fontSize: 10, color: 'var(--mut)' }}>
-              {tilt >= 0 ? '+' : ''}
-              {tilt.toFixed(1)} pts more {tilt >= 0 ? 'positive than negative' : 'negative than positive'}
-            </div>
-          </div>
+    <Panel style={{ height: '100%' }}>
+      <PanelHeader title="Social sentiment" note={`${d.history.length} days`} right={<MockBadge env={social} />} />
+      <div style={{ position: 'relative', zIndex: 4, padding: '4px 26px 18px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
+          <span className="t-display" style={{ fontSize: 48 }}>
+            {tilt >= 0 ? '+' : '−'}
+            {Math.abs(tilt).toFixed(1)}
+          </span>
+          <span style={{ fontSize: 15, fontWeight: 600, color: tilt >= 0 ? '#ffb27a' : 'var(--down)' }}>
+            {tilt >= 0 ? 'Leaning positive' : 'Leaning negative'}
+          </span>
         </div>
-
-        <p style={{ margin: 0, ...mono, fontSize: 8.5, lineHeight: 1.55, color: 'var(--dim)' }}>
-          {lagNote(d)}. Share of BTC posts each day that Santiment&apos;s classifier labels positive,
-          neutral or negative (counts per label ÷ all labelled posts). Santiment&apos;s free plan
-          withholds the latest 30 days, so this reads a month back, not today. Fetched daily by
-          the worker.
-        </p>
+        {d.history.length > 1 ? (
+          <svg width="100%" height={100} viewBox="0 0 300 80" preserveAspectRatio="none" role="img" aria-label={`Net social tilt over ${d.history.length} days, now ${tilt.toFixed(1)} points`}>
+            <path d="M0 40 L300 40" stroke="var(--line2)" strokeDasharray="3 5" vectorEffect="non-scaling-stroke" />
+            <path d={area} fill="var(--accent)" fillOpacity={0.15} />
+            <path d={line} fill="none" stroke="var(--accent)" strokeWidth={2} vectorEffect="non-scaling-stroke" strokeLinejoin="round" />
+          </svg>
+        ) : null}
+        <div style={{ display: 'flex', gap: 10 }}>
+          {BUCKETS.map((b) => (
+            <div key={b} className="iris-inset" style={{ flex: 1, padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <span style={{ fontSize: 13, color: 'var(--dim)' }}>{softCase(BUCKET_LABEL[b])}</span>
+              <span style={{ fontSize: 19, fontWeight: 600 }}>{fmtShare(d.latest[b])}</span>
+            </div>
+          ))}
+        </div>
+        <span className="t-caption" title={lagNote(d)}>
+          Santiment · {d.sources.join(', ')} · {d.lagDays} days behind
+        </span>
       </div>
       <SourceFootnote env={social} />
     </Panel>
-  );
-}
-
-/** Compact card for the Overview strip. */
-export function SocialSentimentCard({ social }: { social: Envelope<SocialSentimentData> }) {
-  const d = social.data;
-  return (
-    <div style={{ background: 'var(--panel)', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ padding: '11px 14px', minWidth: 0, flex: 1 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-          <span className="iris-micro" style={{ ...mono, fontSize: 9, letterSpacing: '.14em', color: 'var(--mut)' }}>
-            SOCIAL SENTIMENT
-          </span>
-          <MockBadge env={social} />
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 8 }}>
-          <Donut day={d.latest} size={58} />
-          <Legend day={d.latest} dense />
-        </div>
-        <div className="iris-micro" style={{ ...mono, fontSize: 9, color: 'var(--dim)', marginTop: 6 }}>
-          Santiment · {lagNote(d).toLowerCase()}
-        </div>
-      </div>
-      <SourceFootnote env={social} />
-    </div>
   );
 }

@@ -47,12 +47,12 @@ export function MarketsTable({ macro }: { macro: Envelope<MacroMarketsData> }) {
             <tr key={r.key}>
               <td style={{ whiteSpace: 'nowrap' }}>
                 {r.label}
-                <span style={{ color: 'var(--dim)', marginLeft: 6, fontSize: 8.5 }}>
+                <span style={{ color: 'var(--dim)', marginLeft: 6, fontSize: 12 }}>
                   {r.symbol}
                 </span>
               </td>
               <td style={{ textAlign: 'right', fontWeight: 700 }}>{r.level}</td>
-              <td style={{ fontSize: 10, color: r.raw.z1y !== null && Math.abs(r.raw.z1y) >= 2 ? 'var(--amber)' : 'var(--mut)', whiteSpace: 'nowrap' }}>
+              <td style={{ fontSize: 12, color: r.raw.z1y !== null && Math.abs(r.raw.z1y) >= 2 ? 'var(--amber)' : 'var(--mut)', whiteSpace: 'nowrap' }}>
                 {zWordsShort(r.raw.z1y)}
               </td>
               <td style={{ textAlign: 'right', color: toneVar(signTone(r.raw.change1dPct)) }}>
@@ -81,9 +81,7 @@ export function MarketsTable({ macro }: { macro: Envelope<MacroMarketsData> }) {
           <p
             style={{
               margin: 0,
-              fontFamily: 'var(--mono)',
-              fontSize: 8.5,
-              letterSpacing: '.1em',
+              fontSize: 12,
               color: 'var(--amber)',
             }}
           >
@@ -93,8 +91,7 @@ export function MarketsTable({ macro }: { macro: Envelope<MacroMarketsData> }) {
         <p
           style={{
             margin: 0,
-            fontFamily: 'var(--mono)',
-            fontSize: 8.5,
+            fontSize: 12,
             lineHeight: 1.55,
             color: 'var(--dim)',
           }}

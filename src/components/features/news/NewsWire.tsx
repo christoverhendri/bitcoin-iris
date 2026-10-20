@@ -64,9 +64,7 @@ export function NewsWire({ news, filter }: NewsWireProps) {
               href={f.key === 'all' ? '?' : `?filter=${f.key}`}
               className="iris-micro pill-btn"
               style={{
-                fontFamily: 'var(--mono)',
-                fontSize: 9,
-                letterSpacing: '.14em',
+                fontSize: 12,
                 padding: '5px 10px',
                 color: active ? 'var(--txt)' : 'var(--mut)',
                 border: '1px solid var(--line2)',
@@ -98,8 +96,7 @@ export function NewsWire({ news, filter }: NewsWireProps) {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div
                   style={{
-                    fontFamily: 'var(--mono)',
-                    fontSize: 10,
+                    fontSize: 12,
                     color: 'var(--txt)',
                     lineHeight: 1.35,
                     wordBreak: 'break-word',
@@ -108,13 +105,12 @@ export function NewsWire({ news, filter }: NewsWireProps) {
                   {a.title}
                 </div>
                 <div
-                  className="iris-micro"
+
                   style={{
                     display: 'flex',
                     gap: 6,
                     marginTop: 3,
-                    fontFamily: 'var(--mono)',
-                    fontSize: 8.5,
+                    fontSize: 12,
                     color: 'var(--dim)',
                   }}
                 >
@@ -128,15 +124,13 @@ export function NewsWire({ news, filter }: NewsWireProps) {
           ))
         ) : (
           <div
-            className="iris-micro"
+
             style={{
               flex: 1,
               display: 'grid',
               placeItems: 'center',
               padding: 24,
-              fontFamily: 'var(--mono)',
-              fontSize: 9,
-              letterSpacing: '.16em',
+              fontSize: 12,
               color: 'var(--dim)',
             }}
           >

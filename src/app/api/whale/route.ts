@@ -26,7 +26,10 @@ export async function GET(request: Request) {
   // so there is no error branch to write here.
   const env = await getWhaleEvents({ limit });
 
-  return NextResponse.json(env, {
+  // No placeholder rows leave the server: a mocked envelope keeps its flags
+  // (isMock, reason, unlockNote) so the client can say what is missing, but
+  // carries no transfers.
+  return NextResponse.json(env.isMock ? { ...env, data: [] } : env, {
     headers: { 'cache-control': 'public, max-age=0, s-maxage=30, stale-while-revalidate=60' },
   });
 }

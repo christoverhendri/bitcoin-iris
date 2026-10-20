@@ -11,24 +11,24 @@ export default async function WeeklyForecastPage() {
   const [weeklyForecast, weeklyForward] = await Promise.all([getWeeklyForecast({ symbol: 'BTC-USD' }), getWeeklyForward({})]);
 
   return (
-    <div
-      style={{
-        padding: '16px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '12px',
-        minWidth: 0,
-      }}
-    >
-      <LiveOnly env={weeklyForecast} title="WEEKLY FORECAST">
-        <DirectionCard forecast={weeklyForecast} />
-      </LiveOnly>
-      <LiveOnly env={weeklyForecast} title="DRIVER BREAKDOWN">
-        <DriverBreakdown forecast={weeklyForecast} />
-      </LiveOnly>
-      <LiveOnly env={weeklyForward} title="FORWARD VALIDATION">
-        <WeeklyForwardPanel fw={weeklyForward} />
-      </LiveOnly>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20, minWidth: 0 }}>
+      <section className="ember-split" aria-label="This week">
+        <div className="main rise" style={{ ['--i' as string]: 2 }}>
+          <LiveOnly env={weeklyForecast} title="WEEKLY FORECAST">
+            <DirectionCard forecast={weeklyForecast} />
+          </LiveOnly>
+        </div>
+        <div className="side rise" style={{ ['--i' as string]: 3, flex: '1 1 440px' }}>
+          <LiveOnly env={weeklyForecast} title="DRIVER BREAKDOWN">
+            <DriverBreakdown forecast={weeklyForecast} />
+          </LiveOnly>
+        </div>
+      </section>
+      <div className="rise" style={{ ['--i' as string]: 4 }}>
+        <LiveOnly env={weeklyForward} title="FORWARD VALIDATION">
+          <WeeklyForwardPanel fw={weeklyForward} />
+        </LiveOnly>
+      </div>
     </div>
   );
 }

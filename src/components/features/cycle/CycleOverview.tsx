@@ -111,7 +111,7 @@ export function CycleOverview({ cycle }: { cycle: Envelope<HalvingCycleData> }) 
           ) : null}
         </PanelStrip>
       </div>
-      <div style={{ padding: '0 12px 10px', fontSize: 10.5, lineHeight: 1.5, color: 'var(--dim)' }}>
+      <div style={{ padding: '0 12px 10px', fontSize: 12, lineHeight: 1.5, color: 'var(--dim)' }}>
         {caption}.{' '}
         {nh
           ? `Waktu blok: ${nh.minutes.used.toFixed(2)} menit${nh.minutes.live !== null ? ' (rata-rata epoch sekarang)' : ''}; rentang dari ${[nh.minutes.live, nh.minutes.lastEpoch, nh.minutes.target]

@@ -50,7 +50,7 @@ function SmallChart({ s }: { s: MarketSeries }) {
 
   if (pts.length < 2) {
     return (
-      <div style={{ padding: 12, fontSize: 11, color: 'var(--dim)' }}>
+      <div style={{ padding: 12, fontSize: 13, color: 'var(--dim)' }}>
         {s.label}: belum cukup data untuk korelasi 30 hari.
       </div>
     );
@@ -77,14 +77,14 @@ function SmallChart({ s }: { s: MarketSeries }) {
   return (
     <div style={{ background: 'var(--panel)', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
-        <span className="iris-micro" style={{ fontFamily: 'var(--mono)', fontSize: 9.5, letterSpacing: '.12em', color: 'var(--txt)' }}>
+        <span style={{ fontSize: 12, color: 'var(--txt)' }}>
           {s.label}
         </span>
-        <span style={{ fontFamily: 'var(--mono)', fontSize: 12, fontWeight: 700, color: 'var(--txt)' }}>
+        <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--txt)' }}>
           {h ? fmtR(h.r) : fmtR(last.r)}
         </span>
       </div>
-      <div style={{ fontSize: 11, color: 'var(--mut)', minHeight: 16 }}>
+      <div style={{ fontSize: 13, color: 'var(--mut)', minHeight: 16 }}>
         {h ? `${fmtDate(h.ts)} · ${corrWords(h.r)}` : `Sekarang: ${corrWords(last.r)}`}
       </div>
       <svg
@@ -138,7 +138,7 @@ export function RollingCorrelationCharts({ macro }: { macro: Envelope<MacroMarke
   return (
     <Panel>
       <PanelHeader title="KORELASI 30 HARI DENGAN BTC" note="riwayat setahun · return harian, dicocokkan per tanggal" right={<MockBadge env={macro} />} />
-      <p style={{ margin: 0, padding: '10px 12px', fontSize: 11.5, lineHeight: 1.55, color: 'var(--mut)', borderBottom: '1px solid var(--line)' }}>
+      <p style={{ margin: 0, padding: '4px 26px 10px', fontSize: 15, lineHeight: 1.55, color: '#e9ddd2' }}>
         Garis menunjukkan seberapa searah tiap pasar bergerak dengan BTC dalam 30 hari terakhir pada
         setiap tanggal. +1 = selalu bergerak searah, −1 = selalu berlawanan, 0 = tidak berhubungan.
         Area abu-abu = terlalu lemah untuk disebut hubungan (dengan 30 hari data, nilai di dalamnya

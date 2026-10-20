@@ -92,8 +92,7 @@ export function FlowMatrix({ etf }: { etf: Envelope<EtfFlowsData> }) {
         style={{
           margin: 0,
           padding: '10px 12px 0',
-          fontFamily: 'var(--mono)',
-          fontSize: 8.5,
+          fontSize: 12,
           lineHeight: 1.55,
           color: 'var(--dim)',
         }}

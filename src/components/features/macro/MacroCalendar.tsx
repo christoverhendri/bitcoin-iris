@@ -17,7 +17,7 @@ export function MacroCalendar({ cal }: { cal: Envelope<MacroCalendarData> }) {
   return (
     <Panel>
       <PanelHeader title="JADWAL MAKRO AS" note="dari FRED & federalreserve.gov" right={<MockBadge env={cal} />} />
-      <p style={{ margin: 0, padding: '10px 12px 0', fontSize: 11.5, lineHeight: 1.55, color: 'var(--mut)' }}>
+      <p style={{ margin: 0, padding: '4px 26px 0', fontSize: 15, lineHeight: 1.55, color: '#e9ddd2' }}>
         Jadwal rilis yang sering menggerakkan harga BTC. Tanggal diambil otomatis dari penerbitnya (FRED untuk CPI dan NFP, situs
         The Fed untuk FOMC); tidak ada tanggal yang diketik manual.
       </p>
@@ -29,15 +29,15 @@ export function MacroCalendar({ cal }: { cal: Envelope<MacroCalendarData> }) {
               key={`${e.kind}-${e.date}`}
               style={{ display: 'flex', alignItems: 'baseline', gap: 10, padding: '7px 0', borderBottom: '1px solid var(--line)' }}
             >
-              <span style={{ fontFamily: 'var(--mono)', fontSize: 9, letterSpacing: '.12em', color: WHAT[e.kind].color, width: 40 }}>{e.kind}</span>
-              <span style={{ flex: 1, minWidth: 0, fontSize: 11.5 }}>
+              <span style={{ fontSize: 12, color: WHAT[e.kind].color, width: 40 }}>{e.kind}</span>
+              <span style={{ flex: 1, minWidth: 0, fontSize: 13 }}>
                 {WHAT[e.kind].name}
                 {e.sep ? <span style={{ color: 'var(--dim)' }}> · + proyeksi ekonomi</span> : null}
-                <span style={{ display: 'block', fontSize: 10, color: 'var(--dim)' }}>{WHAT[e.kind].plain}</span>
+                <span style={{ display: 'block', fontSize: 12, color: 'var(--dim)' }}>{WHAT[e.kind].plain}</span>
               </span>
-              <span style={{ fontFamily: 'var(--mono)', fontSize: 10.5, textAlign: 'right', whiteSpace: 'nowrap' }}>
+              <span style={{ fontSize: 12, textAlign: 'right', whiteSpace: 'nowrap' }}>
                 {fmtDay(e.date)}
-                <span style={{ display: 'block', fontSize: 9, color: n <= 7 ? 'var(--amber)' : 'var(--dim)' }}>
+                <span style={{ display: 'block', fontSize: 12, color: n <= 7 ? 'var(--amber)' : 'var(--dim)' }}>
                   {n === 0 ? 'HARI INI' : `${n} hari lagi`}
                 </span>
               </span>
@@ -46,7 +46,7 @@ export function MacroCalendar({ cal }: { cal: Envelope<MacroCalendarData> }) {
         })}
       </div>
       {d.missing.length ? (
-        <div style={{ padding: '0 12px 8px', fontSize: 10.5, color: 'var(--amber)' }}>
+        <div style={{ padding: '0 12px 8px', fontSize: 12, color: 'var(--amber)' }}>
           Tidak tersedia saat ini: {d.missing.join(', ')} (sumbernya gagal dibaca) — jadwalnya tidak ditampilkan, bukan ditebak.
         </div>
       ) : null}

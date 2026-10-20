@@ -9,9 +9,7 @@ export interface ExchangeReservePanelProps {
 }
 
 const micro: React.CSSProperties = {
-  fontFamily: 'var(--mono)',
-  fontSize: 9,
-  letterSpacing: '.14em',
+  fontSize: 12,
   color: 'var(--mut)',
 };
 
@@ -48,7 +46,7 @@ export function ExchangeReservePanel({ flows }: ExchangeReservePanelProps) {
 
       <div style={{ padding: '14px 12px', display: 'flex', flexDirection: 'column', gap: 14 }}>
         <div>
-          <div className="iris-micro" style={micro}>
+          <div style={micro}>
             TRACKED RESERVE
           </div>
           <div
@@ -75,10 +73,10 @@ export function ExchangeReservePanel({ flows }: ExchangeReservePanelProps) {
               marginBottom: 5,
             }}
           >
-            <span className="iris-micro" style={{ ...micro, color: 'var(--blue)' }}>
+            <span style={{ ...micro, color: 'var(--blue)' }}>
               COLD {fmtCompact(f.coldBtc, '')} BTC · {fmtPct(coldPct, false, 1)}
             </span>
-            <span className="iris-micro" style={{ ...micro, color: 'var(--amber)' }}>
+            <span style={{ ...micro, color: 'var(--amber)' }}>
               HOT {fmtCompact(liquidBtc, '')} BTC · {fmtPct(hotPct, false, 1)}
             </span>
           </div>

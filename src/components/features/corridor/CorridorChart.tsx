@@ -18,7 +18,7 @@ const PCT_T = 300;
 const PCT_B = 404;
 
 /** Fill between band i and i+1 (p5–p25 … p75–p95): cheap → expensive. */
-const BAND_FILL = ['var(--up)', 'var(--blue)', 'var(--amber)', 'var(--down)'];
+const BAND_FILL = ['#7a5338', '#a0613a', '#e8813a', '#ffb27a'];
 const LAST = BAND_FILL.length;
 const EDGES = [0, ...ZONE_EDGES, 100];
 
@@ -53,11 +53,11 @@ export function CorridorChart({ pl }: { pl: Envelope<PowerLawData> }) {
     <Panel>
       <PanelHeader title="KORIDOR POWER-LAW" note={`mingguan sejak ${pts[0].date.slice(0, 4)} · skala log`} right={<MockBadge env={pl} />} />
       <Explain>
-        Atas: harga (garis putih) di dalam pita warna — hijau = murah, biru, kuning, merah = mahal. Pita digambar dengan fit
+        Atas: harga (garis oranye) di dalam pita warna, dari cokelat gelap = murah sampai oranye terang = mahal. Pita digambar dengan fit
         terbaru, jadi bentuk pita di masa lalu memakai pengetahuan sekarang. Bawah: persentil walk-forward yang{' '}
         <b>tidak</b> memakai hindsight — itu angka yang dipakai untuk semua uji di halaman ini.
       </Explain>
-      <div style={{ padding: 12 }}>
+      <div style={{ position: 'relative', zIndex: 4, padding: '12px 22px' }}>
         <ChartHover
           viewW={W}
           viewH={H}
@@ -84,7 +84,7 @@ export function CorridorChart({ pl }: { pl: Envelope<PowerLawData> }) {
           {[0, LAST].map((q) => (
             <path key={q} d={line(bands.map((b) => b[q]), y)} fill="none" stroke={q ? 'var(--down)' : 'var(--up)'} strokeOpacity={0.5} vectorEffect="non-scaling-stroke" />
           ))}
-          <path d={line(pts.map((p) => p.price), y)} fill="none" stroke="var(--txt)" strokeWidth={1.2} vectorEffect="non-scaling-stroke" />
+          <path d={line(pts.map((p) => p.price), y)} fill="none" stroke="var(--accent)" strokeWidth={2} vectorEffect="non-scaling-stroke" style={{ filter: 'drop-shadow(0 0 6px color-mix(in srgb, var(--accent) 60%, transparent))' }} />
 
           {/* percentile strip */}
           {ZONES.map((z, i) => (

@@ -10,9 +10,11 @@ export interface SeasonalityHeatmapProps {
   seasonality: Envelope<SeasonalityCell[]>;
 }
 
-function tint(returnPct: number): { tone: string; alpha: number } {
-  const alpha = Math.max(0.05, Math.min(0.85, Math.abs(returnPct) / 40));
-  return { tone: returnPct >= 0 ? 'var(--up)' : 'var(--down)', alpha };
+/** Up months fill with the accent, down months with a warm brown, both by size. */
+function tint(returnPct: number): { tone: string; alpha: number; ink: string } {
+  const alpha = Math.max(0.12, Math.min(1, Math.abs(returnPct) / 45));
+  const ink = returnPct >= 0 && alpha > 0.6 ? '#1a0e06' : 'var(--txt)';
+  return { tone: returnPct >= 0 ? 'var(--accent)' : '#6b4a35', alpha, ink };
 }
 
 export function SeasonalityHeatmap({ seasonality }: SeasonalityHeatmapProps) {
@@ -37,25 +39,22 @@ export function SeasonalityHeatmap({ seasonality }: SeasonalityHeatmapProps) {
   return (
     <Panel style={{ display: 'flex', flexDirection: 'column' }}>
       <PanelHeader
-        title="MONTHLY RETURN HEATMAP"
+        title="Monthly returns"
         note={`${years[0] ?? ''}–${years[years.length - 1] ?? ''} · ${years.length} tahun`}
         right={
           <>
-            <Tag label={`BEST ${MONTHS[bestIdx]} ${fmtPct(monthAvg[bestIdx])}`} tone="up" />
-            <Tag label={`WORST ${MONTHS[worstIdx]} ${fmtPct(monthAvg[worstIdx])}`} tone="down" />
+            <Tag label={`Terbaik ${MONTHS[bestIdx]} ${fmtPct(monthAvg[bestIdx])}`} tone="up" />
+            <Tag label={`Terburuk ${MONTHS[worstIdx]} ${fmtPct(monthAvg[worstIdx])}`} tone="down" />
             <MockBadge env={seasonality} />
           </>
         }
       />
-      <p style={{ margin: 0, padding: '10px 12px 0', fontSize: 11.5, lineHeight: 1.55, color: 'var(--mut)' }}>
-        Tiap kotak = kenaikan atau penurunan BTC selama satu bulan: harga penutupan terakhir bulan itu dibanding penutupan
-        terakhir bulan sebelumnya. Hijau = naik, merah = turun. Kotak bergaris = bulan <b>BERJALAN</b> (sampai data
-        terakhir), belum dihitung di baris ringkasan. Baris <b>% TAHUN NAIK</b> = berapa tahun bulan itu ditutup naik dibagi
-        jumlah tahunnya — catatan sejarah, bukan jaminan.
+      <p style={{ position: 'relative', zIndex: 4, margin: 0, padding: '0 26px', fontSize: 14, color: 'var(--mut)' }}>
+        Return tiap bulan, close ke close. Oranye naik, cokelat turun; kotak bergaris = bulan berjalan.
       </p>
-      <div style={{ padding: '12px', overflowX: 'auto', minWidth: 0 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: gridCols, gap: '1px', background: 'var(--line)', border: '1px solid var(--line)', minWidth: 640 }}>
-          <HeadCell>YR</HeadCell>
+      <div style={{ position: 'relative', zIndex: 4, padding: '16px 26px', overflowX: 'auto', minWidth: 0 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: gridCols, gap: 4, minWidth: 640 }}>
+          <HeadCell>Tahun</HeadCell>
           {MONTHS.map((m) => (
             <HeadCell key={m}>{m}</HeadCell>
           ))}
@@ -66,13 +65,13 @@ export function SeasonalityHeatmap({ seasonality }: SeasonalityHeatmapProps) {
               {MONTHS.map((_, i) => {
                 const cell = byKey.get(`${y}-${i + 1}`);
                 if (!cell) return <DataCell key={i} />;
-                const { tone, alpha } = tint(cell.returnPct);
+                const { tone, alpha, ink } = tint(cell.returnPct);
                 return (
                   <DataCell key={i} running={cell.partial} title={`${MONTHS[i]} ${y}: ${fmtPct(cell.returnPct)}${cell.partial ? ' · BERJALAN (sampai data terakhir)' : ''}`}>
-                    <span aria-hidden style={{ position: 'absolute', inset: 0, background: tone, opacity: alpha }} />
-                    <span style={{ position: 'relative', color: 'var(--txt)' }}>{toSeasonalityLabel(cell)}</span>
+                    <span aria-hidden style={{ position: 'absolute', inset: 0, borderRadius: 7, background: tone, opacity: alpha }} />
+                    <span style={{ position: 'relative', color: ink }}>{toSeasonalityLabel(cell)}</span>
                     {cell.partial ? (
-                      <span style={{ position: 'relative', display: 'block', fontSize: 7, letterSpacing: '.1em', color: 'var(--txt)' }}>BERJALAN</span>
+                      <span style={{ position: 'relative', display: 'block', fontSize: 12, color: ink }}>berjalan</span>
                     ) : null}
                   </DataCell>
                 );
@@ -82,15 +81,15 @@ export function SeasonalityHeatmap({ seasonality }: SeasonalityHeatmapProps) {
 
           {(['mean', 'median'] as const).map((k) => (
             <Row key={k}>
-              <HeadCell>{k === 'mean' ? 'RATA-RATA' : 'MEDIAN'}</HeadCell>
+              <HeadCell>{k === 'mean' ? 'Rata-rata' : 'Median'}</HeadCell>
               {summary.map((s) => {
                 const v = s[k];
                 if (v === null) return <DataCell key={s.month} strong>—</DataCell>;
-                const { tone, alpha } = tint(v);
+                const { tone, alpha, ink } = tint(v);
                 return (
                   <DataCell key={s.month} strong>
-                    <span aria-hidden style={{ position: 'absolute', inset: 0, background: tone, opacity: alpha }} />
-                    <span style={{ position: 'relative', color: 'var(--txt)' }}>{fmtPct(v)}</span>
+                    <span aria-hidden style={{ position: 'absolute', inset: 0, borderRadius: 7, background: tone, opacity: alpha }} />
+                    <span style={{ position: 'relative', color: ink }}>{fmtPct(v)}</span>
                   </DataCell>
                 );
               })}
@@ -98,13 +97,13 @@ export function SeasonalityHeatmap({ seasonality }: SeasonalityHeatmapProps) {
           ))}
 
           <Row>
-            <HeadCell>% TAHUN NAIK</HeadCell>
+            <HeadCell>% tahun naik</HeadCell>
             {summary.map((s) => (
               <DataCell key={s.month} strong title={`${MONTHS[s.month - 1]}: naik di ${s.up} dari ${s.n} tahun`}>
-                <span style={{ display: 'block', color: s.pctUp === null || s.pctUp === 50 ? 'var(--mut)' : s.pctUp > 50 ? 'var(--up)' : 'var(--down)' }}>
+                <span style={{ display: 'block', color: s.pctUp === null || s.pctUp === 50 ? 'var(--mut)' : s.pctUp > 50 ? '#ffb27a' : 'var(--down)' }}>
                   {s.pctUp === null ? '—' : `${Math.round(s.pctUp)}%`}
                 </span>
-                <span style={{ display: 'block', fontSize: 8, fontWeight: 400, color: 'var(--dim)' }}>
+                <span style={{ display: 'block', fontSize: 13, fontWeight: 400, color: 'var(--dim)' }}>
                   {s.up}/{s.n} tahun
                 </span>
               </DataCell>
@@ -113,7 +112,7 @@ export function SeasonalityHeatmap({ seasonality }: SeasonalityHeatmapProps) {
         </div>
       </div>
       {running ? (
-        <div style={{ padding: '0 12px 8px', fontSize: 10.5, color: 'var(--dim)' }}>
+        <div style={{ position: 'relative', zIndex: 4, padding: '0 26px 8px', fontSize: 13, color: 'var(--dim)' }}>
           BERJALAN = {MONTHS[running.month - 1]} {running.year} sampai data terakhir; masuk ringkasan begitu bulan berikutnya dimulai.
         </div>
       ) : null}
@@ -128,18 +127,7 @@ function Row({ children }: { children: ReactNode }) {
 
 function HeadCell({ children }: { children?: ReactNode }) {
   return (
-    <div
-      className="iris-micro"
-      style={{
-        background: 'var(--sunk)',
-        padding: '7px 4px',
-        textAlign: 'center',
-        fontFamily: 'var(--mono)',
-        fontSize: 8.5,
-        letterSpacing: '.08em',
-        color: 'var(--mut)',
-      }}
-    >
+    <div style={{ padding: '6px 4px', textAlign: 'center', fontSize: 12.5, color: 'var(--dim)', alignSelf: 'center' }}>
       {children}
     </div>
   );
@@ -151,14 +139,14 @@ function DataCell({ children, strong, title, running }: { children?: ReactNode; 
       title={title}
       style={{
         position: 'relative',
-        outline: running ? '1px dashed var(--txt)' : undefined,
+        outline: running ? '2px dashed var(--txt)' : undefined,
         outlineOffset: -2,
-        background: 'var(--panel)',
-        padding: '7px 4px',
+        borderRadius: 7,
+        background: strong ? 'var(--raise)' : 'var(--sunk)',
+        padding: '8px 4px',
         textAlign: 'center',
-        fontFamily: 'var(--mono)',
-        fontSize: 9,
-        fontWeight: strong ? 700 : 500,
+        fontSize: 12,
+        fontWeight: strong ? 700 : 600,
         minWidth: 0,
         whiteSpace: 'nowrap',
       }}

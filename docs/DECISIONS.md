@@ -905,3 +905,31 @@ implementasi FHS/GARCH kini hanya versi Python di `worker/iris_worker/monthly/`.
 `internal_distribution` dihapus dari katalog (migrasi 0010). URL lama diarahkan (307) ke `/forecast/30d`.
 Jangka di atas 30 hari (3M–1Y) tidak lagi ditampilkan.
 
+
+## 19. Desain ulang tampilan (20 Okt 2026)
+
+Permintaan pemilik: tampilan terlalu padat, terlalu teknikal (font mono), tata letak membingungkan
+bagi retail. **Tidak ada fitur yang dihapus**; yang berubah hanya tata letak dan visualisasi.
+Referensi: dashboard "big data" dengan globe di tengah dan dashboard trading dengan kartu kaca
+(Quantix). Tema tetap gelap, rapi dan elegan. Putaran kedua: palet **hitam-oranye** (referensi landing page crypto bergaya oranye), globe diganti bergaya referensi (atmosfer oranye, garis lengkung bercahaya, label tempat), dan teks penjelasan dipangkas.
+
+| Keputusan | Alasan |
+|---|---|
+| Satu font, **Inter**, untuk semua teks dan angka (`--mono` dipetakan ke Inter) | Font mono membuat dashboard terasa seperti terminal. Angka tetap sejajar lewat tabular figures. |
+| Label ALL-CAPS ditampilkan sebagai kalimat biasa lewat `softCase` (data di lapisan data tidak berubah) | Tes dan URL bergantung pada label aslinya. Singkatan (BTC, ETF, RSI…) dijaga. |
+| Kartu kaca bersudut 20px, jarak 20px antar kartu; grid 1px lama dibuang | Garis halus di mana-mana membuat halaman terasa padat. |
+| Overview dibaca dari atas: **jawaban** (forecast, confluence, fear & greed, sentimen sosial) di sekitar globe berita dunia, lalu **bukti** (harga, snapshot, technicals), lalu **berita** | Retail perlu satu tempat untuk mulai. Semua panel lama tetap ada. |
+| Globe 3D (three.js) dengan tekstur yang digambar dari data peta bawaan | Tanpa unduhan aset. Marker = berita nyata yang sudah ada; tidak ada garis hubung karangan antar titik. Jatuh ke globe SVG lama kalau WebGL tidak ada. |
+| Aturan "tanpa glass/gradien/glow" dari skill `design-taste-frontend` **tidak dipakai** | Skill itu untuk website marketing; referensi pemilik memakai kaca dan cahaya. Yang diambil: tanpa mono, tanpa label huruf besar kecil, hierarki lewat ukuran dan nada, ruang lega. Dari `apple-design`: material kaca, tracking menurut ukuran, gerak yang bisa diinterupsi, reduced motion. |
+
+Baru Overview, shell (sidebar, topbar), dan Global Sentiment yang dirakit ulang. Halaman lain sudah
+memakai font, warna, dan kartu baru lewat primitif `Panel`, tetapi tata letak dalamnya belum disusun
+ulang (lihat "Migration layer" di `DESIGN_TOKENS.md`).
+
+Putaran kedua (20 Okt 2026, malam):
+
+| Keputusan | Alasan |
+|---|---|
+| Teks penjelasan dihapus dari layar Overview dan Global Sentiment; catatan kecil panel (`note`) di semua halaman kini hanya muncul sebagai tooltip, sumber data jadi satu baris redup | Permintaan pemilik: minimalis. Rincian (track record, band volatilitas, bobot confluence) pindah ke tooltip, tidak hilang. |
+| Garis lengkung di globe menghubungkan berita terbaru **berurutan menurut waktu terbit** | Hiasan seperti referensi, bukan data aliran antar negara. Dicatat di kode dan di `DESIGN_TOKENS.md` supaya tidak dibaca sebagai klaim. |
+| Sekitar 19 paragraf penjelasan di halaman Forecast, Macro, On-Chain, Quant belum dipangkas | Dikerjakan bersama perapian tata letak halaman itu. |

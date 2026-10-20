@@ -10,16 +10,8 @@ export default async function MacroMarketsPage() {
   const macro = await getMacroMarkets({ range: '1y' });
 
   return (
-    <div
-      style={{
-        padding: '16px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '12px',
-        minWidth: 0,
-      }}
-    >
-      <p style={{ margin: 0, fontSize: 11.5, lineHeight: 1.55, color: 'var(--mut)' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20, minWidth: 0 }}>
+      <p className="rise" style={{ ['--i' as string]: 2, margin: '-8px 0 4px', maxWidth: 900, fontSize: 15, lineHeight: 1.6, color: 'var(--mut)' }}>
         Pasar global yang sering memengaruhi BTC: dolar AS, saham AS (S&amp;P 500), indeks
         ketakutan pasar saham (VIX), emas, dan imbal hasil obligasi AS 10 tahun. Dolar dan yield yang
         naik biasanya menekan aset berisiko; saham yang naik biasanya berarti pasar sedang berani

@@ -51,13 +51,13 @@ describe('SECTIONS', () => {
 describe('forecast section', () => {
   const forecast = SECTIONS.find((s) => s.key === 'forecast')!;
 
-  it('lands a first-time visitor on the weekly forecast', () => {
-    expect(defaultSubHref(forecast)).toBe('/forecast/weekly');
+  it('lands a visitor on the forecast overview at the section root', () => {
+    expect(defaultSubHref(forecast)).toBe('/forecast');
   });
 
   it('offers weekly and the 30-day forecast (new slug: the old one was a cached 308); distribution and calibration are gone', () => {
     const slugs = forecast.subs.map((s) => s.slug);
-    expect(slugs).toEqual(['weekly', '30d']);
+    expect(slugs).toEqual([null, 'weekly', '30d']);
   });
 
   it('keeps the weekly slug behind the WEEKLY FORECAST label', () => {
@@ -72,7 +72,7 @@ describe('curated sections (2026-10-18)', () => {
     expect(SECTIONS.map((s) => s.key)).not.toContain('market');
     const quant = SECTIONS.find((s) => s.key === 'quant')!;
     // HALVING CYCLE and POWER-LAW added 2026-10-19.
-    expect(quant.subs.map((s) => s.slug)).toEqual(['seasonality', 'cycle', 'corridor']);
+    expect(quant.subs.map((s) => s.slug)).toEqual([null, 'seasonality', 'cycle', 'corridor']);
   });
 
   it('splits On-Chain into ETF, long/short and wallets', () => {

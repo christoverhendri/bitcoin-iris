@@ -1,30 +1,33 @@
 import type { CSSProperties, ReactNode } from 'react';
 
 /**
- * A panel surface. No radius, no shadow — depth comes from the surface ramp
- * (bg #08090c -> sunk #0b0d11 -> panel #0e1014) and 1px hairlines.
+ * A panel surface: a solid warm card whose edge catches the accent light (see
+ * `.iris-card` / `.iris-panel` in globals.css). It lifts a little on hover and
+ * a band of light sweeps across it. `still` keeps it from moving, for panels
+ * that hold something the visitor drags.
  */
 export function Panel({
   children,
   style,
   className,
   scroll,
+  still,
 }: {
   children: ReactNode;
   style?: CSSProperties;
   className?: string;
   /** Make the panel body scroll instead of growing the shell. */
   scroll?: boolean;
+  /** No hover lift or sheen. */
+  still?: boolean;
 }) {
   return (
     <div
-      className={className}
+      className={`iris-card iris-panel${still ? ' still' : ''}${className ? ` ${className}` : ''}`}
       style={{
-        background: 'var(--panel)',
-        minWidth: 0,
         display: 'flex',
         flexDirection: 'column',
-        ...(scroll ? { overflow: 'hidden' } : null),
+        overflow: scroll ? 'hidden' : 'clip',
         ...style,
       }}
     >
@@ -34,9 +37,9 @@ export function Panel({
 }
 
 /**
- * The signature layout trick from the original: a grid whose 1px gap is filled
- * by the line colour, so the gutter *is* the border. No double borders, and
- * every divider lines up across the whole page for free.
+ * A grid of cards with an even gutter. (It used to be a 1px grid whose gap was
+ * filled with the line colour so the gutter was the border. Cards now carry
+ * their own edge, so the gutter is just space.)
  */
 export function PanelGrid({
   children,
@@ -57,8 +60,7 @@ export function PanelGrid({
       className={className}
       style={{
         display: 'grid',
-        gap: 1,
-        background: 'var(--line)',
+        gap: 20,
         gridTemplateColumns: columns,
         gridTemplateRows: rows,
         minWidth: 0,

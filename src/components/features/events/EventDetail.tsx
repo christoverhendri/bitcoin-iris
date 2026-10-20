@@ -35,21 +35,22 @@ export function EventDetail({ detail, onClose, onPick }: EventDetailProps) {
       else neu++;
     }
     return (
-      <div style={wrap} className="iris-micro">
-        <Header title={`${detail.place} · ${evs.length} EVENTS`} onClose={onClose} />
+      <div style={wrap}>
+        <Header title={`${detail.place} · ${evs.length} events`} onClose={onClose} />
         <div style={badgeRow}>
-          <Chip label={`BULL ${bull}`} color="var(--up)" />
-          <Chip label={`BEAR ${bear}`} color="var(--down)" />
-          <Chip label={`NEU ${neu}`} color="var(--mut)" />
+          <Chip label={`Positive ${bull}`} color="#ffb27a" />
+          <Chip label={`Negative ${bear}`} color="var(--down)" />
+          <Chip label={`Neutral ${neu}`} color="var(--mut)" />
         </div>
-        <div style={{ maxHeight: 260, overflowY: 'auto', borderTop: '1px solid var(--line)' }}>
+        <div style={{ maxHeight: 280, overflowY: 'auto', padding: '0 8px 8px' }}>
           {evs.map((e) => (
             <button key={e.id} type="button" onClick={() => onPick(e)} style={rowBtn}>
               <span
                 style={{
-                  width: 6,
-                  height: 6,
-                  marginTop: 3,
+                  width: 8,
+                  height: 8,
+                  marginTop: 6,
+                  borderRadius: '50%',
                   flexShrink: 0,
                   background: CATEGORY_COLOR[e.category],
                 }}
@@ -70,25 +71,25 @@ export function EventDetail({ detail, onClose, onPick }: EventDetailProps) {
   const e = detail.event;
   const sent = sentimentWord(e.sentiment);
   return (
-    <div style={wrap} className="iris-micro">
+    <div style={wrap}>
       <Header title={e.place} onClose={onClose} />
       <div style={badgeRow}>
-        <Chip label={sent} color={SENT_COLOR[sent]} />
-        <Chip label={e.category.replace('_', ' ')} color={CATEGORY_COLOR[e.category]} />
+        <Chip label={sent.charAt(0) + sent.slice(1).toLowerCase()} color={SENT_COLOR[sent]} />
+        <Chip label={e.category.charAt(0) + e.category.slice(1).toLowerCase().replace('_', ' ')} color={CATEGORY_COLOR[e.category]} />
       </div>
       <HeadlineModel assessment={e.sentimentAssessment} />
       <div style={dimLine}>
         {e.place} · {e.lat.toFixed(2)}, {e.lon.toFixed(2)}
       </div>
-      <div style={{ padding: '8px 10px', borderTop: '1px solid var(--line)' }}>
-        <div style={sectionLabel}>SUMMARY</div>
+      <div style={{ padding: '4px 18px 18px' }}>
+        <div style={sectionLabel}>Headline</div>
         <div style={summaryText}>{e.headline}</div>
         <div style={{ ...rowMeta, marginTop: 6 }}>
           {e.source} · {fmtAgo(new Date(e.publishedAt).toISOString())}
         </div>
         {e.url ? (
           <a href={e.url} target="_blank" rel="noopener noreferrer" style={linkStyle}>
-            OPEN SOURCE ↗
+            Open source ↗
           </a>
         ) : null}
       </div>
@@ -98,48 +99,14 @@ export function EventDetail({ detail, onClose, onPick }: EventDetailProps) {
 
 function Header({ title, onClose }: { title: string; onClose: () => void }) {
   return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: 8,
-        padding: '8px 10px',
-        borderBottom: '1px solid var(--line)',
-      }}
-    >
-      <span
-        style={{
-          fontFamily: 'var(--mono)',
-          fontSize: 9,
-          letterSpacing: '.12em',
-          color: 'var(--txt)',
-          textTransform: 'uppercase',
-          whiteSpace: 'nowrap',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-        }}
-      >
-        ● {title}
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '16px 14px 8px 18px' }}>
+      <span style={{ fontSize: 16, fontWeight: 600, color: 'var(--txt)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        {title}
       </span>
-      <button
-        type="button"
-        onClick={onClose}
-        aria-label="Close detail"
-        style={{
-          fontFamily: 'var(--mono)',
-          fontSize: 12,
-          lineHeight: 1,
-          color: 'var(--mut)',
-          background: 'transparent',
-          border: '1px solid var(--line2)',
-          width: 18,
-          height: 18,
-          flexShrink: 0,
-          cursor: 'pointer',
-        }}
-      >
-        ×
+      <button type="button" onClick={onClose} aria-label="Close detail" className="globe-btn" style={{ width: 32, height: 32, flexShrink: 0 }}>
+        <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" aria-hidden="true">
+          <path d="M6 6l12 12M18 6L6 18" />
+        </svg>
       </button>
     </div>
   );
@@ -149,13 +116,13 @@ function Chip({ label, color }: { label: string; color: string }) {
   return (
     <span
       style={{
-        fontFamily: 'var(--mono)',
-        fontSize: 8.5,
-        letterSpacing: '.12em',
+        fontSize: 12,
+        fontWeight: 600,
         color,
-        border: `1px solid color-mix(in srgb, ${color} 40%, transparent)`,
-        padding: '3px 7px',
-        lineHeight: 1,
+        background: `color-mix(in srgb, ${color} 14%, transparent)`,
+        padding: '5px 11px',
+        borderRadius: 999,
+        lineHeight: 1.2,
         whiteSpace: 'nowrap',
         display: 'inline-block',
       }}
@@ -167,13 +134,13 @@ function Chip({ label, color }: { label: string; color: string }) {
 
 const wrap: CSSProperties = {
   position: 'absolute',
-  top: 8,
-  right: 8,
-  width: 320,
-  maxWidth: 'calc(100% - 16px)',
-  background: 'var(--panel)',
-  border: '1px solid var(--line2)',
-  boxShadow: 'none',
+  top: 12,
+  right: 12,
+  width: 340,
+  maxWidth: 'calc(100% - 24px)',
+  background: '#1a130e',
+  borderRadius: 20,
+  boxShadow: '0 24px 48px -20px rgba(0,0,0,0.8)',
   zIndex: 6,
   display: 'flex',
   flexDirection: 'column',
@@ -181,26 +148,21 @@ const wrap: CSSProperties = {
 const badgeRow: CSSProperties = {
   display: 'flex',
   flexWrap: 'wrap',
-  gap: 4,
-  padding: '8px 10px',
+  gap: 6,
+  padding: '4px 18px 10px',
 };
 const dimLine: CSSProperties = {
-  padding: '0 10px 8px',
-  fontFamily: 'var(--mono)',
-  fontSize: 8.5,
-  letterSpacing: '.08em',
+  padding: '0 18px 10px',
+  fontSize: 12.5,
   color: 'var(--dim)',
 };
 const sectionLabel: CSSProperties = {
-  fontFamily: 'var(--mono)',
-  fontSize: 8.5,
-  letterSpacing: '.16em',
+  fontSize: 12.5,
   color: 'var(--dim)',
   marginBottom: 4,
 };
 const summaryText: CSSProperties = {
-  fontFamily: 'var(--mono)',
-  fontSize: 11,
+  fontSize: 15,
   lineHeight: 1.45,
   color: 'var(--txt)',
   display: '-webkit-box',
@@ -210,40 +172,38 @@ const summaryText: CSSProperties = {
 };
 const rowMeta: CSSProperties = {
   display: 'block',
-  fontFamily: 'var(--mono)',
-  fontSize: 8.5,
-  letterSpacing: '.06em',
+  fontSize: 12.5,
   color: 'var(--dim)',
-  marginTop: 2,
+  marginTop: 3,
 };
 const rowHeadline: CSSProperties = {
   display: '-webkit-box',
   WebkitLineClamp: 2,
   WebkitBoxOrient: 'vertical',
   overflow: 'hidden',
-  fontFamily: 'var(--mono)',
-  fontSize: 9.5,
+  fontSize: 14,
   lineHeight: 1.35,
   color: 'var(--txt)',
 };
 const rowBtn: CSSProperties = {
   display: 'flex',
-  gap: 7,
+  gap: 10,
   width: '100%',
   textAlign: 'left',
-  padding: '7px 10px',
-  borderBottom: '1px solid var(--line)',
+  whiteSpace: 'normal',
+  padding: '9px 10px',
+  borderRadius: 12,
   background: 'transparent',
   cursor: 'pointer',
 };
 const linkStyle: CSSProperties = {
-  display: 'inline-block',
-  marginTop: 8,
-  fontFamily: 'var(--mono)',
-  fontSize: 8.5,
-  letterSpacing: '.14em',
-  color: 'var(--blue)',
+  display: 'inline-flex',
+  marginTop: 12,
+  fontSize: 13,
+  fontWeight: 600,
+  color: 'var(--accent-ink)',
+  background: 'var(--accent)',
   textDecoration: 'none',
-  border: '1px solid var(--line2)',
-  padding: '4px 8px',
+  padding: '8px 14px',
+  borderRadius: 999,
 };

@@ -116,13 +116,12 @@ export function WhaleWire({ initial, limit = 50 }: WhaleWireProps) {
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-            <span style={{ fontFamily: 'var(--mono)', fontSize: 9, color: 'var(--mut)' }}>
+            <span style={{ fontSize: 12, color: 'var(--mut)' }}>
               EXCHANGE NETFLOW 24H
             </span>
             <span
               style={{
-                fontFamily: 'var(--mono)',
-                fontSize: 11,
+                fontSize: 13,
                 fontWeight: 700,
                 color: netflowColor(summary.netUsd),
               }}
@@ -135,7 +134,7 @@ export function WhaleWire({ initial, limit = 50 }: WhaleWireProps) {
               tone={summary.netUsd > 0 ? 'down' : summary.netUsd < 0 ? 'up' : 'mut'}
             />
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, fontSize: 11 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, fontSize: 13 }}>
             {(
               [
                 ['INFLOW', fmtCompact(summary.inflowUsd), 'var(--down)', summary.inflowCount],
@@ -144,11 +143,11 @@ export function WhaleWire({ initial, limit = 50 }: WhaleWireProps) {
               ] as const
             ).map(([label, value, color, n]) => (
               <div key={label}>
-                <div style={{ fontFamily: 'var(--mono)', fontSize: 8, color: 'var(--mut)' }}>
+                <div style={{ fontSize: 12, color: 'var(--mut)' }}>
                   {label}
                 </div>
-                <div style={{ fontFamily: 'var(--mono)', fontWeight: 700, color }}>{value}</div>
-                <div style={{ fontFamily: 'var(--mono)', fontSize: 8, color: 'var(--dim)' }}>
+                <div style={{ fontWeight: 700, color }}>{value}</div>
+                <div style={{ fontSize: 12, color: 'var(--dim)' }}>
                   {n} tx
                 </div>
               </div>
@@ -164,8 +163,7 @@ export function WhaleWire({ initial, limit = 50 }: WhaleWireProps) {
                 padding: '20px 12px',
                 textAlign: 'center',
                 color: 'var(--dim)',
-                fontFamily: 'var(--mono)',
-                fontSize: 9,
+                fontSize: 12,
               }}
             >
               No whale movement on the wire
@@ -207,8 +205,7 @@ export function WhaleWire({ initial, limit = 50 }: WhaleWireProps) {
                       <span
                         style={{
                           display: 'block',
-                          fontFamily: 'var(--mono)',
-                          fontSize: 9,
+                          fontSize: 12,
                           color: 'var(--txt)',
                           marginBottom: 3,
                           lineHeight: 1.35,
@@ -222,13 +219,12 @@ export function WhaleWire({ initial, limit = 50 }: WhaleWireProps) {
                           display: 'flex',
                           flexWrap: 'wrap',
                           gap: 6,
-                          fontFamily: 'var(--mono)',
-                          fontSize: 8,
+                          fontSize: 12,
                           color: 'var(--dim)',
                           alignItems: 'center',
                         }}
                       >
-                        <span style={{ color: row.kindColor, letterSpacing: '.1em' }}>
+                        <span style={{ color: row.kindColor }}>
                           {row.kindLabel}
                         </span>
                         <span>·</span>
@@ -239,8 +235,7 @@ export function WhaleWire({ initial, limit = 50 }: WhaleWireProps) {
                     </span>
                     <span
                       style={{
-                        fontFamily: 'var(--mono)',
-                        fontSize: 10,
+                        fontSize: 12,
                         color: 'var(--mut)',
                         marginTop: 1,
                       }}
@@ -261,8 +256,7 @@ export function WhaleWire({ initial, limit = 50 }: WhaleWireProps) {
                       <p
                         style={{
                           margin: 0,
-                          fontFamily: 'var(--mono)',
-                          fontSize: 10,
+                          fontSize: 12,
                           lineHeight: 1.5,
                           color: 'var(--mut)',
                           wordBreak: 'break-word',
@@ -276,9 +270,7 @@ export function WhaleWire({ initial, limit = 50 }: WhaleWireProps) {
                           target="_blank"
                           rel="noopener noreferrer"
                           style={{
-                            fontFamily: 'var(--mono)',
-                            fontSize: 9,
-                            letterSpacing: '.12em',
+                            fontSize: 12,
                             color: 'var(--blue)',
                             textDecoration: 'none',
                           }}

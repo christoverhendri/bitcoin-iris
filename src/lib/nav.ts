@@ -56,6 +56,8 @@ export const SECTIONS: Section[] = [
     // VOLATILITY removed in the 2026-10-18 curation; /quant/volatility redirects here.
     // HALVING CYCLE and POWER-LAW added 2026-10-19 (research/BTC_Halving_Cycle_PowerLaw.ipynb).
     subs: [
+      // OVERVIEW (2026-10-20): the section root previews all three studies.
+      { slug: null, label: 'OVERVIEW' },
       { slug: 'seasonality', label: 'SEASONALITY' },
       { slug: 'cycle', label: 'HALVING CYCLE' },
       { slug: 'corridor', label: 'POWER-LAW' },
@@ -116,6 +118,8 @@ export const SECTIONS: Section[] = [
     // the same FHS engine, run by Timothy's worker, stored and validated
     // (docs/DECISIONS.md §16–18). Their old URLs redirect to /forecast/30d.
     subs: [
+      // OVERVIEW (2026-10-20): the section root previews the weekly call and the 30-day range.
+      { slug: null, label: 'OVERVIEW' },
       { slug: 'weekly', label: 'WEEKLY FORECAST' },
       // Timothy's 30-day Monte Carlo (2026-10-19). New slug, see next.config.ts.
       { slug: '30d', label: 'MONTHLY FORECAST' },

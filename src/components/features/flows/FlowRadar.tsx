@@ -17,11 +17,9 @@ export interface FlowRadarProps {
 function Chip({ label, color }: { label: string; color: string }) {
   return (
     <span
-      className="iris-micro"
+
       style={{
-        fontFamily: 'var(--mono)',
-        fontSize: 8.5,
-        letterSpacing: '.14em',
+        fontSize: 12,
         color,
         border: `1px solid color-mix(in srgb, ${color} 40%, transparent)`,
         padding: '3px 8px',
@@ -36,7 +34,7 @@ function Chip({ label, color }: { label: string; color: string }) {
 }
 
 const th: React.CSSProperties = { color: 'var(--mut)' };
-const mono: React.CSSProperties = { fontFamily: 'var(--mono)', whiteSpace: 'nowrap' };
+const mono: React.CSSProperties = { whiteSpace: 'nowrap' };
 
 /**
  * The wire: every classified movement over 50 BTC touching a tracked wallet,
@@ -58,14 +56,12 @@ export function FlowRadar({ flows }: FlowRadarProps) {
 
       {rows.length === 0 ? (
         <div
-          className="iris-micro"
+
           style={{
-            fontFamily: 'var(--mono)',
-            fontSize: 10,
+            fontSize: 12,
             color: 'var(--dim)',
             padding: '18px 12px',
-            letterSpacing: '.1em',
-          }}
+            }}
         >
           NO TRANSFERS ABOVE 50 BTC IN THE OBSERVED WINDOW
         </div>
@@ -95,9 +91,8 @@ export function FlowRadar({ flows }: FlowRadarProps) {
                 <td style={{ ...mono, color: 'var(--mut)' }}>{r.exchange}</td>
                 <td
                   style={{
-                    fontFamily: 'var(--mono)',
                     color: 'var(--dim)',
-                    fontSize: 10,
+                    fontSize: 12,
                     maxWidth: 260,
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',

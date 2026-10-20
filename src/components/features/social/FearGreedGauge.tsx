@@ -131,14 +131,14 @@ export function FearGreedGauge({ fearGreed }: FearGreedGaugeProps) {
             {fg.value}
           </div>
           <div
-            className="iris-micro"
-            style={{ fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: '.16em', color, marginTop: 4 }}
+
+            style={{ fontSize: 12, color, marginTop: 4 }}
           >
             {label.toUpperCase()}
           </div>
           <div
-            className="iris-micro"
-            style={{ fontFamily: 'var(--mono)', fontSize: 9, color: changeTone, marginTop: 3 }}
+
+            style={{ fontSize: 12, color: changeTone, marginTop: 3 }}
           >
             {fmtPct(fg.changePct, true)} vs prev
           </div>

@@ -1,4 +1,4 @@
-import { Panel, PanelHeader, Tag, MockBadge, SourceFootnote } from '@/components/primitives';
+import { Panel, PanelHeader, MockBadge, SourceFootnote } from '@/components/primitives';
 import { ChartHover } from '@/components/charts/ChartHover';
 import type { Envelope } from '@/lib/envelope';
 import type { MonthlyForecastData } from '@/lib/features/monthlyForecast';
@@ -22,7 +22,7 @@ const PAD_R = 62;
 const HISTORY_SHARE = 0.3;
 const TICK_STEPS = [0, 7, 14, 21, 30];
 const CLIP_ID = 'monthly-plot-area';
-const mono = { fontFamily: 'var(--mono)', fontSize: 8, fill: 'var(--dim)' } as const;
+const mono = { fontSize: 13, fill: 'var(--dim)' } as const;
 
 export function MonthlyFan({ fc }: { fc: Envelope<MonthlyForecastData> }) {
   const d = fc.data;
@@ -59,31 +59,57 @@ export function MonthlyFan({ fc }: { fc: Envelope<MonthlyForecastData> }) {
     })),
   ];
 
+  const end = d.bands[steps];
+  const k = (v: number) => `$${(v / 1000).toFixed(1)}k`;
+
   return (
     <Panel>
+      <div className="ember-halo" aria-hidden="true" style={{ top: -300, right: -200 }} />
       <PanelHeader
-        title="PRAKIRAAN 30 HARI · MONTE CARLO"
+        title="Prakiraan 30 hari · Monte Carlo"
         note={`${d.nPaths.toLocaleString('en-US')} jalur · data s.d. ${fmtDay(d.asOf)}`}
-        right={
-          <>
-            <Tag label="GELAP = 50%" tone="blue" />
-            <Tag label="SEDANG = 80%" tone="blue" />
-            <Tag label="TERANG = 90%" tone="mut" />
-            <MockBadge env={fc} />
-          </>
-        }
+        right={<MockBadge env={fc} />}
       />
-      <p style={{ margin: 0, padding: '10px 12px 0', fontSize: 11.5, lineHeight: 1.55, color: 'var(--mut)' }}>
-        Ke mana harga BTC <b>bisa</b> bergerak tiap hari selama 30 hari ke depan, berdasarkan seberapa besar gejolaknya
-        sekarang — <b>bukan tebakan arah</b>. Kecenderungan naik/turun sengaja dibuang, jadi garis tengah selalu dekat harga
-        sekarang. Garis tipis = beberapa jalur simulasi nyata, dipilih dari yang terendah sampai tertinggi, hanya untuk
-        menunjukkan sebaran.
+      <div style={{ position: 'relative', zIndex: 4, padding: '6px 26px 4px', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'flex-end', gap: 20 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <span style={{ fontSize: 15, color: 'var(--mut)' }}>Harga tengah di {fmtDay(end.date)}</span>
+          <span className="t-display" style={{ fontSize: 'clamp(54px, 6vw, 84px)' }}>
+            {fmtUsd(end.p50)}
+          </span>
+          <span style={{ fontSize: 15, fontWeight: 600, color: end.p50 >= d.spot ? '#ffb27a' : 'var(--down)' }}>
+            {fmtSignedPct(pctVsSpot(end.p50, d.spot))} dari harga {fmtUsd(d.spot)}
+          </span>
+        </div>
+        <div style={{ display: 'flex', gap: 32, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <span style={{ fontSize: 13, color: 'var(--dim)' }}>Separuh jalur</span>
+            <span className="t-title" style={{ fontSize: 24 }}>
+              {k(end.p25)} – {k(end.p75)}
+            </span>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <span style={{ fontSize: 13, color: 'var(--dim)' }}>8 dari 10 jalur</span>
+            <span className="t-title" style={{ fontSize: 24 }}>
+              {k(end.p10)} – {k(end.p90)}
+            </span>
+          </div>
+        </div>
+      </div>
+      <p style={{ position: 'relative', zIndex: 4, margin: 0, padding: '14px 26px 0', fontSize: 14, lineHeight: 1.5, color: 'var(--mut)' }}>
+        Ke mana harga <b>bisa</b> bergerak tiap hari, dari besarnya gejolak sekarang. Bukan tebakan arah: garis tengah sengaja dekat harga sekarang.
       </p>
-      <div style={{ padding: 12 }}>
-        <ChartHover viewW={W} viewH={H} height={320} points={points} svgStyle={{ background: 'var(--sunk)' }} ariaLabel={`Kisaran harga BTC simulasi ${steps} hari ke depan`}>
+      <div style={{ position: 'relative', zIndex: 4, display: 'flex', gap: 16, flexWrap: 'wrap', padding: '12px 26px 0', fontSize: 13, color: 'var(--mut)' }}>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ width: 14, height: 10, borderRadius: 3, background: 'color-mix(in srgb, var(--accent) 45%, transparent)' }} />50% jalur</span>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ width: 14, height: 10, borderRadius: 3, background: 'color-mix(in srgb, var(--accent) 26%, transparent)' }} />80%</span>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ width: 14, height: 10, borderRadius: 3, background: 'color-mix(in srgb, var(--accent) 14%, transparent)' }} />90%</span>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ width: 16, height: 3, borderRadius: 2, background: 'var(--accent)' }} />harga tengah</span>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ width: 16, height: 3, borderRadius: 2, background: '#c9b8aa' }} />harga sungguhan</span>
+      </div>
+      <div style={{ position: 'relative', zIndex: 4, padding: '8px 22px 8px' }}>
+        <ChartHover viewW={W} viewH={H} height={340} points={points} ariaLabel={`Kisaran harga BTC simulasi ${steps} hari ke depan`}>
           {[0, 0.25, 0.5, 0.75, 1].map((t) => lo + t * span).map((p, i) => (
             <g key={i}>
-              <line x1={0} x2={W - PAD_R} y1={y(p)} y2={y(p)} stroke="var(--line)" vectorEffect="non-scaling-stroke" />
+              <line x1={0} x2={W - PAD_R} y1={y(p)} y2={y(p)} stroke="#2a2019" strokeDasharray="3 6" vectorEffect="non-scaling-stroke" />
               <text x={W - PAD_R + 6} y={y(p) + 3} {...mono}>
                 {fmtUsd(p)}
               </text>
@@ -91,28 +117,28 @@ export function MonthlyFan({ fc }: { fc: Envelope<MonthlyForecastData> }) {
           ))}
           {TICK_STEPS.filter((s) => s <= steps).map((s) => (
             <g key={s}>
-              <line x1={coneX(s)} x2={coneX(s)} y1={PAD_T} y2={H - PAD_B} stroke="var(--line)" strokeDasharray="2 3" vectorEffect="non-scaling-stroke" />
+              <line x1={coneX(s)} x2={coneX(s)} y1={PAD_T} y2={H - PAD_B} stroke="#2a2019" strokeDasharray="2 4" vectorEffect="non-scaling-stroke" />
               <text x={coneX(s) + 3} y={H - 8} {...mono}>
-                {s === 0 ? 'SEKARANG' : `D+${s} ${fmtDayShort(d.bands[s].date)}`}
+                {s === 0 ? 'Sekarang' : `D+${s} ${fmtDayShort(d.bands[s].date)}`}
               </text>
             </g>
           ))}
-          <path d={ribbon('p95', 'p5')} fill="var(--blue)" fillOpacity={0.08} stroke="none" />
-          <path d={ribbon('p90', 'p10')} fill="var(--blue)" fillOpacity={0.12} stroke="none" />
-          <path d={ribbon('p75', 'p25')} fill="var(--blue)" fillOpacity={0.18} stroke="none" />
+          <path d={ribbon('p95', 'p5')} fill="var(--accent)" fillOpacity={0.12} stroke="none" />
+          <path d={ribbon('p90', 'p10')} fill="var(--accent)" fillOpacity={0.14} stroke="none" />
+          <path d={ribbon('p75', 'p25')} fill="var(--accent)" fillOpacity={0.22} stroke="none" />
           <defs>
             <clipPath id={CLIP_ID}>
               <rect x={0} y={PAD_T} width={W - PAD_R} height={H - PAD_T - PAD_B} />
             </clipPath>
           </defs>
           {d.paths.map((p, i) => (
-            <path key={i} d={line(p.map((price, s) => [coneX(s), price]))} fill="none" stroke="var(--mut)" strokeOpacity={0.45} clipPath={`url(#${CLIP_ID})`} strokeWidth={0.75} vectorEffect="non-scaling-stroke" />
+            <path key={i} d={line(p.map((price, s) => [coneX(s), price]))} fill="none" stroke="#c9b8aa" strokeOpacity={0.28} clipPath={`url(#${CLIP_ID})`} strokeWidth={0.75} vectorEffect="non-scaling-stroke" />
           ))}
-          <path d={line(d.bands.map((b) => [coneX(b.step), b.p50]))} fill="none" stroke="var(--blue)" strokeWidth={1.5} vectorEffect="non-scaling-stroke" />
-          <path d={line(hist.map((p, i) => [histX(i), p.close]))} fill="none" stroke="var(--txt)" strokeWidth={1.25} vectorEffect="non-scaling-stroke" />
-          <line x1={splitX} x2={splitX} y1={PAD_T} y2={H - PAD_B} stroke="var(--line2)" vectorEffect="non-scaling-stroke" />
-          <text x={4} y={H - 8} {...mono} letterSpacing="0.12em">
-            {hist.length} HARI TERAKHIR
+          <path d={line(d.bands.map((b) => [coneX(b.step), b.p50]))} fill="none" stroke="var(--accent)" strokeWidth={2.5} vectorEffect="non-scaling-stroke" style={{ filter: 'drop-shadow(0 0 6px color-mix(in srgb, var(--accent) 70%, transparent))' }} />
+          <path d={line(hist.map((p, i) => [histX(i), p.close]))} fill="none" stroke="#c9b8aa" strokeWidth={2} strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+          <line x1={splitX} x2={splitX} y1={PAD_T} y2={H - PAD_B} stroke="#5a4130" strokeDasharray="4 5" vectorEffect="non-scaling-stroke" />
+          <text x={4} y={H - 8} {...mono}>
+            {hist.length} hari terakhir
           </text>
         </ChartHover>
       </div>

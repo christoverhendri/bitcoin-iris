@@ -1,33 +1,26 @@
 /**
- * The pulsing LIVE indicator — the only animation in the design.
+ * The pulsing LIVE indicator.
  *
  * `stale` turns it off deliberately: a pulsing LIVE dot over a five-minute-old
  * price is a credibility bug, not a cosmetic one.
  */
 export function LiveBadge({ stale = false, reason }: { stale?: boolean; reason?: string }) {
-  const tone = stale ? 'var(--dim)' : 'var(--up)';
   return (
     <span
-      className="iris-micro"
+      className="chip"
       title={stale ? (reason ?? 'Data is stale — the ingestion worker is not reporting') : 'Data is fresh'}
       style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 5,
-        fontFamily: 'var(--mono)',
-        fontSize: 8.5,
-        letterSpacing: '.14em',
-        color: tone,
-        border: `1px solid color-mix(in srgb, ${tone} 40%, transparent)`,
-        padding: '3px 8px',
-        lineHeight: 1,
+        padding: '8px 14px',
+        fontSize: 13,
+        background: '#1c140e',
+        color: stale ? 'var(--dim)' : '#ffb27a',
       }}
     >
       <span
         className={stale ? undefined : 'iris-pulse'}
-        style={{ width: 5, height: 5, borderRadius: '50%', background: tone }}
+        style={{ width: 7, height: 7, borderRadius: '50%', background: stale ? 'var(--dim)' : 'var(--accent)' }}
       />
-      {stale ? 'STALE' : 'LIVE'}
+      {stale ? 'Stale' : 'Live'}
     </span>
   );
 }

@@ -11,7 +11,7 @@ import type { EventCategory } from '@/lib/features/geopoliticalEvents';
 import { SentimentStrip } from '@/components/features/sentiment/SentimentStrip';
 import { GlobalSentimentPanel } from '@/components/features/events/GlobalSentimentPanel';
 import { WhaleWire } from '@/components/features/whale/WhaleWire';
-import { SocialSentimentPanel } from '@/components/features/socialSentiment/SocialSentimentPanel';
+import { SocialSentimentCard } from '@/components/features/socialSentiment/SocialSentimentPanel';
 
 export const revalidate = 30;
 export const dynamic = 'force-dynamic';
@@ -54,22 +54,25 @@ export default async function GlobalSentimentPage({
       : new Set(cats.split(',').filter(Boolean) as EventCategory[]);
 
   return (
-    <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12, minWidth: 0 }}>
-      <SentimentStrip
-        fearGreed={fearGreed}
-        sentiment={sentiment}
-        news={news}
-        events={events}
-      />
-      <LiveOnly env={social} title="SOCIAL SENTIMENT">
-        <SocialSentimentPanel social={social} />
-      </LiveOnly>
-      <LiveOnly env={[events, news]} title="GLOBAL EVENT MAP">
-        <GlobalSentimentPanel events={events} news={news} activeCats={activeCats} />
-      </LiveOnly>
-      <LiveOnly env={whale} title="WHALE WIRE">
-        <WhaleWire initial={whale} limit={WHALE_LIMIT} />
-      </LiveOnly>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20, minWidth: 0 }}>
+      <SentimentStrip fearGreed={fearGreed} sentiment={sentiment} news={news} events={events} />
+      <div className="rise" style={{ ['--i' as string]: 3 }}>
+        <LiveOnly env={[events, news]} title="WORLD EVENTS">
+          <GlobalSentimentPanel events={events} news={news} activeCats={activeCats} />
+        </LiveOnly>
+      </div>
+      <section className="ember-row3" aria-label="The crowd and the whales">
+        <div className="rise" style={{ ['--i' as string]: 4 }}>
+          <LiveOnly env={social} title="SOCIAL SENTIMENT">
+            <SocialSentimentCard social={social} />
+          </LiveOnly>
+        </div>
+        <div className="rise" style={{ ['--i' as string]: 5, flex: '2 1 520px' }}>
+          <LiveOnly env={whale} title="WHALE WIRE">
+            <WhaleWire initial={whale} limit={WHALE_LIMIT} />
+          </LiveOnly>
+        </div>
+      </section>
     </div>
   );
 }

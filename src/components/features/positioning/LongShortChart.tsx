@@ -31,8 +31,7 @@ export function LongShortChart({ positioning }: { positioning: Envelope<Position
           style={{
             padding: 20,
             textAlign: 'center',
-            fontFamily: 'var(--mono)',
-            fontSize: 9,
+            fontSize: 12,
             color: 'var(--dim)',
           }}
         >
@@ -135,9 +134,7 @@ export function LongShortChart({ positioning }: { positioning: Envelope<Position
           style={{
             display: 'flex',
             justifyContent: 'space-between',
-            fontFamily: 'var(--mono)',
-            fontSize: 8,
-            letterSpacing: '.08em',
+            fontSize: 12,
             color: 'var(--dim)',
           }}
         >
@@ -149,8 +146,7 @@ export function LongShortChart({ positioning }: { positioning: Envelope<Position
         <p
           style={{
             margin: 0,
-            fontFamily: 'var(--mono)',
-            fontSize: 8.5,
+            fontSize: 12,
             lineHeight: 1.55,
             color: 'var(--dim)',
           }}

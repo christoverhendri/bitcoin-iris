@@ -19,9 +19,7 @@ const W = 960;
 const H = 500;
 
 const zoomBtn: CSSProperties = {
-  fontFamily: 'var(--mono)',
-  fontSize: 9,
-  letterSpacing: '.08em',
+  fontSize: 12,
   height: 22,
   minWidth: 22,
   padding: 0,
@@ -312,7 +310,7 @@ export function WorldMap({
 
       {hovered ? (
         <div
-          className="iris-micro"
+
           style={{
             position: 'absolute',
             left: `${((transform.x + hovered.x * k) / W) * 100}%`,
@@ -323,15 +321,14 @@ export function WorldMap({
             background: 'var(--panel)',
             border: '1px solid var(--line2)',
             padding: '6px 8px',
-            fontFamily: 'var(--mono)',
-            fontSize: 9,
+            fontSize: 12,
             lineHeight: 1.4,
             color: 'var(--txt)',
             zIndex: 2,
           }}
         >
           <div style={{ marginBottom: 3 }}>{hovered.event.headline}</div>
-          <div style={{ color: 'var(--dim)', letterSpacing: '.1em' }}>
+          <div style={{ color: 'var(--dim)' }}>
             {hovered.event.place.toUpperCase()} · {hovered.event.category} ·{' '}
             {fmtAgo(new Date(hovered.event.publishedAt).toISOString())}
           </div>
@@ -353,7 +350,7 @@ export function WorldMap({
           type="button"
           title="Zoom out"
           onClick={() => zoomByFactor(1 / 1.6)}
-          className="iris-micro"
+
           style={zoomBtn}
         >
           −
@@ -362,7 +359,7 @@ export function WorldMap({
           type="button"
           title="Zoom in"
           onClick={() => zoomByFactor(1.6)}
-          className="iris-micro"
+
           style={zoomBtn}
         >
           +
@@ -371,7 +368,7 @@ export function WorldMap({
           type="button"
           title="Reset view"
           onClick={() => resetZoom()}
-          className="iris-micro"
+
           style={{ ...zoomBtn, padding: '0 6px' }}
         >
           RESET

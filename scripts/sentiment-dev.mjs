@@ -46,5 +46,5 @@ if (!values['worker-only']) {
     await new Promise((resolve) => setTimeout(resolve, 500));
   }
   if (!ready) { console.error('Sentiment worker did not become ready.'); stop(1); }
-  else start(process.execPath, ['node_modules/next/dist/bin/next', values.production ? 'start' : 'dev', '--hostname', '127.0.0.1']);
+  else start(process.execPath, ['node_modules/next/dist/bin/next', values.production ? 'start' : 'dev', '--hostname', '127.0.0.1', '--port', '3000']);
 }

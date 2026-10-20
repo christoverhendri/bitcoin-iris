@@ -63,11 +63,12 @@ export const CORRIDOR_METHOD_NOTE = [
 ].join('\n');
 
 export const ZONE_COLOR: Record<Zone, string> = {
-  'Sangat murah': 'var(--up)',
-  Murah: 'color-mix(in srgb, var(--up) 60%, var(--mut))',
-  Wajar: 'var(--blue)',
-  Mahal: 'var(--amber)',
-  'Sangat mahal': 'var(--down)',
+  // One warm ramp, cheap (dark) to expensive (bright): told apart by lightness.
+  'Sangat murah': '#7a5338',
+  Murah: '#a0613a',
+  Wajar: '#c9b8aa',
+  Mahal: '#e8813a',
+  'Sangat mahal': '#ffb27a',
 };
 
 /** `0–10`, `10–30` … from the config edges. */

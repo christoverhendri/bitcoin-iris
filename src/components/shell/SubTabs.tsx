@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect } from 'react';
 import { SUB_COOKIE, sectionFromPath, subHref } from '@/lib/nav';
+import { softCase } from '@/lib/softCase';
 
 /**
  * Sub-tab strip. Each tab is a real route, so tabs are deep-linkable and the
@@ -37,14 +38,11 @@ export function SubTabs() {
     document.cookie = `${SUB_COOKIE}=${encodeURIComponent(JSON.stringify(map))}; path=/; max-age=31536000; samesite=lax`;
   }, [section, currentSlug]);
 
-  if (!section || section.subs.length === 0) return null;
+  // A section with a single view (Overview, Global Sentiment) has nothing to switch between.
+  if (!section || section.subs.length <= 1) return null;
 
   return (
-    <div
-      role="tablist"
-      aria-label={`${section.title} views`}
-      style={{ display: 'flex', gap: 2, flexWrap: 'wrap', minWidth: 0 }}
-    >
+    <div role="tablist" aria-label={`${section.title} views`} className="seg">
       {section.subs.map((sub) => {
         const active = (sub.slug ?? null) === currentSlug;
         return (
@@ -53,17 +51,9 @@ export function SubTabs() {
             href={subHref(section, sub)}
             role="tab"
             aria-selected={active}
-            className="tab-btn iris-micro"
-            style={{
-              fontFamily: 'var(--mono)',
-              fontSize: 9.5,
-              letterSpacing: '.14em',
-              padding: '9px 12px',
-              color: active ? 'var(--txt)' : 'var(--mut)',
-              borderBottom: `2px solid ${active ? 'var(--down)' : 'transparent'}`,
-            }}
+            className="seg-btn"
           >
-            {sub.label}
+            {softCase(sub.label)}
           </Link>
         );
       })}

@@ -1,23 +1,28 @@
 import { LiveOnly } from '@/components/primitives';
 import { getPowerLaw } from '@/lib/features/powerLawCorridor';
-import { CorridorNow } from '@/components/features/corridor/CorridorNow';
+import { PowerLawHero, PowerLawLadder } from '@/components/features/corridor/PowerLawCards';
 import { CorridorChart } from '@/components/features/corridor/CorridorChart';
 
-/**
- * Same 30 s as the other tabs (the terminal layout's value wins anyway). The
- * Coin Metrics series itself is fetched at most once a day (`coinmetrics.ts`);
- * the walk-forward recompute on top of it runs in memory.
- */
+/** The power-law lane: where the price sits today, today's bands, and the long chart. */
 export const revalidate = 30;
 
 export default async function PowerLawPage() {
   const pl = await getPowerLaw({});
 
   return (
-    <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px', minWidth: 0 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20, minWidth: 0 }}>
       <LiveOnly env={pl} title="POWER-LAW CORRIDOR">
-        <CorridorNow pl={pl} />
-        <CorridorChart pl={pl} />
+        <section className="ember-split" aria-label="Today in the corridor">
+          <div className="main rise" style={{ ['--i' as string]: 2 }}>
+            <PowerLawHero pl={pl} />
+          </div>
+          <div className="side rise" style={{ ['--i' as string]: 3 }}>
+            <PowerLawLadder pl={pl} />
+          </div>
+        </section>
+        <div className="rise" style={{ ['--i' as string]: 4 }}>
+          <CorridorChart pl={pl} />
+        </div>
       </LiveOnly>
     </div>
   );

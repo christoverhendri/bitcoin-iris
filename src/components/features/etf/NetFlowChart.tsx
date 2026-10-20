@@ -29,7 +29,7 @@ export function NetFlowChart({ etf }: { etf: Envelope<EtfFlowsData> }) {
     return (
       <Panel>
         <PanelHeader title="ETF NET FLOW PER SESI" right={<MockBadge env={etf} />} />
-        <div style={{ padding: 20, textAlign: 'center', fontSize: 11, color: 'var(--dim)' }}>
+        <div style={{ padding: 20, textAlign: 'center', fontSize: 13, color: 'var(--dim)' }}>
           Belum ada sesi yang dipublikasikan
         </div>
         <SourceFootnote env={etf} />
@@ -85,12 +85,12 @@ export function NetFlowChart({ etf }: { etf: Envelope<EtfFlowsData> }) {
         {/* one date per bar, aligned to the bar centres */}
         <div style={{ display: 'grid', gridTemplateColumns: `repeat(${n}, 1fr)`, padding: `0 ${(PAD_X / W) * 100}%` }}>
           {rows.map((r) => (
-            <span key={r.date} style={{ fontFamily: 'var(--mono)', fontSize: 8.5, color: 'var(--dim)', textAlign: 'center', whiteSpace: 'nowrap' }}>
+            <span key={r.date} style={{ fontSize: 12, color: 'var(--dim)', textAlign: 'center', whiteSpace: 'nowrap' }}>
               {fmtDayShort(r.date)}
             </span>
           ))}
         </div>
-        <div style={{ fontFamily: 'var(--mono)', fontSize: 8.5, color: 'var(--dim)' }}>
+        <div style={{ fontSize: 12, color: 'var(--dim)' }}>
           Tinggi bar penuh = ±{fmtUsdM(peak).replace('+', '')} · arahkan kursor ke bar untuk nilainya
         </div>
       </div>

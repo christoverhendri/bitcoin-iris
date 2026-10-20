@@ -16,12 +16,22 @@ export default async function MonthlyForecastPage() {
   const fc = await getMonthlyForecast({});
 
   return (
-    <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px', minWidth: 0 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20, minWidth: 0 }}>
       <LiveOnly env={fc} title="PRAKIRAAN 30 HARI">
-        <MonthlyFan fc={fc} />
-        <MonthlyRange fc={fc} />
-        <MonthlyAccuracy fc={fc} />
-        <MonthlyForwardPanel fc={fc} />
+        <div className="rise" style={{ ['--i' as string]: 2 }}>
+          <MonthlyFan fc={fc} />
+        </div>
+        <section className="ember-split" aria-label="Range and accuracy">
+          <div className="main rise" style={{ ['--i' as string]: 3 }}>
+            <MonthlyRange fc={fc} />
+          </div>
+          <div className="side rise" style={{ ['--i' as string]: 4 }}>
+            <MonthlyAccuracy fc={fc} />
+          </div>
+        </section>
+        <div className="rise" style={{ ['--i' as string]: 5 }}>
+          <MonthlyForwardPanel fc={fc} />
+        </div>
       </LiveOnly>
     </div>
   );

@@ -34,8 +34,8 @@ export function NetflowChart({ flows }: NetflowChartProps) {
       <div style={{ padding: '14px 12px', display: 'flex', flexDirection: 'column', gap: 12 }}>
         <div>
           <div
-            className="iris-micro"
-            style={{ fontFamily: 'var(--mono)', fontSize: 9, letterSpacing: '.14em', color: 'var(--mut)' }}
+
+            style={{ fontSize: 12, color: 'var(--mut)' }}
           >
             NET POSITION
           </div>
@@ -50,7 +50,7 @@ export function NetflowChart({ flows }: NetflowChartProps) {
           >
             {netBtc}
           </div>
-          <div className="iris-micro" style={{ fontFamily: 'var(--mono)', fontSize: 9, color: 'var(--dim)', marginTop: 2 }}>
+          <div style={{ fontSize: 12, color: 'var(--dim)', marginTop: 2 }}>
             {net >= 0 ? 'net leaving exchanges' : 'net entering exchanges'}
           </div>
         </div>

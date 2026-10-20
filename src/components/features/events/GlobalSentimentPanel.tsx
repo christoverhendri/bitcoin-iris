@@ -6,7 +6,7 @@ import type { Envelope } from '@/lib/envelope';
 import type { EventCategory, GeoEvent } from '@/lib/features/geopoliticalEvents';
 import type { NewsArticle } from '@/lib/features/news';
 import { WorldMap, type DetailPayload } from './WorldMap';
-import { GlobeMap } from './GlobeMap';
+import { EmberGlobe } from './EmberGlobe';
 import { EventNewsRail } from './EventNewsRail';
 import { EventDetail } from './EventDetail';
 import { EventLayerToggle } from './EventLayerToggle';
@@ -23,33 +23,18 @@ export function GlobalSentimentPanel({ events, news, activeCats }: GlobalSentime
   const [view, setView] = useState<'globe' | 'flat'>('globe');
 
   return (
-    <Panel style={{ display: 'flex', flexDirection: 'column', minHeight: 460 }}>
+    <Panel still style={{ display: 'flex', flexDirection: 'column', minHeight: 460 }}>
       <PanelHeader
-        title="GLOBAL EVENT MAP"
-        note="CRYPTO · MACRO · GEOPOLITICAL"
+        title="World events"
+        note={`${events.data.length} events · crypto, macro, geopolitical`}
         right={
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ display: 'flex', gap: 2 }}>
+            <div className="seg" role="group" aria-label="Map view">
               {([
-                ['globe', '3D'],
-                ['flat', '2D'],
+                ['globe', 'Globe'],
+                ['flat', 'Map'],
               ] as const).map(([v, lbl]) => (
-                <button
-                  key={v}
-                  type="button"
-                  onClick={() => setView(v)}
-                  aria-pressed={view === v}
-                  style={{
-                    fontFamily: 'var(--mono)',
-                    fontSize: 9,
-                    letterSpacing: '.1em',
-                    padding: '3px 8px',
-                    border: '1px solid var(--line2)',
-                    background: view === v ? '#1b2430' : 'transparent',
-                    color: view === v ? 'var(--txt)' : 'var(--mut)',
-                    cursor: 'pointer',
-                  }}
-                >
+                <button key={v} type="button" className="seg-btn" onClick={() => setView(v)} aria-pressed={view === v}>
                   {lbl}
                 </button>
               ))}
@@ -59,29 +44,28 @@ export function GlobalSentimentPanel({ events, news, activeCats }: GlobalSentime
         }
       />
 
-      <div
-        style={{
-          padding: '8px 12px',
-          borderBottom: '1px solid var(--line)',
-          background: 'var(--sunk)',
-        }}
-      >
+      <div style={{ position: 'relative', zIndex: 4, padding: '4px 26px 14px' }}>
         <Suspense fallback={null}>
           <EventLayerToggle />
         </Suspense>
       </div>
 
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 1, background: 'var(--line)' }}>
+      <div style={{ position: 'relative', zIndex: 4, display: 'flex', flexWrap: 'wrap', gap: 20, padding: '0 22px 22px' }}>
         <div
           style={{
-            flex: '2 1 560px',
+            flex: '999 1 560px',
             minWidth: 0,
             position: 'relative',
-            background: 'var(--panel)',
+            aspectRatio: '1 / 1',
+            maxHeight: 700,
+            minHeight: 440,
+            borderRadius: 24,
+            overflow: 'hidden',
+            background: '#0d0907',
           }}
         >
           {view === 'globe' ? (
-            <GlobeMap
+            <EmberGlobe
               events={events.data}
               activeCats={activeCats}
               selectedKey={selectedKey}
@@ -114,11 +98,13 @@ export function GlobalSentimentPanel({ events, news, activeCats }: GlobalSentime
 
         <div
           style={{
-            flex: '1 1 300px',
+            flex: '1 1 340px',
             minWidth: 0,
-            maxHeight: 560,
-            background: 'var(--panel)',
+            maxHeight: 700,
+            borderRadius: 24,
+            overflow: 'hidden',
           }}
+          className="iris-inset"
         >
           <EventNewsRail
             events={events.data}

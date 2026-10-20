@@ -68,9 +68,9 @@ export function ChartHover({
         {children}
         {p ? (
           <g pointerEvents="none">
-            <line x1={p.x} x2={p.x} y1={0} y2={viewH} stroke="var(--mut)" strokeWidth={1} vectorEffect="non-scaling-stroke" />
+            <line x1={p.x} x2={p.x} y1={0} y2={viewH} stroke="#5a4130" strokeWidth={1} strokeDasharray="3 4" vectorEffect="non-scaling-stroke" />
             {p.y !== undefined ? (
-              <circle cx={p.x} cy={p.y} r={3.5} fill="var(--txt)" stroke="var(--panel)" strokeWidth={1.5} vectorEffect="non-scaling-stroke" />
+              <circle cx={p.x} cy={p.y} r={4} fill="#ffd2ae" stroke="var(--accent)" strokeWidth={2} vectorEffect="non-scaling-stroke" />
             ) : null}
           </g>
         ) : null}
@@ -83,20 +83,19 @@ export function ChartHover({
             top: 4,
             left: `${leftPct}%`,
             transform: `translateX(${leftPct > 70 ? '-105%' : leftPct < 30 ? '5%' : '-50%'})`,
-            background: 'var(--sunk)',
-            border: '1px solid var(--line2)',
-            padding: '5px 8px',
-            fontFamily: 'var(--mono)',
-            fontSize: 10,
+            background: '#f6eee7',
+            borderRadius: 10,
+            padding: '7px 11px',
+            fontSize: 12.5,
             lineHeight: 1.5,
-            color: 'var(--txt)',
+            color: '#1a110b',
             whiteSpace: 'nowrap',
             pointerEvents: 'none',
-            zIndex: 2,
+            zIndex: 5,
           }}
         >
           {p.lines.map((l, i) => (
-            <div key={i} style={i === 0 ? { fontWeight: 700 } : { color: 'var(--mut)' }}>
+            <div key={i} style={i === 0 ? { fontWeight: 700 } : { color: '#5a4130' }}>
               {l}
             </div>
           ))}

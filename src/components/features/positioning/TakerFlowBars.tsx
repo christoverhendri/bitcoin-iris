@@ -32,8 +32,7 @@ export function TakerFlowBars({ positioning }: { positioning: Envelope<Positioni
           style={{
             padding: 20,
             textAlign: 'center',
-            fontFamily: 'var(--mono)',
-            fontSize: 9,
+            fontSize: 12,
             color: 'var(--dim)',
           }}
         >
@@ -105,7 +104,7 @@ export function TakerFlowBars({ positioning }: { positioning: Envelope<Positioni
             vectorEffect="non-scaling-stroke"
           />
         </ChartHover>
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--mono)', fontSize: 8, color: 'var(--dim)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--dim)' }}>
           <span>{fmtHour(rows[0].ts)}</span>
           <span>{fmtHour(rows[n - 1].ts)}</span>
         </div>
@@ -115,8 +114,7 @@ export function TakerFlowBars({ positioning }: { positioning: Envelope<Positioni
             display: 'grid',
             gridTemplateColumns: '1fr 1fr 1fr',
             gap: 8,
-            fontFamily: 'var(--mono)',
-            fontSize: 9,
+            fontSize: 12,
           }}
         >
           {(
@@ -127,7 +125,7 @@ export function TakerFlowBars({ positioning }: { positioning: Envelope<Positioni
             ] as const
           ).map(([label, value, color]) => (
             <div key={label}>
-              <div style={{ fontSize: 8, color: 'var(--mut)', letterSpacing: '.12em' }}>
+              <div style={{ fontSize: 12, color: 'var(--mut)' }}>
                 {label}
               </div>
               <div style={{ fontWeight: 700, color }}>{value}</div>
@@ -138,8 +136,7 @@ export function TakerFlowBars({ positioning }: { positioning: Envelope<Positioni
         <p
           style={{
             margin: 0,
-            fontFamily: 'var(--mono)',
-            fontSize: 8.5,
+            fontSize: 12,
             lineHeight: 1.55,
             color: 'var(--dim)',
           }}

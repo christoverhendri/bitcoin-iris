@@ -3,11 +3,12 @@
 import { useEffect, useState } from 'react';
 
 /**
- * The live clock in the topbar.
+ * The live UTC clock in the top bar. UTC because every timestamp in the
+ * terminal (candle closes, worker schedules, releases) is stated in UTC.
  *
- * Renders an empty placeholder on the server and fills in after mount — the
- * time differs between server and client by definition, so rendering it during
- * SSR would be a guaranteed hydration mismatch.
+ * Renders a placeholder on the server and fills in after mount — the time
+ * differs between server and client by definition, so rendering it during SSR
+ * would be a guaranteed hydration mismatch.
  */
 export function Clock() {
   const [time, setTime] = useState<string | null>(null);
@@ -20,6 +21,7 @@ export function Clock() {
           hour: '2-digit',
           minute: '2-digit',
           second: '2-digit',
+          timeZone: 'UTC',
         }),
       );
     tick();
@@ -29,18 +31,10 @@ export function Clock() {
 
   return (
     <span
-      className="iris-micro"
       suppressHydrationWarning
-      style={{
-        fontFamily: 'var(--mono)',
-        fontSize: 10,
-        color: 'var(--mut)',
-        minWidth: 62,
-        display: 'inline-block',
-        textAlign: 'right',
-      }}
+      style={{ fontSize: 14, color: '#a8968a', minWidth: 96, display: 'inline-block', textAlign: 'right' }}
     >
-      {time ?? '--:--:--'}
+      {time ?? '--:--:--'} UTC
     </span>
   );
 }

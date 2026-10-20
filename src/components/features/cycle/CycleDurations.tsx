@@ -48,7 +48,7 @@ export function CycleDurations({ cycle }: { cycle: Envelope<HalvingCycleData> })
             <tr key={r.label}>
               <td>
                 {r.label}
-                <div style={{ fontSize: 9.5, color: 'var(--dim)' }}>{r.hint}</div>
+                <div style={{ fontSize: 12, color: 'var(--dim)' }}>{r.hint}</div>
               </td>
               <td style={{ textAlign: 'right' }} title={r.values.map((v) => `siklus ${v.label}: ${n0(v.value)} hari`).join('\n')}>
                 {r.values.map((v) => n0(v.value)).join(' · ') || '—'}
@@ -62,7 +62,7 @@ export function CycleDurations({ cycle }: { cycle: Envelope<HalvingCycleData> })
           ))}
         </tbody>
       </QTable>
-      <div style={{ padding: '8px 12px', fontSize: 10.5, color: 'var(--dim)' }}>
+      <div style={{ padding: '8px 12px', fontSize: 12, color: 'var(--dim)' }}>
         Gambar: batang biru = rentang 80%, titik putih = tiap siklus.
       </div>
       <SourceFootnote env={cycle} />

@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { type Envelope, explainMock } from '@/lib/envelope';
+import { softCase } from '@/lib/softCase';
 
 /**
  * Renders its panel only when the data is real (curation 2026-10-18: "tidak
@@ -28,23 +29,11 @@ export function LiveOnly({
     <div
       role="note"
       title={explainMock(missing)}
-      style={{
-        background: 'var(--panel)',
-        border: '1px dashed var(--line2)',
-        padding: '9px 12px',
-        fontSize: 11,
-        lineHeight: 1.5,
-        color: 'var(--mut)',
-      }}
+      className="iris-inset"
+      style={{ padding: '16px 20px', fontSize: 14, lineHeight: 1.55, color: 'var(--mut)' }}
     >
-      <span
-        className="iris-micro"
-        style={{ fontFamily: 'var(--mono)', fontSize: 9, letterSpacing: '.14em', color: 'var(--txt)' }}
-      >
-        {title}
-      </span>{' '}
-      — data belum tersedia ({reasonWords(missing)}). Panel disembunyikan supaya tidak menampilkan angka
-      contoh.
+      <span style={{ fontWeight: 600, color: 'var(--txt)' }}>{softCase(title)}</span> — data belum tersedia (
+      {reasonWords(missing)}). Panel disembunyikan supaya tidak menampilkan angka contoh.
     </div>
   );
 }

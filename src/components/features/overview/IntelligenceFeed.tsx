@@ -1,197 +1,129 @@
-'use client';
-
-import { useState } from 'react';
-import { Panel, PanelHeader, Tag, MockBadge, SourceFootnote } from '@/components/primitives';
+import Link from 'next/link';
+import { Panel, PanelHeader, MockBadge, SourceFootnote } from '@/components/primitives';
 import type { Envelope } from '@/lib/envelope';
 import type { SentimentData } from '@/lib/features/sentiment';
 import type { NewsArticle } from '@/lib/features/news';
-import { newsSentimentWord, newsCategoryColor } from '@/lib/features/news/present';
-import { HeadlineModel, ModelProvenance } from '@/components/features/sentiment/ModelProvenance';
+import { sentimentSource } from '@/lib/sentiment/types';
+import { softCase } from '@/lib/softCase';
 
 export interface IntelligenceFeedProps {
   sentiment: Envelope<SentimentData>;
   news: Envelope<NewsArticle[]>;
 }
 
-function toneFor(s: NewsArticle['sentiment']): 'up' | 'down' | 'txt' {
-  return s === 'positive' ? 'up' : s === 'negative' ? 'down' : 'txt';
+const WORD: Record<NewsArticle['sentiment'], string> = { positive: 'Positive', neutral: 'Neutral', negative: 'Negative' };
+
+/** Tag colours: the accent for positive, sand for negative, a quiet tone for neutral. */
+function tag(s: NewsArticle['sentiment']) {
+  if (s === 'positive') return { bg: 'var(--accent-soft)', fg: '#ffb27a' };
+  if (s === 'negative') return { bg: '#2a211b', fg: '#e8d5c4' };
+  return { bg: '#221912', fg: '#c9b8aa' };
 }
 
+/** P(positive) − P(negative) from the model, when the model scored the headline. */
+function score(a: NewsArticle): string | null {
+  const p = a.sentimentAssessment?.probabilities;
+  if (!p) return null;
+  const v = p.positive - p.negative;
+  if (Math.abs(v) < 0.005) return '0.00';
+  return `${v > 0 ? '+' : '−'}${Math.abs(v).toFixed(2)}`;
+}
+
+/**
+ * The latest headlines, each labelled by the sentiment model, with the mix of
+ * labels over the whole sample in the header. A label is the tone of the text,
+ * not a price call.
+ */
 export function IntelligenceFeed({ sentiment, news }: IntelligenceFeedProps) {
   const s = sentiment.data;
   const articles = news.data.slice(0, 10);
-  const [openIdx, setOpenIdx] = useState<number | null>(null);
+  const engine = sentimentSource(articles.find((a) => a.sentimentAssessment)?.sentimentAssessment);
 
   return (
-    <Panel style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 300 }}>
-      <PanelHeader
-        title="LIVE INTELLIGENCE"
-        note="RSS headlines · keyword-count labels · no ML model"
-        right={<MockBadge env={news} />}
-      />
-
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-        {/* Sentiment summary */}
-        <div style={{ padding: 12, borderBottom: '1px solid var(--line)', background: 'var(--sunk)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-            <span style={{ fontFamily: 'var(--mono)', fontSize: 9, color: 'var(--mut)' }}>
-              HEADLINE MIX · LAST {s.headlineCount} HEADLINES
-            </span>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, fontSize: 11 }}>
+    <Panel>
+      <PanelHeader title="Intelligence feed" note={`${engine} · ${s.headlineCount} headlines`} right={<MockBadge env={news} />} />
+      <div style={{ position: 'relative', zIndex: 4, padding: '6px 26px 14px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             {(
               [
-                ['BULLISH', s.positivePct, 'var(--up)'],
-                ['NEUTRAL', s.neutralPct, 'var(--txt)'],
-                ['BEARISH', s.negativePct, 'var(--down)'],
+                ['Positive', s.positivePct, '#ffb27a'],
+                ['Neutral', s.neutralPct, 'var(--txt)'],
+                ['Negative', s.negativePct, 'var(--down)'],
               ] as const
             ).map(([label, pct, color]) => (
-              <div key={label}>
-                <div style={{ fontFamily: 'var(--mono)', fontSize: 8, color: 'var(--mut)' }}>
-                  {label}
-                </div>
-                <div style={{ fontFamily: 'var(--mono)', fontWeight: 700, color }}>
-                  {pct.toFixed(0)}%
-                </div>
-              </div>
+              <span key={label} className="iris-inset" style={{ padding: '10px 16px', display: 'flex', alignItems: 'baseline', gap: 10 }}>
+                <span style={{ fontSize: 13, color: 'var(--dim)' }}>{label}</span>
+                <span style={{ fontSize: 20, fontWeight: 600, color }}>{pct.toFixed(0)}%</span>
+              </span>
             ))}
           </div>
+          <Link href="/sentiment" className="ember-btn">
+            Open all news
+          </Link>
         </div>
 
-        {/* News list */}
-        <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
-          {articles.length === 0 ? (
-            <div
-              style={{
-                padding: '20px 12px',
-                textAlign: 'center',
-                color: 'var(--dim)',
-                fontFamily: 'var(--mono)',
-                fontSize: 9,
-              }}
-            >
-              No news available
-            </div>
-          ) : (
-            articles.map((a, i) => {
-              const open = openIdx === i;
-              return (
-                <div
-                  key={i}
-                  style={{
-                    borderBottom: i < articles.length - 1 ? '1px solid var(--line)' : 'none',
-                  }}
-                >
-                  <button
-                    type="button"
-                    onClick={() => setOpenIdx(open ? null : i)}
-                    aria-expanded={open}
+        {articles.length === 0 ? (
+          <div className="t-caption" style={{ padding: '20px 0', textAlign: 'center' }}>
+            No headlines from the feeds right now.
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 32px' }}>
+            {articles.map((a, i) => {
+              const t = tag(a.sentiment);
+              const sc = score(a);
+              const body = (
+                <>
+                  <span
                     style={{
-                      width: '100%',
-                      textAlign: 'left',
-                      background: open ? 'var(--sunk)' : 'transparent',
-                      border: 'none',
-                      cursor: 'pointer',
-                      padding: '10px 12px',
-                      display: 'flex',
-                      gap: 8,
-                      alignItems: 'flex-start',
+                      flex: '0 0 auto',
+                      minWidth: 78,
+                      padding: '5px 10px',
+                      borderRadius: 999,
+                      fontSize: 12,
+                      fontWeight: 600,
+                      textAlign: 'center',
+                      background: t.bg,
+                      color: t.fg,
                     }}
                   >
-                    <span style={{ minWidth: 'fit-content', marginTop: 2 }}>
-                      <Tag label={newsSentimentWord(a.sentiment)} tone={toneFor(a.sentiment)} />
+                    {WORD[a.sentiment]}
+                  </span>
+                  <span style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 3 }}>
+                    <span style={{ fontSize: 15, lineHeight: 1.4, color: 'var(--txt)', wordBreak: 'break-word' }}>{a.title}</span>
+                    <span style={{ fontSize: 13, color: 'var(--dim)' }}>
+                      {a.source} · {softCase(a.category.replace('_', ' '))} · {a.btcWindow}
                     </span>
-                    <span style={{ flex: 1, minWidth: 0 }}>
-                      <span
-                        style={{
-                          display: 'block',
-                          fontFamily: 'var(--mono)',
-                          fontSize: 9,
-                          color: 'var(--txt)',
-                          marginBottom: 3,
-                          lineHeight: 1.35,
-                          wordBreak: 'break-word',
-                        }}
-                      >
-                        {a.title}
-                      </span>
-                      <span
-                        style={{
-                          display: 'flex',
-                          flexWrap: 'wrap',
-                          gap: 6,
-                          fontFamily: 'var(--mono)',
-                          fontSize: 8,
-                          color: 'var(--dim)',
-                          alignItems: 'center',
-                        }}
-                      >
-                        <span style={{ color: newsCategoryColor(a) }}>{a.category}</span>
-                        <span>·</span>
-                        <span>{a.source}</span>
-                        <span>·</span>
-                        <span>{a.btcWindow}</span>
-                      </span>
-                      <HeadlineModel assessment={a.sentimentAssessment} />
+                  </span>
+                  {sc ? (
+                    <span style={{ fontSize: 14, fontWeight: 600, color: '#e9ddd2' }} title="Model P(positive) − P(negative)">
+                      {sc}
                     </span>
-                    <span
-                      style={{
-                        fontFamily: 'var(--mono)',
-                        fontSize: 10,
-                        color: 'var(--mut)',
-                        marginTop: 1,
-                      }}
-                    >
-                      {open ? '−' : '+'}
-                    </span>
-                  </button>
-
-                  {open && (
-                    <div
-                      style={{
-                        padding: '0 12px 12px 12px',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: 8,
-                      }}
-                    >
-                      <p
-                        style={{
-                          margin: 0,
-                          fontFamily: 'var(--font-body, var(--mono))',
-                          fontSize: 11,
-                          lineHeight: 1.5,
-                          color: 'var(--mut)',
-                        }}
-                      >
-                        {a.description || 'No description supplied by the source feed.'}
-                      </p>
-                      {a.url && (
-                        <a
-                          href={a.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          style={{
-                            fontFamily: 'var(--mono)',
-                            fontSize: 9,
-                            letterSpacing: '.12em',
-                            color: 'var(--blue)',
-                            textDecoration: 'none',
-                          }}
-                        >
-                          OPEN SOURCE ↗
-                        </a>
-                      )}
-                    </div>
-                  )}
+                  ) : null}
+                </>
+              );
+              const style = {
+                flex: '1 1 440px',
+                minWidth: 0,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 16,
+                padding: '14px 12px',
+                margin: '0 -12px',
+              } as const;
+              return a.url ? (
+                <a key={i} href={a.url} target="_blank" rel="noopener noreferrer" className="ember-row" style={style} title={a.description || undefined}>
+                  {body}
+                </a>
+              ) : (
+                <div key={i} className="ember-row" style={style} title={a.description || undefined}>
+                  {body}
                 </div>
               );
-            })
-          )}
-        </div>
+            })}
+          </div>
+        )}
       </div>
-
-      <ModelProvenance analysis={s.analysis} />
       <SourceFootnote env={news} />
     </Panel>
   );

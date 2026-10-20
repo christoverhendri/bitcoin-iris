@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
+import { softCase } from '@/lib/softCase';
 
-/** 9px mono, .16em tracking, 1px bottom hairline. The panel title idiom. */
+/** The panel title idiom: an 18px semibold title, a quiet note beside it. */
 export function PanelHeader({
   title,
   right,
@@ -15,46 +16,23 @@ export function PanelHeader({
   return (
     <div
       style={{
+        position: 'relative',
+        zIndex: 4,
         display: 'flex',
-        alignItems: 'center',
+        alignItems: 'baseline',
         justifyContent: 'space-between',
-        gap: 10,
-        padding: '8px 12px',
-        borderBottom: '1px solid var(--line)',
-        minHeight: 30,
+        gap: 12,
+        padding: '24px 26px 10px',
+        flexWrap: 'wrap',
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, minWidth: 0 }}>
-        <span
-          className="iris-micro"
-          style={{
-            fontFamily: 'var(--mono)',
-            fontSize: 9,
-            letterSpacing: '.16em',
-            color: 'var(--txt)',
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-          }}
-        >
-          {title}
-        </span>
-        {note ? (
-          <span
-            className="iris-micro"
-            style={{
-              fontFamily: 'var(--mono)',
-              fontSize: 8.5,
-              letterSpacing: '.12em',
-              color: 'var(--dim)',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {note}
-          </span>
-        ) : null}
+      <h2 className="t-title" style={{ margin: 0, fontSize: 18, color: 'var(--txt)' }}>
+        {softCase(title)}
+      </h2>
+      <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+        {note ? <span style={{ fontSize: 13, color: 'var(--dim)' }}>{softCase(note)}</span> : null}
+        {right}
       </div>
-      {right ? <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>{right}</div> : null}
     </div>
   );
 }

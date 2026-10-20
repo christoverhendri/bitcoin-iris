@@ -31,7 +31,7 @@ export function MacroMetrics({ macro, country, countryLabel }: MacroMetricsProps
   return (
     <Panel style={{ display: 'flex', flexDirection: 'column' }}>
       <PanelHeader title="DATA EKONOMI AS" note={countryLabel} right={<MockBadge env={macro} />} />
-      <p style={{ margin: 0, padding: '10px 12px', fontSize: 11.5, lineHeight: 1.55, color: 'var(--mut)', borderBottom: '1px solid var(--line)' }}>
+      <p style={{ margin: 0, padding: '4px 26px 10px', fontSize: 15, lineHeight: 1.55, color: '#e9ddd2' }}>
         Empat angka ekonomi utama Amerika Serikat dari FRED (bank sentral AS). Kolom terakhir
         menunjukkan apakah nilainya sedang di atas, sekitar, atau di bawah kebiasaannya selama 2 tahun
         terakhir. Inflasi dan suku bunga yang tinggi biasanya membuat aset berisiko seperti BTC
@@ -50,10 +50,10 @@ export function MacroMetrics({ macro, country, countryLabel }: MacroMetricsProps
         <tbody>
           {metrics.map((x) => (
             <tr key={x.key}>
-              <td style={{ color: 'var(--mut)', fontFamily: 'var(--mono)', fontSize: 10 }}>{x.label}</td>
-              <td style={{ fontSize: 11, color: 'var(--mut)' }}>{x.what}</td>
-              <td style={{ fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 700 }}>{x.value}</td>
-              <td style={{ fontSize: 11, color: 'var(--txt)' }}>{zWords(x.z, WINDOW)}</td>
+              <td style={{ color: 'var(--mut)', fontSize: 12 }}>{x.label}</td>
+              <td style={{ fontSize: 13, color: 'var(--mut)' }}>{x.what}</td>
+              <td style={{ fontSize: 12, fontWeight: 700 }}>{x.value}</td>
+              <td style={{ fontSize: 13, color: 'var(--txt)' }}>{zWords(x.z, WINDOW)}</td>
             </tr>
           ))}
         </tbody>

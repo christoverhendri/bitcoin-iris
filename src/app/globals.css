@@ -1,53 +1,72 @@
 @import "tailwindcss";
 
 /* ---------------------------------------------------------------------------
-   IRIS terminal design tokens.
-   Values are mirrored in src/lib/theme/tokens.ts — tokens.test.ts asserts parity.
-   Do not edit one without the other.
+   IRIS terminal design tokens ("Ember", 2026-10-20).
+   Values are mirrored in src/lib/theme/tokens.ts and tokens.test.ts asserts parity.
+   Do not edit one without the other. No semicolons inside the comments of the
+   two blocks below, the parity test splits on them.
 --------------------------------------------------------------------------- */
 @theme {
-  --color-bg: #08090c;
-  --color-panel: #0e1014;
-  --color-sunk: #0b0d11;
-  --color-line: #191d24;
-  --color-line2: #242a33;
-  --color-txt: #dfe5ec;
-  --color-mut: #6f7c8a;
-  --color-dim: #4b5663;
-  --color-up: #26d07c;
-  --color-down: #ef4444;
-  --color-blue: #3b82f6;
-  --color-amber: #f5a524;
-  --color-purple: #a78bfa;
+  --color-bg: #0b0806;
+  --color-panel: #130e0a;
+  --color-sunk: #1a130e;
+  --color-line: #241a13;
+  --color-line2: #2e2219;
+  --color-txt: #f6eee7;
+  --color-mut: #b9a89a;
+  --color-dim: #9a887a;
+  --color-up: #ffb27a;
+  --color-down: #c9b8aa;
+  --color-blue: #e9c4a6;
+  --color-amber: #ffa05c;
+  --color-purple: #b8663a;
 
-  --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
-  --font-heading: var(--font-archivo), system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-body: var(--font-archivo), system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: var(--font-ember), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-ember), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-body: var(--font-ember), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
 /* Plain custom properties too: inline style={{color:'var(--up)'}} is the idiom
-   ported from the original, and @theme names are prefixed with --color-. */
+   used across the components, and @theme names are prefixed with --color-. */
 :root {
-  --bg: #08090c;
-  --panel: #0e1014;
-  --sunk: #0b0d11;
-  --line: #191d24;
-  --line2: #242a33;
-  --txt: #dfe5ec;
-  --mut: #6f7c8a;
-  --dim: #4b5663;
-  --up: #26d07c;
-  --down: #ef4444;
-  --blue: #3b82f6;
-  --amber: #f5a524;
-  --purple: #a78bfa;
+  --bg: #0b0806;
+  --panel: #130e0a;
+  --sunk: #1a130e;
+  --line: #241a13;
+  --line2: #2e2219;
+  --txt: #f6eee7;
+  --mut: #b9a89a;
+  --dim: #9a887a;
+  --up: #ffb27a;
+  --down: #c9b8aa;
+  --blue: #e9c4a6;
+  --amber: #ffa05c;
+  --purple: #b8663a;
 
-  --mono: var(--font-jetbrains-mono), ui-monospace, monospace;
-  --font-heading: var(--font-archivo), system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-body: var(--font-archivo), system-ui, -apple-system, "Segoe UI", sans-serif;
+  /* One typeface everywhere. --mono is kept as a name only so the older
+     components that still reference it pick up the same face. */
+  --mono: var(--font-ember), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-ember), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-body: var(--font-ember), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
 
-  /* Sidebar width — one number, referenced by the shell grid and the drawer. */
-  --rail: 198px;
+  /* The one accent, and the surfaces stepped from the ground by tone. */
+  --accent: #ff6b1f;
+  --accent-ink: #1a0e06;
+  --accent-soft: color-mix(in srgb, #ff6b1f 16%, transparent);
+  --raise: #1f1712;
+  --raise-2: #261b13;
+  --glass: rgba(255, 255, 255, 0.03);
+  --glass-strong: rgba(255, 255, 255, 0.06);
+  --stroke: rgba(255, 214, 180, 0.07);
+  --stroke-strong: rgba(255, 214, 180, 0.14);
+  --inset: #1a130e;
+  --r-lg: 26px;
+  --r-md: 18px;
+  --r-sm: 12px;
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  /* No side rail in Ember: navigation lives in the top bar. */
+  --rail: 0px;
 
   color-scheme: dark;
 }
@@ -66,13 +85,43 @@ body {
 body {
   color: var(--txt);
   font-family: var(--font-body);
-  /* The terminal is a fixed-height app shell; the content column scrolls, not the page. */
+  font-size: 14px;
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  /* The terminal is a fixed-height app shell: the content column scrolls, not the page. */
   overflow: hidden;
+  background: var(--bg);
+}
+
+/* The warm light over the top of every page. It breathes, slowly. */
+.ember-glow {
+  position: fixed;
+  top: -460px;
+  left: 50%;
+  width: 1500px;
+  height: 860px;
+  margin-left: -750px;
+  background: radial-gradient(ellipse at center, color-mix(in srgb, var(--accent) 22%, transparent) 0%, transparent 62%);
+  pointer-events: none;
+  z-index: 0;
+  animation: emberBreathe 6s ease-in-out infinite;
+}
+@keyframes emberBreathe {
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 0.95;
+  }
 }
 
 button {
   white-space: nowrap;
-  font-family: var(--mono);
+  font-family: inherit;
+  font-size: inherit;
   cursor: pointer;
   background: none;
   border: 0;
@@ -81,62 +130,362 @@ button {
 }
 
 a {
-  color: var(--blue);
+  color: #ffa05c;
   text-decoration: none;
 }
 a:hover {
-  color: var(--up);
+  color: #ffc59a;
 }
 
 ::selection {
-  background: color-mix(in srgb, var(--blue) 35%, transparent);
+  background: color-mix(in srgb, var(--accent) 38%, transparent);
 }
 
 /* ---------------------------------------------------------------------------
-   The one animation in the original: the LIVE dot.
+   Type. Tracking is size-specific: large text tightens, small text stays at 0.
 --------------------------------------------------------------------------- */
-@keyframes irisPulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.2;
-  }
+.t-display {
+  font-weight: 600;
+  letter-spacing: -0.045em;
+  line-height: 0.95;
+}
+.t-title {
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: 1.15;
+}
+.t-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--dim);
+  letter-spacing: 0;
+}
+.t-caption {
+  font-size: 12px;
+  color: var(--dim);
+}
+.t-accent {
+  color: var(--accent);
+  text-shadow: 0 0 44px color-mix(in srgb, var(--accent) 42%, transparent);
 }
 
-.iris-pulse {
-  animation: irisPulse 1.8s infinite;
+/* Text that a slow band of light crosses. */
+.shine {
+  background: linear-gradient(100deg, currentColor 38%, #ffd2ae 50%, currentColor 62%);
+  background-size: 260% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: emberShine 7s linear infinite;
+}
+@keyframes emberShine {
+  from {
+    background-position: 130% 0;
+  }
+  to {
+    background-position: -130% 0;
+  }
 }
 
 /* ---------------------------------------------------------------------------
-   Interaction. The original had three :hover rules, no transitions, and no
-   focus styles at all. Hover is kept identical; transitions and focus rings
-   are added because a keyboard user could not use the original.
+   Material. A solid warm card whose edge catches light at two corners. Panels
+   lift a little on hover and a band of light sweeps across them.
 --------------------------------------------------------------------------- */
+.iris-card {
+  position: relative;
+  background: var(--panel);
+  border-radius: var(--r-lg);
+  min-width: 0;
+  isolation: isolate;
+}
+.iris-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--accent) 60%, transparent),
+    transparent 32%,
+    transparent 68%,
+    color-mix(in srgb, var(--accent) 22%, transparent)
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  opacity: 0.42;
+  transition: opacity 500ms ease;
+  z-index: 3;
+}
+.iris-panel {
+  transition:
+    transform 600ms var(--ease),
+    background-color 400ms ease;
+}
+.iris-panel::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -70%;
+  width: 45%;
+  height: 100%;
+  background: linear-gradient(100deg, transparent, color-mix(in srgb, var(--accent) 12%, transparent), transparent);
+  transform: skewX(-18deg);
+  pointer-events: none;
+  z-index: 2;
+}
+.iris-panel:hover {
+  transform: translateY(-3px);
+  background-color: #1a130e;
+}
+.iris-panel:hover::before {
+  opacity: 1;
+}
+.iris-panel:hover::after {
+  animation: emberSheen 1.2s var(--ease);
+}
+/* Panels that hold a canvas the visitor drags (the globe) keep still. */
+.iris-panel.still:hover {
+  transform: none;
+  background-color: var(--panel);
+}
+.iris-panel.still:hover::after {
+  animation: none;
+}
+@keyframes emberSheen {
+  from {
+    left: -70%;
+  }
+  to {
+    left: 135%;
+  }
+}
+
+.iris-inset {
+  background: var(--inset);
+  border-radius: var(--r-md);
+}
+
+/* Slow conic light behind a hero card. */
+.ember-halo {
+  position: absolute;
+  width: 640px;
+  height: 640px;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    color-mix(in srgb, var(--accent) 55%, transparent) 70deg,
+    transparent 140deg,
+    transparent 220deg,
+    color-mix(in srgb, var(--accent) 30%, transparent) 290deg,
+    transparent 360deg
+  );
+  filter: blur(60px);
+  opacity: 0.5;
+  pointer-events: none;
+  z-index: 0;
+  animation: emberSpin 28s linear infinite;
+}
+@keyframes emberSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Controls. Pill navigation, segmented controls and buttons share one feel:
+   instant press feedback, a springy settle, nothing that blocks input.
+--------------------------------------------------------------------------- */
+.ember-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: 4px;
+  background: #140f0b;
+  border-radius: 999px;
+}
+.ember-nav a {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 18px;
+  border-radius: 999px;
+  color: #a8968a;
+  font-size: 14px;
+  font-weight: 500;
+  transition:
+    background-color 300ms ease,
+    color 300ms ease,
+    transform 150ms ease;
+}
+.ember-nav a:hover {
+  color: var(--txt);
+  background: var(--raise);
+}
+.ember-nav a:active {
+  transform: scale(0.97);
+}
+.ember-nav a[aria-current='page'] {
+  color: var(--txt);
+  background: var(--raise-2);
+}
+.ember-nav a[aria-current='page']::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.seg {
+  display: inline-flex;
+  gap: 2px;
+  padding: 4px;
+  border-radius: 999px;
+  background: #140f0b;
+  max-width: 100%;
+  overflow-x: auto;
+}
+.seg-btn {
+  padding: 9px 16px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #a8968a;
+  transition:
+    background-color 300ms ease,
+    color 300ms ease,
+    transform 150ms ease;
+}
+.seg-btn:hover {
+  color: var(--txt);
+  background: var(--raise);
+}
+.seg-btn:active {
+  transform: scale(0.96);
+}
+.seg-btn[aria-selected='true'],
+.seg-btn[aria-pressed='true'] {
+  color: var(--txt);
+  font-weight: 600;
+  background: var(--raise-2);
+}
+
+.ember-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 14px;
+  font-weight: 600;
+  transition:
+    transform 150ms ease,
+    filter 300ms ease;
+}
+.ember-btn:hover {
+  filter: brightness(1.12);
+  color: var(--accent-ink);
+}
+.ember-btn:active {
+  transform: scale(0.97);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  background: var(--raise);
+}
+
+/* Legacy hover classes, still used by a few filters. */
 .nav-btn,
 .ind-btn,
 .tab-btn,
 .pill-btn {
   transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease;
 }
-
-.nav-btn:hover {
-  background: #12161c;
-}
-.ind-btn:hover {
-  background: #12161c;
+.nav-btn:hover,
+.ind-btn:hover,
+.pill-btn:hover {
+  background: var(--raise);
 }
 .tab-btn:hover {
   color: var(--txt);
 }
-.pill-btn:hover {
-  background: #12161c;
+
+/* List rows that slide a touch to the right under the pointer. */
+.ember-row {
+  border-radius: 14px;
+  transition:
+    background-color 300ms ease,
+    transform 300ms var(--ease);
+}
+.ember-row:hover {
+  background-color: var(--raise);
+  transform: translateX(3px);
 }
 
 :where(a, button, [tabindex]):focus-visible {
-  outline: 1px solid var(--blue);
-  outline-offset: -1px;
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 8px;
+}
+
+/* ---------------------------------------------------------------------------
+   Motion. Entrances rise a little and settle. Transform and opacity only, and
+   all of it collapses for reduced motion.
+--------------------------------------------------------------------------- */
+@keyframes irisPulse {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 70%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 12px transparent;
+  }
+}
+.iris-pulse {
+  animation: irisPulse 2.2s ease-out infinite;
+}
+
+@keyframes irisRise {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.rise {
+  animation: irisRise 1s var(--ease) both;
+  animation-delay: calc(var(--i, 0) * 90ms);
+}
+
+@keyframes emberGrow {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+.ember-grow {
+  transform-origin: left center;
+  animation: emberGrow 1.1s 0.4s var(--ease) both;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -145,7 +494,12 @@ a:hover {
   *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
+    animation-delay: 0ms !important;
     transition-duration: 0.01ms !important;
+  }
+  .iris-panel:hover,
+  .ember-row:hover {
+    transform: none;
   }
 }
 
@@ -160,84 +514,196 @@ table.iris-table {
 table.iris-table th,
 table.iris-table td {
   text-align: left;
-  padding: 6px 8px;
-  border-bottom: 1px solid var(--line);
+  padding: 11px 12px;
   white-space: nowrap;
 }
 table.iris-table th {
-  font-weight: 600;
-  letter-spacing: 0.06em;
+  font-weight: 500;
+  font-size: 13px;
+  color: var(--dim);
+}
+table.iris-table tbody tr {
+  transition: background-color 300ms ease;
+}
+table.iris-table tbody tr:hover {
+  background: var(--raise);
 }
 
 /* ---------------------------------------------------------------------------
-   Mobile. The original was desktop-only: 198px fixed rail, 8.5px type, zero
-   media queries. Below 1024px the rail becomes a drawer (see SidebarDrawer)
-   and the micro-type floor is raised so it stays readable.
+   Migration layer. Some components still carry the old micro-type (8 to 11px,
+   wide tracking). This keeps them legible in the Ember face until each one is
+   moved to the .t-* classes.
 --------------------------------------------------------------------------- */
-@media (max-width: 1023px) {
-  :root {
-    --rail: 0px;
-  }
-  .iris-micro {
-    font-size: 11px !important;
+.iris-micro,
+[style*='font-size: 8'],
+[style*='font-size: 9'],
+[style*='font-size: 10'],
+[style*='font-size: 11'] {
+  font-size: 12px !important;
+}
+[style*='letter-spacing'] {
+  letter-spacing: 0.01em !important;
+}
+
+/* ---------------------------------------------------------------------------
+   Layout.
+--------------------------------------------------------------------------- */
+.ember-page {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 32px;
+}
+@media (max-width: 720px) {
+  .ember-page {
+    padding: 0 16px;
   }
 }
 
-/* Overview: chart 2/3 + snapshot 1/3 collapses to a single column when narrow. */
+/* Two columns that stack: a wide main column and a side column. */
+.ember-split {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  align-items: stretch;
+}
+.ember-split > .main {
+  flex: 999 1 640px;
+  min-width: 0;
+}
+.ember-split > .side {
+  flex: 1 1 380px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.ember-row3 {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  align-items: stretch;
+}
+.ember-row3 > * {
+  flex: 1 1 340px;
+  min-width: 0;
+}
+
+/* Kept for pages that still use the older grid helpers. */
+.ov-split {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr);
+  gap: 20px;
+  align-items: start;
+}
 @media (max-width: 900px) {
   .ov-split {
-    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
-/* Thin scrollbars that match the surface ramp rather than the OS default. */
+/* Thin scrollbars that stay out of the way. */
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--line2) transparent;
+  scrollbar-color: rgba(255, 214, 180, 0.16) transparent;
 }
 *::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 *::-webkit-scrollbar-thumb {
-  background: var(--line2);
+  background: rgba(255, 214, 180, 0.16);
+  border-radius: 8px;
 }
 *::-webkit-scrollbar-track {
   background: transparent;
 }
 
-/* ---------------------------------------------------------------------------
-   Rail vs drawer.
-   >=1024px: the rail is a real grid column (--rail: 198px) and the hamburger
-             is hidden.
-   <1024px:  --rail collapses to 0, the rail becomes a fixed overlay panel that
-             slides in, and the hamburger appears in the topbar.
---------------------------------------------------------------------------- */
-.iris-drawer-toggle {
-  display: none;
+/* Metric rows inside a card: separated by space and a hover tone, never a rule. */
+.kv-row {
+  border-radius: 12px;
+  transition: background-color 300ms ease;
+}
+.kv-row:hover {
+  background: var(--raise);
 }
 
-@media (max-width: 1023px) {
-  .iris-drawer-toggle {
-    display: inline-flex;
-  }
-
-  .iris-rail {
-    position: fixed;
-    inset: 0 auto 0 0;
-    width: 240px;
-    z-index: 50;
-    transform: translateX(-100%);
-    transition: transform 180ms ease;
-  }
-
-  .iris-rail[data-open='true'] {
-    transform: translateX(0);
-  }
+/* Chips that act as toggles (map layers, filters). */
+button.chip {
+  cursor: pointer;
+  color: #c9b8aa;
+  font-weight: 500;
+  font-size: 13px;
+  padding: 8px 14px;
+  transition: background-color 300ms ease, color 300ms ease, transform 150ms ease;
+}
+button.chip:hover {
+  color: var(--txt);
+  filter: brightness(1.15);
+}
+button.chip:active {
+  transform: scale(0.96);
+}
+button.chip[aria-pressed='true'] {
+  color: var(--accent-ink);
+  background: var(--accent);
+  font-weight: 600;
 }
 
-@media (max-width: 1023px) and (prefers-reduced-motion: reduce) {
-  .iris-rail {
-    transition: none;
+/* Globe controls and name tags. */
+.globe-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #c9b8aa;
+  transition:
+    background-color 250ms ease,
+    color 250ms ease,
+    transform 150ms ease;
+}
+.globe-btn:hover {
+  background: #2a1e15;
+  color: var(--txt);
+}
+.globe-btn:active {
+  transform: scale(0.92);
+}
+.globe-btn[aria-pressed='true'] {
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+  color: #ffb27a;
+}
+.globe-tag {
+  padding: 5px 10px;
+  border-radius: 8px;
+  background: #f6eee7;
+  color: #1a110b;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.globe-hint {
+  position: absolute;
+  left: 18px;
+  bottom: 18px;
+  color: var(--dim);
+  font-size: 13px;
+  pointer-events: none;
+}
+@keyframes globeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
   }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.globe-in {
+  animation: globeIn 1.6s 0.3s var(--ease) both;
 }

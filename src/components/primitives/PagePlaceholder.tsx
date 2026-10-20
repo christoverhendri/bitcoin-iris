@@ -15,14 +15,12 @@ export function PagePlaceholder({ panels }: { panels: string[] }) {
         <Panel key={title} style={{ minHeight: 180 }}>
           <PanelHeader title={title} note="PENDING" />
           <div
-            className="iris-micro"
+
             style={{
               flex: 1,
               display: 'grid',
               placeItems: 'center',
-              fontFamily: 'var(--mono)',
-              fontSize: 9,
-              letterSpacing: '.16em',
+              fontSize: 12,
               color: 'var(--dim)',
               padding: 24,
             }}

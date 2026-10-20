@@ -39,12 +39,10 @@ export function CountryScopeTabs() {
             role="tab"
             aria-selected={active}
             title={c.label}
-            className="tab-btn iris-micro"
+            className="tab-btn"
             onClick={() => setCountry(c.code)}
             style={{
-              fontFamily: 'var(--mono)',
-              fontSize: 9.5,
-              letterSpacing: '.14em',
+              fontSize: 12,
               padding: '8px 12px',
               color: active ? 'var(--txt)' : 'var(--mut)',
               borderBottom: `2px solid ${active ? 'var(--blue)' : 'transparent'}`,

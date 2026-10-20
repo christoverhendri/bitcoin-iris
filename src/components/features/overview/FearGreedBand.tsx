@@ -6,108 +6,63 @@ export interface FearGreedBandProps {
   fearGreed: Envelope<FearGreedData>;
 }
 
-function tone(c: FearGreedData['classification']): string {
-  if (c === 'Extreme Greed' || c === 'Greed') return 'var(--up)';
-  if (c === 'Extreme Fear' || c === 'Fear') return 'var(--down)';
-  return 'var(--txt)';
-}
+const WORD: Record<FearGreedData['classification'], string> = {
+  'Extreme Fear': 'Extreme fear',
+  Fear: 'Fear',
+  Neutral: 'Neutral',
+  Greed: 'Greed',
+  'Extreme Greed': 'Extreme greed',
+};
 
-const ZONES = [
-  { label: 'EXTREME FEAR', to: 25, color: 'var(--down)' },
-  { label: 'FEAR', to: 45, color: 'var(--amber)' },
-  { label: 'NEUTRAL', to: 55, color: 'var(--mut)' },
-  { label: 'GREED', to: 75, color: 'var(--blue)' },
-  { label: 'EXTREME GREED', to: 100, color: 'var(--up)' },
-];
-
-export function FearGreedBand({ fearGreed }: FearGreedBandProps) {
+/**
+ * The alternative.me index as a half-dial: the arc fills to today's value and
+ * a light dot sits at its end. The change line is the index's own move versus
+ * yesterday, as the source reports it.
+ */
+export function FearGreedCard({ fearGreed }: FearGreedBandProps) {
   const fg = fearGreed.data;
   const v = Math.max(0, Math.min(100, fg.value));
-  const changeUp = fg.changePct >= 0;
+  const greedy = fg.classification === 'Greed' || fg.classification === 'Extreme Greed';
+  // The dot at the end of the arc: 0 at the left end, 100 at the right.
+  const a = Math.PI * (1 - v / 100);
+  const dx = 80 + 70 * Math.cos(a);
+  const dy = 82 - 70 * Math.sin(a);
+  const up = fg.changePct >= 0;
 
   return (
-    <Panel>
-      <PanelHeader
-        title="FEAR & GREED"
-        note="alternative.me · 0 = fear · 100 = greed"
-        right={<MockBadge env={fearGreed} />}
-      />
-      <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
+    <Panel style={{ height: '100%' }}>
+      <PanelHeader title="Fear & greed" right={<MockBadge env={fearGreed} />} />
+      <div style={{ position: 'relative', zIndex: 4, padding: '0 22px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div style={{ position: 'relative' }}>
+          <svg width="100%" viewBox="0 0 160 92" role="img" aria-label={`Fear and Greed index ${fg.value}, ${WORD[fg.classification]}`}>
+            <path d="M10 82 A70 70 0 0 1 150 82" fill="none" stroke="var(--line2)" strokeWidth={10} strokeLinecap="round" />
+            <path
+              d="M10 82 A70 70 0 0 1 150 82"
+              fill="none"
+              stroke={greedy ? 'var(--accent)' : '#b8663a'}
+              strokeWidth={10}
+              strokeLinecap="round"
+              pathLength={100}
+              strokeDasharray={`${v} 100`}
+              style={{ filter: 'drop-shadow(0 0 6px color-mix(in srgb, var(--accent) 55%, transparent))' }}
+            />
+            <circle cx={dx} cy={dy} r={6} fill="#ffd2ae" />
+          </svg>
           <span
-            style={{
-              fontFamily: 'var(--mono)',
-              fontSize: 26,
-              fontWeight: 700,
-              color: tone(fg.classification),
-              lineHeight: 1,
-            }}
+            className="t-display"
+            style={{ position: 'absolute', left: 0, right: 0, bottom: 0, textAlign: 'center', fontSize: 34 }}
           >
             {fg.value}
           </span>
-          <span
-            style={{
-              fontFamily: 'var(--mono)',
-              fontSize: 11,
-              letterSpacing: '.14em',
-              color: tone(fg.classification),
-            }}
-          >
-            {fg.classification.toUpperCase()}
-          </span>
-          <span
-            style={{
-              marginLeft: 'auto',
-              fontFamily: 'var(--mono)',
-              fontSize: 9,
-              color: changeUp ? 'var(--up)' : 'var(--down)',
-            }}
-          >
-            {changeUp ? '+' : ''}
-            {fg.changePct.toFixed(1)}% 24h
-          </span>
         </div>
-
-        {/* scale */}
-        <div style={{ position: 'relative', height: 8, display: 'flex', gap: 1 }}>
-          {ZONES.map((z, i) => {
-            const from = i === 0 ? 0 : ZONES[i - 1].to;
-            return (
-              <div
-                key={z.label}
-                title={z.label}
-                style={{ width: `${z.to - from}%`, background: z.color, opacity: 0.45 }}
-              />
-            );
-          })}
-          <div
-            style={{
-              position: 'absolute',
-              left: `${v}%`,
-              top: -3,
-              width: 2,
-              height: 14,
-              background: 'var(--txt)',
-              transform: 'translateX(-1px)',
-            }}
-          />
-        </div>
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            fontFamily: 'var(--mono)',
-            fontSize: 8,
-            letterSpacing: '.1em',
-            color: 'var(--dim)',
-          }}
-        >
-          <span>0</span>
-          <span>25</span>
-          <span>50</span>
-          <span>75</span>
-          <span>100</span>
-        </div>
+        <span style={{ fontSize: 14, textAlign: 'center', color: '#e9ddd2' }}>
+          {WORD[fg.classification]},{' '}
+          <span style={{ color: up ? '#ffb27a' : 'var(--down)' }}>
+            {up ? '+' : ''}
+            {fg.changePct.toFixed(1)}%
+          </span>{' '}
+          vs yesterday
+        </span>
       </div>
       <SourceFootnote env={fearGreed} />
     </Panel>
