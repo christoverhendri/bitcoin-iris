@@ -30,7 +30,7 @@ const NAV_LABEL: Record<string, string> = {
 const NAV_ORDER = ['overview', 'forecast', 'quant', 'chain', 'macro', 'sentiment', 'strategy'];
 
 /**
- * The Ember top bar: the IRIS mark, one pill row for every section, the
+ * The Ember top bar: the BitPulse mark, one pill row for every section, the
  * live price, the UTC clock and the LIVE dot. It replaces the side rail, so
  * the content gets the full width.
  */
@@ -55,12 +55,38 @@ export function Topbar({ ticker }: { ticker: TickerState }) {
       }}
     >
       <Link href="/overview" style={{ display: 'flex', alignItems: 'center', gap: 12, color: 'var(--txt)' }}>
-        <svg width={30} height={30} viewBox="0 0 30 30" aria-hidden="true">
-          <circle cx={15} cy={15} r={12} fill="none" stroke="var(--accent)" strokeWidth={2.5} />
-          <circle cx={15} cy={15} r={4.5} fill="var(--accent)" />
+        <svg width={34} height={34} viewBox="0 0 34 34" aria-hidden="true">
+          <defs>
+            <linearGradient id="bp-mark" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stopColor="#ff8a3d" />
+              <stop offset="1" stopColor="#e8480c" />
+            </linearGradient>
+          </defs>
+          <rect width={34} height={34} rx={10} fill="url(#bp-mark)" />
+          <path
+            d="M5 18h6l3-8 5 15 3-9 2 2h5"
+            fill="none"
+            stroke="#fff6ee"
+            strokeWidth={2.2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
         </svg>
-        <span style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-0.02em' }}>IRIS</span>
-        <span style={{ fontSize: 14, color: 'var(--dim)' }}>BTC Terminal</span>
+        <span style={{ fontSize: 22, fontWeight: 500, letterSpacing: '-0.03em' }}>
+          Bit<span style={{ color: 'var(--accent)', fontWeight: 700 }}>Pulse</span>
+        </span>
+        <span
+          style={{
+            fontSize: 11,
+            color: 'var(--dim)',
+            letterSpacing: '0.18em',
+            textTransform: 'uppercase',
+            paddingLeft: 12,
+            borderLeft: '1px solid var(--stroke-strong)',
+          }}
+        >
+          BTC Intelligence
+        </span>
       </Link>
 
       <nav aria-label="Sections" className="ember-nav">

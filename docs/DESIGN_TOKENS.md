@@ -53,7 +53,7 @@ display and keeps abbreviations (BTC, ETF, RSI, MACD…).
 
 ## Layout
 
-- **Shell:** no side rail. The top bar holds the IRIS mark, one pill row for the six sections, the live
+- **Shell:** no side rail. The top bar holds the BitPulse mark, one pill row for the six sections, the live
   price, the UTC clock and the LIVE dot. Under it, `PageHeading` sets the section title large with a
   one-line lede and the sub-tab switcher. The footer carries feed health, the active model and the
   disclaimer.

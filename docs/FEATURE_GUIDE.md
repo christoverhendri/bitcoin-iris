@@ -1,4 +1,4 @@
-# IRIS BTC Terminal — Panduan Fitur per Tab
+# BitPulse — BTC Terminal — Panduan Fitur per Tab
 
 Dokumen ini menjelaskan **setiap tab dan setiap panel** di dashboard: isinya apa, angkanya
 datang dari mana, rumusnya apa, dan cara membacanya. Semua rumus diambil langsung dari kode

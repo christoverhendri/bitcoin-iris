@@ -20,7 +20,7 @@
  */
 
 const UA =
-  'Mozilla/5.0 (compatible; IRIS-Terminal/1.0; +https://github.com/) AppleWebKit/537.36';
+  'Mozilla/5.0 (compatible; BitPulse/1.0; +https://github.com/) AppleWebKit/537.36';
 
 const DEFAULT_TIMEOUT_MS = 9_000;
 

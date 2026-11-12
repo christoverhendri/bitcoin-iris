@@ -2,6 +2,7 @@ import { LiveOnly } from '@/components/primitives';
 import { getPositioning } from '@/lib/features/positioning';
 import { PositioningHero, VenueSpreads } from '@/components/features/onchain/OnChainCards';
 import { LongShortChart } from '@/components/features/positioning/LongShortChart';
+import { LivePerp } from '@/components/features/positioning/LivePerp';
 import { TakerFlowBars } from '@/components/features/positioning/TakerFlowBars';
 
 export const revalidate = 60;
@@ -12,6 +13,7 @@ export default async function LongShortPage() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20, minWidth: 0 }}>
+      <LivePerp />
       <LiveOnly env={positioning} title="LONG / SHORT">
         <div className="rise" style={{ ['--i' as string]: 2 }}>
           <PositioningHero positioning={positioning} />

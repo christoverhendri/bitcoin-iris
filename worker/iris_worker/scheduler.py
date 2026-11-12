@@ -9,6 +9,7 @@ Daemon APScheduler untuk semua job worker (semua jadwal dalam UTC):
 | clf_weekly   | CLF_CRON      | 30 0 * * 1     | Senin 07:30      | refresh (kalau belum segar) lalu prediksi -> clf_signals / out/ |
 | social_sentiment | SOCIAL_CRON | 20 0 * * *   | tiap hari 07:20  | proporsi sentimen sosial BTC dari Santiment -> social_sentiment_daily / out/ (hanya kalau SANTIMENT_API_KEY di-set) |
 | whale_ingest | WHALE_CRON    | */5 * * * *    | tiap 5 menit     | POST {IRIS_APP_URL}/api/ingest/whale (hanya kalau IRIS_APP_URL + CRON_SECRET di-set) |
+| history_archive | HISTORY_CRON | 5 * * * *    | tiap jam :05     | POST {IRIS_APP_URL}/api/ingest/history -> news_sentiment_items, daily_snapshots, ohlcv_candles (hanya kalau IRIS_APP_URL + CRON_SECRET di-set) |
 | watcher_news | WATCHER_CRON  | * * * * *      | tiap menit       | Telegram Watcher.Guru -> news_pipeline (SQLite) -> .data/watcher-guru.json untuk dashboard |
 | monthly      | MONTHLY_CRON  | 20 0 * * 1     | Senin 07:20      | Monte Carlo 30 hari (iris_worker.monthly, Timothy) -> Supabase, atau worker/out/*.json tanpa Supabase |
 
@@ -37,7 +38,7 @@ from apscheduler.triggers.cron import CronTrigger
 
 from iris_worker import config
 from iris_worker.data.build import last_closed_day, week_start_sunday
-from iris_worker.jobs import whale_ingest
+from iris_worker.jobs import history_archive, whale_ingest
 from iris_worker.jobs.clf_weekly import WeekNotClosedError, run_clf_weekly
 from iris_worker.jobs.refresh_data import run_refresh
 from iris_worker.jobs.social_sentiment import run_social_sentiment
@@ -194,6 +195,13 @@ def job_whale():
         _stamp(f"whale_ingest GAGAL: {e}")
 
 
+def job_history():
+    try:
+        history_archive.run_history_archive()
+    except Exception as e:
+        _stamp(f"history_archive GAGAL: {e}")
+
+
 def job_watcher():
     # Quiet on success (runs every minute); the pipeline's own back-off handles
     # repeated failures, so a failure is logged once per attempt and skipped.
@@ -236,7 +244,7 @@ def catch_up(dry_run: bool = False):
 
 def main():
     parser = argparse.ArgumentParser(description="IRIS Worker Scheduler")
-    parser.add_argument("--once", choices=["refresh", "weekly", "social", "whale", "watcher", "monthly", "forward", "all"],
+    parser.add_argument("--once", choices=["refresh", "weekly", "social", "whale", "watcher", "monthly", "forward", "history", "all"],
                         help="Jalankan job sekali lalu keluar.")
     parser.add_argument("--dry-run", action="store_true", help="clf_weekly tanpa menulis apa pun.")
     parser.add_argument("--no-catch-up", action="store_true",
@@ -258,6 +266,8 @@ def main():
             run_social_sentiment(dry_run=args.dry_run)
         if args.once == "whale":
             whale_ingest.run_whale_ingest()
+        if args.once == "history":
+            history_archive.run_history_archive()
         if args.once == "watcher":
             print(run_watcher_news())
         if args.once == "monthly":
@@ -285,6 +295,12 @@ def main():
                       name="Whale Alert ingest trigger", misfire_grace_time=120)
     else:
         _stamp("whale_ingest dilewati: IRIS_APP_URL / CRON_SECRET belum di-set")
+
+    if history_archive.is_configured():
+        sched.add_job(job_history, parse_cron(config.HISTORY_CRON), id="history_archive",
+                      name="History archive trigger", misfire_grace_time=1800)
+    else:
+        _stamp("history_archive dilewati: IRIS_APP_URL / CRON_SECRET belum di-set")
 
     sched.add_job(job_watcher, parse_cron(config.WATCHER_CRON), id="watcher_news",
                   name="Watcher.Guru news pipeline", misfire_grace_time=60)

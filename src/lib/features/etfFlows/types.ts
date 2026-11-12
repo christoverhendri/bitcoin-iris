@@ -19,6 +19,12 @@ export interface EtfFlowSession {
   totalUsdM: number;
   /** Per-fund breakdown for the session, US$ millions. Signed. */
   byFund: Record<string, number>;
+  /**
+   * True for the newest sessions. The publisher transcribes issuer figures and
+   * revises recent rows (19 Oct moved 441.9 -> 435.8 within days), so those rows
+   * may still change. The panels mark them rather than present them as final.
+   */
+  provisional: boolean;
 }
 
 export interface EtfFlowsData {

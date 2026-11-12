@@ -73,7 +73,7 @@ export function StatusFooter({ health, now }: { health: FeedHealth; now?: number
           Sync {health.syncFromDirectFetch ? 'direct on render' : fmtAgo(health.lastSyncAt, now ?? health.renderedAt)}
         </span>
       </span>
-      <span>For research only. Not financial advice. IRIS BTC © {new Date(health.renderedAt).getUTCFullYear()}</span>
+      <span>For research only. Not financial advice. BitPulse © {new Date(health.renderedAt).getUTCFullYear()}</span>
     </footer>
   );
 }

@@ -1,4 +1,4 @@
-# IRIS BTC Intelligence Terminal
+# BitPulse — BTC Intelligence Terminal
 
 A BTC signal / evidence / forecast terminal. Next.js frontend on Supabase
 Postgres, fed by a separate Python ingestion worker.

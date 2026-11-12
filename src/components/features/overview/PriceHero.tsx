@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import { LivePrice } from './LivePrice';
 import { MockBadge, Panel, SourceFootnote } from '@/components/primitives';
 import { TimeframePills } from '@/components/shell';
 import { ChartHover } from '@/components/charts/ChartHover';
@@ -38,8 +39,6 @@ export function PriceHero({
   const s = snapshot.data;
   const candles = ohlcv.isMock ? [] : ohlcv.data;
   const n = candles.length;
-  const [whole, cents] = fmtUsd(s.last).split('.');
-  const up = s.change24hPct >= 0;
 
   // Chart geometry. Closes only: a line reads cleaner than candles at this size,
   // and the hover still reports open, high and low for every candle.
@@ -88,34 +87,9 @@ export function PriceHero({
             <h1 style={{ margin: 0, fontSize: 15, fontWeight: 500, color: 'var(--mut)' }}>
               Bitcoin <span style={{ color: 'var(--dim)' }}>·</span> BTC / USD
             </h1>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, flexWrap: 'wrap' }}>
-              <span className="t-display shine" style={{ fontSize: 'clamp(56px, 7vw, 92px)', color: 'var(--txt)' }}>
-                ${whole}
-              </span>
-              <span style={{ fontSize: 'clamp(28px, 3vw, 40px)', fontWeight: 500, letterSpacing: '-0.03em', color: 'var(--dim)' }}>
-                .{cents}
-              </span>
-            </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10 }}>
-              <span
-                className="chip"
-                style={{
-                  padding: '6px 12px',
-                  fontSize: 15,
-                  background: up ? 'var(--accent-soft)' : 'var(--raise)',
-                  color: up ? '#ffb27a' : 'var(--down)',
-                }}
-              >
-                <svg width={10} height={10} viewBox="0 0 10 10" aria-hidden="true" style={{ transform: up ? undefined : 'rotate(180deg)' }}>
-                  <path d="M5 1 L9 8 L1 8 Z" fill="currentColor" />
-                </svg>
-                {fmtPct(Math.abs(s.change24hPct), false)}
-              </span>
-              <span style={{ fontSize: 15, color: 'var(--mut)' }}>
-                {s.change24hAbs >= 0 ? '+' : '−'}${fmtUsd(Math.abs(s.change24hAbs))} in 24 hours
-              </span>
+            <LivePrice initial={{ last: s.last, change24hAbs: s.change24hAbs, change24hPct: s.change24hPct }} live={!snapshot.isMock}>
               <MockBadge env={snapshot} />
-            </div>
+            </LivePrice>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 10 }}>
             <Suspense fallback={null}>

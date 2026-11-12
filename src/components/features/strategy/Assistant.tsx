@@ -73,7 +73,7 @@ export function Assistant({ questions }: { questions: readonly { key: string; la
         </span>
         <span style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           <h2 className="t-title" style={{ margin: 0, fontSize: 18 }}>
-            Asisten IRIS
+            Asisten BitPulse
           </h2>
           <span style={{ fontSize: 13, color: 'var(--dim)' }}>Pilih pertanyaan, jawabannya dari checklist hari ini</span>
         </span>

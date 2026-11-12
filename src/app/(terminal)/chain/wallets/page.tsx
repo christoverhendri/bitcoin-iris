@@ -2,6 +2,7 @@ import { LiveOnly } from '@/components/primitives';
 import { getChainFlows } from '@/lib/features/chainFlows';
 import { ExchangeRadar, LargeTransfers, NetflowCard, ReserveHero } from '@/components/features/onchain/OnChainCards';
 import { FlowRadar } from '@/components/features/flows/FlowRadar';
+import { LiveFlowWire } from '@/components/features/flows/LiveFlowWire';
 
 export const revalidate = 60;
 
@@ -11,6 +12,7 @@ export default async function WalletsPage() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20, minWidth: 0 }}>
+      <LiveFlowWire />
       <LiveOnly env={flows} title="EXCHANGE RESERVE">
         <section className="ember-split" aria-label="Reserves and net flow">
           <div className="main rise" style={{ ['--i' as string]: 2 }}>

@@ -48,6 +48,7 @@ export function mockEtfFlows({ limit = 10 }: EtfFlowsArgs): EtfFlowsData {
       ts,
       totalUsdM: Math.round(total * 10) / 10,
       byFund,
+      provisional: false,
     });
   }
 

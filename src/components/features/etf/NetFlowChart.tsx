@@ -46,7 +46,12 @@ export function NetFlowChart({ etf }: { etf: Envelope<EtfFlowsData> }) {
 
   const points = rows.map((r, i) => ({
     x: cx(i),
-    lines: [fmtDay(r.date), `Net ${fmtUsdM(r.totalUsdM)}`, r.totalUsdM >= 0 ? 'uang masuk' : 'uang keluar'],
+    lines: [
+      fmtDay(r.date),
+      `Net ${fmtUsdM(r.totalUsdM)}`,
+      r.totalUsdM >= 0 ? 'uang masuk' : 'uang keluar',
+      ...(r.provisional ? ['Sementara: bisa direvisi sumbernya'] : []),
+    ],
   }));
 
   return (
@@ -87,6 +92,7 @@ export function NetFlowChart({ etf }: { etf: Envelope<EtfFlowsData> }) {
           {rows.map((r) => (
             <span key={r.date} style={{ fontSize: 12, color: 'var(--dim)', textAlign: 'center', whiteSpace: 'nowrap' }}>
               {fmtDayShort(r.date)}
+              {r.provisional ? '*' : ''}
             </span>
           ))}
         </div>

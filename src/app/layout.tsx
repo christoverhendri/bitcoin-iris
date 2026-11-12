@@ -12,7 +12,7 @@ const ember = Inter_Tight({
 });
 
 export const metadata: Metadata = {
-  title: 'IRIS BTC Intelligence Terminal',
+  title: 'BitPulse — BTC Intelligence',
   description: 'BTC signal, evidence and forecast terminal. Informational only — not financial advice.',
 };
 

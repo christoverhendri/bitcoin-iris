@@ -25,7 +25,7 @@ export function FlowKpis({ etf }: { etf: Envelope<EtfFlowsData> }) {
           label="LATEST SESSION"
           value={l.latest}
           tone={flowTone(d.latestUsdM)}
-          detail={l.latestDate}
+          detail={d.sessions[0]?.provisional ? `${l.latestDate} · sementara, bisa direvisi` : l.latestDate}
         />
       </div>
       <StatTile

@@ -85,6 +85,8 @@ SOCIAL_CRON = get_str("SOCIAL_CRON", "20 0 * * *")
 # whale ingest: panggil route Next /api/ingest/whale (butuh IRIS_APP_URL + CRON_SECRET).
 WHALE_CRON = get_str("WHALE_CRON", "*/5 * * * *")
 WATCHER_CRON = get_str("WATCHER_CRON", "* * * * *")
+# history_archive: panggil route Next /api/ingest/history (butuh IRIS_APP_URL + CRON_SECRET).
+HISTORY_CRON = get_str("HISTORY_CRON", "5 * * * *")
 # Monday 00:20 UTC: Sunday's daily close is final (same as .github/workflows/monthly-forecast.yml).
 MONTHLY_CRON = get_str("MONTHLY_CRON", "20 0 * * 1")
 IRIS_APP_URL = get_str("IRIS_APP_URL")

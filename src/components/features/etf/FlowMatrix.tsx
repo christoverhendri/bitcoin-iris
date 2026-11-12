@@ -54,8 +54,13 @@ export function FlowMatrix({ etf }: { etf: Envelope<EtfFlowsData> }) {
             <div style={{ display: 'grid', gridTemplateColumns: cols, gap: 6, fontSize: 12, color: 'var(--dim)' }}>
               <span>Fund</span>
               {sessions.map((s, i) => (
-                <span key={s.date} style={{ textAlign: 'center', color: i === sessions.length - 1 ? 'var(--txt)' : undefined }}>
+                <span
+                  key={s.date}
+                  data-tip={s.provisional ? 'Sementara: angka sesi ini bisa direvisi sumbernya' : undefined}
+                  style={{ textAlign: 'center', color: i === sessions.length - 1 ? 'var(--txt)' : undefined }}
+                >
                   {fmtDayShort(s.date)}
+                  {s.provisional ? '*' : ''}
                 </span>
               ))}
               <span style={{ textAlign: 'right' }}>Total</span>

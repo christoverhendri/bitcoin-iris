@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /* ---------------------------------------------------------------------------
-   IRIS terminal design tokens ("Ember", 2026-10-20).
+   BitPulse terminal design tokens ("Ember", 2026-10-20).
    Values are mirrored in src/lib/theme/tokens.ts and tokens.test.ts asserts parity.
    Do not edit one without the other. No semicolons inside the comments of the
    two blocks below, the parity test splits on them.

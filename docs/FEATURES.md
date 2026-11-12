@@ -1,4 +1,4 @@
-# IRIS BTC Terminal — Daftar Fitur
+# BitPulse — BTC Terminal — Daftar Fitur
 
 Ringkasan semua fitur dashboard per 20 Oktober 2026 (branch `final-iris-terminal`). Rumus dan
 detail tiap panel ada di [`FEATURE_GUIDE.md`](FEATURE_GUIDE.md); alasan tiap keputusan di

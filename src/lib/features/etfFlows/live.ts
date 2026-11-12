@@ -9,14 +9,18 @@
 import { getEtfFlows } from '@/lib/sources/etfFlows';
 import type { EtfFlowsArgs, EtfFlowsData, EtfFlowSession, EtfFundRow } from './types';
 
+/** How many of the newest sessions are still liable to be revised upstream. */
+const PROVISIONAL_SESSIONS = 2;
+
 export async function fetchEtfFlows({ limit = 10 }: EtfFlowsArgs) {
   const table = await getEtfFlows();
 
-  const sessions: EtfFlowSession[] = table.days.slice(0, limit).map((d) => ({
+  const sessions: EtfFlowSession[] = table.days.slice(0, limit).map((d, i) => ({
     date: d.date,
     ts: d.ts,
     totalUsdM: d.totalUsdM,
     byFund: d.byFund,
+    provisional: i < PROVISIONAL_SESSIONS,
   }));
 
   if (sessions.length === 0) return null;

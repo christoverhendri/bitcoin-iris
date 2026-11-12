@@ -60,7 +60,7 @@ export function WeeklyForecastCard({
     <Panel>
       <PanelHeader
         title="This week's call"
-        note={isModel ? 'IRIS weekly model' : 'Candle rule'}
+        note={isModel ? 'BitPulse weekly model' : 'Candle rule'}
         right={<MockBadge env={weeklyForecast} />}
       />
       <div style={{ position: 'relative', zIndex: 4, padding: '8px 26px 22px', display: 'flex', flexDirection: 'column', gap: 22 }}>

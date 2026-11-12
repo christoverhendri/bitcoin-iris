@@ -21,7 +21,21 @@
  */
 import { fetchJson } from './http';
 
-const BASE = 'https://blockstream.info/api';
+// mempool.space serves the identical Esplora API and stays reachable on networks
+// that block blockstream.info; the second host is the fallback.
+const BASES = ['https://mempool.space/api', 'https://blockstream.info/api'];
+
+async function esploraJson<T>(path: string, opts: Parameters<typeof fetchJson>[1]): Promise<T> {
+  let last: unknown;
+  for (const base of BASES) {
+    try {
+      return await fetchJson<T>(`${base}${path}`, opts);
+    } catch (e) {
+      last = e;
+    }
+  }
+  throw last;
+}
 
 const SATS = 1e8;
 
@@ -99,7 +113,7 @@ const txsMemo = new Map<string, { at: number; value: EsploraTx[] }>();
  * whole point for a flow signal.
  */
 export async function getAddress(addr: string): Promise<EsploraAddress> {
-  const j = await fetchJson<RawAddress>(`${BASE}/address/${addr}`, { revalidate: 600 });
+  const j = await esploraJson<RawAddress>(`/address/${addr}`, { revalidate: 600 });
   if (!j || typeof j !== 'object' || !j.chain_stats) {
     throw new Error(`esplora /address/${addr}: malformed response`);
   }
@@ -130,7 +144,7 @@ export async function getAddressTxs(addr: string): Promise<EsploraTx[]> {
 
   // 25 transactions from a high-throughput address can be several MB, and each
   // one may carry thousands of inputs. Give it more room than the default.
-  const j = await fetchJson<RawTx[]>(`${BASE}/address/${addr}/txs`, {
+  const j = await esploraJson<RawTx[]>(`/address/${addr}/txs`, {
     revalidate: 300,
     timeoutMs: 20_000,
   });
@@ -162,7 +176,7 @@ function toIo(raw: RawIo | null): EsploraTxIo {
 
 /** Fee estimates in sat/vB keyed by confirmation target in blocks. */
 export async function getFeeEstimates(): Promise<Record<string, number>> {
-  const j = await fetchJson<Record<string, number>>(`${BASE}/fee-estimates`, { revalidate: 600 });
+  const j = await esploraJson<Record<string, number>>(`/fee-estimates`, { revalidate: 600 });
   if (!j || typeof j !== 'object') throw new Error('esplora /fee-estimates: malformed response');
   return j;
 }

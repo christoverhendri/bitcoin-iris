@@ -1,5 +1,5 @@
 /**
- * Single source of truth for the IRIS terminal palette.
+ * Single source of truth for the BitPulse terminal palette.
  *
  * These hex values are duplicated as CSS custom properties in `src/app/globals.css`.
  * `tokens.test.ts` parses that file and asserts byte-equality, because
